@@ -4,6 +4,8 @@ namespace SweeperSmackdown.Factories;
 
 public static class GameStateFactory
 {
+    public static readonly int[] VALID_MODES = new int[] { 1 };
+    
     public static byte[] Create(int mode, int height, int width)
     {
         return mode switch

@@ -3,10 +3,13 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Newtonsoft.Json;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -36,6 +39,24 @@ public static class LobbyPutFunction
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
+        // Handle validation failures
+        var errors = new List<string>();
+
+        if (payload.Lifetime != null && payload.Lifetime <= 0)
+            errors.Add("The 'lifetime' must be greater than 0");
+
+        if (payload.Mode != null && !GameStateFactory.VALID_MODES.Contains(payload.Mode.Value))
+            errors.Add($"The 'mode' is not a valid option ({string.Join(", ", GameStateFactory.VALID_MODES)})");
+
+        if (payload.Height != null && payload.Height >= Constants.MAX_GAME_HEIGHT || payload.Height <= Constants.MIN_GAME_HEIGHT)
+            errors.Add($"The 'height' must be between {Constants.MIN_GAME_HEIGHT} and {Constants.MAX_GAME_HEIGHT}");
+
+        if (payload.Width != null && payload.Width >= Constants.MAX_GAME_WIDTH || payload.Width <= Constants.MIN_GAME_WIDTH)
+            errors.Add($"The 'width' must be between {Constants.MIN_GAME_WIDTH} and {Constants.MAX_GAME_WIDTH}");
+
+        if (errors.Count > 0)
+            return new BadRequestObjectResult(errors);
+
         // Check if lobby exists
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         var initiallyExisted = entity.EntityExists;

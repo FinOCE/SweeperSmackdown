@@ -62,9 +62,6 @@ public class Board : IBoard
         int width,
         byte[] gameState)
     {
-        if (height > 99 || width > 99)
-            throw new ArgumentException("A board cannot have a height or width greater than 99");
-
         if (gameState.Length != height * width)
             throw new ArgumentException("The game state must match the size of the height and width");
 
