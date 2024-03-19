@@ -38,17 +38,12 @@ public static class GameSetupFunction
         //       (e.g. when the celebration ends and a new game starts)
 
         // Setup game conditions
-        var presetTask = ctx.WaitForExternalEvent("SetPreset");
-        
         var lifetimeTask = ctx.WaitForExternalEvent("SetLifetime");
         var modeTask = ctx.WaitForExternalEvent("SetMode");
         var heightTask = ctx.WaitForExternalEvent("SetHeight");
         var widthTask = ctx.WaitForExternalEvent("SetWidth");
-        var manualTask = Task.WhenAll(lifetimeTask, modeTask, heightTask, widthTask);
 
-        // TODO: Setup the above events
-
-        await Task.WhenAny(presetTask, manualTask);
+        await Task.WhenAll(lifetimeTask, modeTask, heightTask, widthTask);
 
         // Wait for countdown to complete
         await ctx.CallSubOrchestratorAsync(

@@ -25,6 +25,8 @@ public interface ILobby
 
     void Create(string instanceId, string[] userIds);
 
+    void Create(string instanceId, string[] userIds, int? lifetime, int? mode, int? height, int? width);
+
     void Delete();
 
     void AddUser(string userId);
@@ -77,9 +79,21 @@ public class Lobby : ILobby
     {
         InstanceId = instanceId;
         UserIds = userIds;
+        Lifetime = null;
         Mode = null;
         Height = null;
         Width = null;
+        Status = ELobbyStatus.Setup;
+    }
+
+    public void Create(string instanceId, string[] userIds, int? lifetime, int? mode, int? height, int? width)
+    {
+        InstanceId = instanceId;
+        UserIds = userIds;
+        Lifetime = lifetime;
+        Mode = mode;
+        Height = height;
+        Width = width;
         Status = ELobbyStatus.Setup;
     }
 
