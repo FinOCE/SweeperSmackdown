@@ -37,11 +37,6 @@ public static class GameSetupFunction
         // TODO: Figure out how to handle user IDs being present here if the user left
         //       (e.g. when the celebration ends and a new game starts)
 
-        // Create lobby
-        await entityClient.SignalEntityAsync<ILobby>(
-            Id.For<Lobby>(props.InstanceId),
-            lobby => lobby.Create(props.InstanceId, props.UserIds));
-
         // Setup game conditions
         var presetTask = ctx.WaitForExternalEvent("SetPreset");
         

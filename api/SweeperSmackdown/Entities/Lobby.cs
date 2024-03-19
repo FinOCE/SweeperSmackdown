@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Newtonsoft.Json;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ public interface ILobby
 
     int? Width { get; }
 
+    ELobbyStatus Status { get; }
+
     void Create(string instanceId, string[] userIds);
 
     void Delete();
@@ -35,28 +38,40 @@ public interface ILobby
     void SetHeight(int height);
 
     void SetWidth(int width);
+
+    void SetStatus(ELobbyStatus status);
 }
 
 [DataContract]
 public class Lobby : ILobby
 {
     [DataMember]
+    [JsonProperty("instanceId")]
     public string InstanceId { get; private set; } = null!;
 
     [DataMember]
+    [JsonProperty("userIds")]
     public string[] UserIds { get; private set; } = null!;
 
     [DataMember]
+    [JsonProperty("lifetime")]
     public int? Lifetime { get; private set; }
 
     [DataMember]
+    [JsonProperty("mode")]
     public int? Mode { get; private set; }
 
     [DataMember]
+    [JsonProperty("height")]
     public int? Height { get; private set; }
 
     [DataMember]
+    [JsonProperty("width")]
     public int? Width { get; private set; }
+
+    [DataMember]
+    [JsonProperty("status")]
+    public ELobbyStatus Status { get; private set; }
 
     public void Create(string instanceId, string[] userIds)
     {
@@ -65,6 +80,7 @@ public class Lobby : ILobby
         Mode = null;
         Height = null;
         Width = null;
+        Status = ELobbyStatus.Setup;
     }
 
     public void Delete() =>
@@ -101,7 +117,20 @@ public class Lobby : ILobby
         Width = width;
     }
 
+    public void SetStatus(ELobbyStatus status)
+    {
+        Status = status;
+    }
+
     [FunctionName(nameof(Lobby))]
     public static Task Run([EntityTrigger] IDurableEntityContext ctx) =>
         ctx.DispatchAsync<Lobby>();
+}
+
+public enum ELobbyStatus
+{
+    Setup,
+    Countdown,
+    Playing,
+    Celebration
 }

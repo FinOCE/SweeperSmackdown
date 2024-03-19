@@ -13,8 +13,11 @@ public static class LobbyDeleteFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}")] HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
+        // TODO: Figure out best approach for deleting lobbies (if it should even be done explicitly at all)
+
         await Task.Delay(0);
         return new NoContentResult();
     }

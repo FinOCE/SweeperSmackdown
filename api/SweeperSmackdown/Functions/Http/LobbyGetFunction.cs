@@ -4,6 +4,8 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using SweeperSmackdown.Entities;
+using SweeperSmackdown.Utils;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -15,7 +17,10 @@ public static class LobbyGetFunction
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
-        await Task.Delay(0);
-        return new NoContentResult();
+        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+
+        return entity.EntityExists
+            ? new OkObjectResult(entity.EntityState)
+            : new NotFoundResult();
     }
 }

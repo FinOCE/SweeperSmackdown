@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Newtonsoft.Json;
 using SweeperSmackdown.Utils;
 using System;
 using System.Runtime.Serialization;
@@ -35,18 +36,23 @@ public interface IBoard
 public class Board : IBoard
 {
     [DataMember]
+    [JsonProperty("instanceId")]
     public string InstanceId { get; private set; } = null!;
 
     [DataMember]
+    [JsonProperty("userId")]
     public string UserId { get; private set; } = null!;
     
     [DataMember]
+    [JsonProperty("height")]
     public int Height { get; private set; }
 
     [DataMember]
+    [JsonProperty("width")]
     public int Width { get; private set; }
 
     [DataMember]
+    [JsonProperty("gameState")]
     public byte[] GameState { get; private set; } = null!;
 
     public void Create(
