@@ -1,0 +1,7 @@
+@lobbyId = "lobbyId"
+
+###
+
+GET http://localhost:7071/lobbies/{{lobbyId}}
+
+###

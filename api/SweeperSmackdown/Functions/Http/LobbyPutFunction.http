@@ -1,0 +1,21 @@
+@lobbyId = "lobbyId"
+
+###
+
+PUT http://localhost:7071/lobbies/{{lobbyId}}
+
+{
+}
+
+###
+
+PUT http://localhost:7071/lobbies/{{lobbyId}}
+
+{
+  "lifetime": 60,
+  "mode": 1,
+  "height": 16,
+  "width": 16"
+}
+
+###
