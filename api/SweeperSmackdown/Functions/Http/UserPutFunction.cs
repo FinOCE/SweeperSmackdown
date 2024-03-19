@@ -2,6 +2,9 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.Entities;
+using SweeperSmackdown.Utils;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http;
@@ -19,7 +22,18 @@ public static class UserPutFunction
         string lobbyId,
         string userId)
     {
-        await Task.Delay(0);
-        return new NoContentResult();
+        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+
+        if (!entity.EntityExists)
+            return new NotFoundResult();
+
+        if (entity.EntityState.UserIds.Contains(userId))
+            return new OkObjectResult(new { userId, lobbyId });
+
+        await entityClient.SignalEntityAsync<ILobby>(
+            Id.For<Lobby>(lobbyId),
+            lobby => lobby.AddUser(userId));
+
+        return new CreatedResult($"/lobbies/{lobbyId}/users/{userId}", new { userId, lobbyId });
     }
 }

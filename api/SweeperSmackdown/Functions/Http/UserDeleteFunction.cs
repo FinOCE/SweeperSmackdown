@@ -4,6 +4,10 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using SweeperSmackdown.Entities;
+using SweeperSmackdown.Utils;
+using System;
+using System.Linq;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -16,7 +20,15 @@ public static class UserDeleteFunction
         string lobbyId,
         string userId)
     {
-        await Task.Delay(0);
+        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+
+        if (!entity.EntityExists || !entity.EntityState.UserIds.Contains(userId))
+            return new NotFoundResult();
+
+        await entityClient.SignalEntityAsync<ILobby>(
+            Id.For<Lobby>(lobbyId),
+            lobby => lobby.RemoveUser(userId));
+
         return new NoContentResult();
     }
 }

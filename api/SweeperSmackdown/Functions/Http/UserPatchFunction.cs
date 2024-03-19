@@ -19,6 +19,8 @@ public static class UserPatchFunction
         string lobbyId,
         string userId)
     {
+        // TODO: Add features to users and then create new entity for users before this can be used
+
         await Task.Delay(0);
         return new NoContentResult();
     }
