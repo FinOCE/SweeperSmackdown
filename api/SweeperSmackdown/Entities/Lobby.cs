@@ -29,6 +29,8 @@ public interface ILobby
 
     void Delete();
 
+    Task<ILobby> Get();
+
     void AddUser(string userId);
 
     void RemoveUser(string userId);
@@ -99,6 +101,9 @@ public class Lobby : ILobby
 
     public void Delete() =>
         Entity.Current.DeleteState();
+
+    public Task<ILobby> Get() =>
+        Task.FromResult((ILobby)this);
 
     public void AddUser(string userId)
     {

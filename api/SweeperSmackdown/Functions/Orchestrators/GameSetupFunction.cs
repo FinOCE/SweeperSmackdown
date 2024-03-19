@@ -29,8 +29,7 @@ public static class GameSetupFunction
 {
     [FunctionName(nameof(GameSetupFunction))]
     public static async Task Run(
-        [OrchestrationTrigger] IDurableOrchestrationContext ctx,
-        [DurableClient] IDurableEntityClient entityClient)
+        [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var props = ctx.GetInput<GameSetupFunctionProps>();
 
@@ -54,21 +53,24 @@ public static class GameSetupFunction
         // TODO: Confirm the above restarted suborchestrator doesn't complete task on loop
 
         // Get current game conditions
-        var lobby = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(props.InstanceId));
+        var lobby = await ctx.CallEntityAsync<ILobby>(
+            Id.For<Lobby>(props.InstanceId),
+            nameof(Lobby.Get));
         
-        var userIds = lobby.EntityState.UserIds;
-        var lifetime = lobby.EntityState.Lifetime!.Value;
-        var mode = lobby.EntityState.Mode!.Value;
-        var height = lobby.EntityState.Height!.Value;
-        var width = lobby.EntityState.Width!.Value;
+        var userIds = lobby.UserIds;
+        var lifetime = lobby.Lifetime!.Value;
+        var mode = lobby.Mode!.Value;
+        var height = lobby.Height!.Value;
+        var width = lobby.Width!.Value;
 
         // Create game boards
         var gameState = GameStateFactory.Create(mode, height, width);
-
+        
         var tasks = userIds.Select(userId =>
-            entityClient.SignalEntityAsync<IBoard>(
+            ctx.CallEntityAsync(
                 Id.For<Board>(props.InstanceId, userId),
-                board => board.Create(props.InstanceId, userId, height, width, gameState)));
+                nameof(Board.Create),
+                (props.InstanceId, userIds, height, width, gameState)));
         
         await Task.WhenAll(tasks);
 

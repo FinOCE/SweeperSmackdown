@@ -29,6 +29,8 @@ public interface IBoard
 
     void Delete();
 
+    Task<IBoard> Get();
+
     void SetBoard(byte[] gameState);
 }
 
@@ -74,6 +76,9 @@ public class Board : IBoard
 
     public void Delete() =>
         Entity.Current.DeleteState();
+    
+    public Task<IBoard> Get() =>
+        Task.FromResult((IBoard)this);
 
     public void SetBoard(byte[] gameState)
     {

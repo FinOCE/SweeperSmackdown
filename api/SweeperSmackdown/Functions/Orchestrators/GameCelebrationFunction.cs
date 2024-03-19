@@ -36,8 +36,7 @@ public static class GameCelebrationFunction
 {
     [FunctionName(nameof(GameCelebrationFunction))]
     public static async Task Run(
-        [OrchestrationTrigger] IDurableOrchestrationContext ctx,
-        [DurableClient] IDurableEntityClient entityClient)
+        [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var props = ctx.GetInput<GameCelebrationFunctionProps>();
 
@@ -53,22 +52,21 @@ public static class GameCelebrationFunction
             timeoutCts.Cancel();
 
         // Delete all board entities
-        var lobby = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(props.InstanceId));
-        
-        if (!lobby.EntityExists)
-            return;
+        var lobby = await ctx.CallEntityAsync<ILobby>(
+            Id.For<Lobby>(props.InstanceId),
+            nameof(Lobby.Get));
 
-        var tasks = lobby.EntityState.UserIds.Select(userId =>
-            entityClient.SignalEntityAsync<IBoard>(
+        var tasks = lobby.UserIds.Select(userId =>
+            ctx.CallEntityAsync(
                 Id.For<Board>(props.InstanceId, userId),
-                board => board.Delete()));
+                nameof(Board.Delete)));
 
         await Task.WhenAll(tasks);
 
         // Start new game
         ctx.StartNewOrchestration(
             nameof(GameSetupFunction),
-            new GameSetupFunctionProps(props.InstanceId, props.UserIds),
+            new GameSetupFunctionProps(props.InstanceId, lobby.UserIds),
             Id.ForInstance(nameof(GameSetupFunction), props.InstanceId));
     }
 }
