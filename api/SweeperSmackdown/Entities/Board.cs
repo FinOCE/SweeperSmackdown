@@ -20,12 +20,7 @@ public interface IBoard
 
     byte[] GameState { get; }
 
-    void Create(
-        string instanceId,
-        string userId,
-        int height,
-        int width,
-        byte[] gameState);
+    void Create((string InstanceId, string UserId, int Height, int Width, byte[] GameState) args);
 
     void Delete();
 
@@ -57,21 +52,16 @@ public class Board : IBoard
     [JsonProperty("gameState")]
     public byte[] GameState { get; private set; } = null!;
 
-    public void Create(
-        string instanceId,
-        string userId,
-        int height,
-        int width,
-        byte[] gameState)
+    public void Create((string InstanceId, string UserId, int Height, int Width, byte[] GameState) args)
     {
-        if (gameState.Length != height * width)
+        if (args.GameState.Length != args.Height * args.Width)
             throw new ArgumentException("The game state must match the size of the height and width");
 
-        InstanceId = instanceId;
-        UserId = userId;
-        Height = height;
-        Width = width;
-        GameState = gameState;
+        InstanceId = args.InstanceId;
+        UserId = args.UserId;
+        Height = args.Height;
+        Width = args.Width;
+        GameState = args.GameState;
     }
 
     public void Delete() =>

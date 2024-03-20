@@ -66,13 +66,13 @@ public static class LobbyPutFunction
             // Create lobby
             await entityClient.SignalEntityAsync<ILobby>(
                 Id.For<Lobby>(lobbyId),
-                lobby => lobby.Create(
+                lobby => lobby.Create((
                     lobbyId,
                     Array.Empty<string>(),
                     payload.Lifetime,
                     payload.Mode,
                     payload.Height,
-                    payload.Width));
+                    payload.Width)));
 
             await orchestrationClient.StartNewAsync(nameof(GameSetupFunction), lobbyId);
         }

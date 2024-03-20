@@ -23,9 +23,9 @@ public interface ILobby
 
     ELobbyStatus Status { get; }
 
-    void Create(string instanceId, string[] userIds);
+    void Create((string InstanceId, string[] UserIds) args);
 
-    void Create(string instanceId, string[] userIds, int? lifetime, int? mode, int? height, int? width);
+    void Create((string InstanceId, string[] UserIds, int? Lifetime, int? Mode, int? Height, int? Width) args);
 
     void Delete();
 
@@ -77,10 +77,10 @@ public class Lobby : ILobby
     [JsonProperty("status")]
     public ELobbyStatus Status { get; private set; }
 
-    public void Create(string instanceId, string[] userIds)
+    public void Create((string InstanceId, string[] UserIds) args)
     {
-        InstanceId = instanceId;
-        UserIds = userIds;
+        InstanceId = args.InstanceId;
+        UserIds = args.UserIds;
         Lifetime = null;
         Mode = null;
         Height = null;
@@ -88,14 +88,14 @@ public class Lobby : ILobby
         Status = ELobbyStatus.Setup;
     }
 
-    public void Create(string instanceId, string[] userIds, int? lifetime, int? mode, int? height, int? width)
+    public void Create((string InstanceId, string[] UserIds, int? Lifetime, int? Mode, int? Height, int? Width) args)
     {
-        InstanceId = instanceId;
-        UserIds = userIds;
-        Lifetime = lifetime;
-        Mode = mode;
-        Height = height;
-        Width = width;
+        InstanceId = args.InstanceId;
+        UserIds = args.UserIds;
+        Lifetime = args.Lifetime;
+        Mode = args.Mode;
+        Height = args.Height;
+        Width = args.Width;
         Status = ELobbyStatus.Setup;
     }
 

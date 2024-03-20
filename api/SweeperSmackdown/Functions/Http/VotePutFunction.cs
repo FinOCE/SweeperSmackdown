@@ -42,7 +42,7 @@ public static class VotePutFunction
         // Add user vote
         await entityClient.SignalEntityAsync<IVote>(
             Id.For<Vote>(lobbyId),
-            vote => vote.AddVote(userId, payload.Choice));
+            vote => vote.AddVote((userId, payload.Choice)));
 
         // Notify voted item if required votes reached
         vote = await entityClient.ReadEntityStateAsync<IVote>(Id.For<Vote>(lobbyId));

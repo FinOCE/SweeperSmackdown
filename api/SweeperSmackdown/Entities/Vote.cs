@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+﻿using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,13 +19,13 @@ public interface IVote
 
     string[] Choices { get; }
 
-    void Create(string instanceId, int requiredVotes, string[] choices);
+    void Create((string InstanceId, int RequiredVotes, string[] Choices) args);
 
     void Delete();
 
     Task<IVote> Get();
     
-    public void AddVote(string userId, string choice);
+    public void AddVote((string UserId, string Choice) args);
 
     public void RemoveVote(string userId);
 }
@@ -48,14 +49,14 @@ public class Vote : IVote
     [JsonProperty("choices")]
     public string[] Choices { get; private set; } = null!;
 
-    public void Create(string instanceId, int requiredVotes, string[] choices)
+    public void Create((string InstanceId, int RequiredVotes, string[] Choices) args)
     {
-        InstanceId = instanceId;
+        InstanceId = args.InstanceId;
         Votes = new Dictionary<string, string[]>();
-        RequiredVotes = requiredVotes;
-        Choices = choices;
-
-        foreach (var choice in choices)
+        RequiredVotes = args.RequiredVotes;
+        Choices = args.Choices;
+        
+        foreach (var choice in args.Choices)
             Votes.Add(choice, Array.Empty<string>());
     }
 
@@ -65,15 +66,15 @@ public class Vote : IVote
     public Task<IVote> Get() =>
         Task.FromResult((IVote)this);
 
-    public void AddVote(string userId, string choice)
+    public void AddVote((string UserId, string Choice) args)
     {
-        if (!Choices.Contains(choice))
+        if (!Choices.Contains(args.Choice))
             throw new ArgumentException("Invalid choice provided");
 
-        if (Votes[choice].Contains(userId))
+        if (Votes[args.Choice].Contains(args.UserId))
             return;
         
-        Votes[choice] = Votes[choice].Append(userId).ToArray();
+        Votes[args.Choice] = Votes[args.Choice].Append(args.UserId).ToArray();
     }
 
     public void RemoveVote(string userId)
@@ -87,4 +88,8 @@ public class Vote : IVote
         {
         }
     }
+
+    [FunctionName(nameof(Vote))]
+    public static Task Run([EntityTrigger] IDurableEntityContext ctx) =>
+        ctx.DispatchAsync<Vote>();
 }
