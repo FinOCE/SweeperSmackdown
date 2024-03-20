@@ -1,0 +1,7 @@
+@userId = "userId"
+
+###
+
+POST http://localhost:7071/negotiate?userId={{userId}}
+
+###

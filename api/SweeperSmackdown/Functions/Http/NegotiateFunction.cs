@@ -4,7 +4,7 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebJobs;
 using SweeperSmackdown.Assets;
 
-namespace SweeperSmackdown.Functions.PubSub;
+namespace SweeperSmackdown.Functions.Http;
 
 public static class NegotiateFunction
 {
@@ -14,7 +14,7 @@ public static class NegotiateFunction
         [WebPubSubConnection(Hub = PubSubConstants.HUB_NAME, UserId = "{query.userId}")] WebPubSubConnection connection)
     {
         // TODO: Add validation to ensure query.userId matches the requester's authorized account
-        
+
         return connection;
     }
 }
