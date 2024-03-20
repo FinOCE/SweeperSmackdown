@@ -9,27 +9,13 @@ namespace SweeperSmackdown.Entities;
 
 public interface ILobby
 {
-    string InstanceId { get; }
-    
-    string[] UserIds { get; }
-
-    int? Lifetime { get; }
-    
-    int? Mode { get; }
-    
-    int? Height { get; }
-
-    int? Width { get; }
-
-    ELobbyStatus Status { get; }
-
     void Create((string InstanceId, string[] UserIds) args);
 
     void Create((string InstanceId, string[] UserIds, int? Lifetime, int? Mode, int? Height, int? Width) args);
 
     void Delete();
-
-    Task<ILobby> Get();
+    
+    Task<Lobby> Get();
 
     void AddUser(string userId);
 
@@ -101,9 +87,9 @@ public class Lobby : ILobby
 
     public void Delete() =>
         Entity.Current.DeleteState();
-
-    public Task<ILobby> Get() =>
-        Task.FromResult((ILobby)this);
+    
+    public Task<Lobby> Get() =>
+        Task.FromResult(this);
 
     public void AddUser(string userId)
     {

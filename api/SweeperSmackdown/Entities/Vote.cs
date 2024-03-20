@@ -11,19 +11,11 @@ namespace SweeperSmackdown.Entities;
 
 public interface IVote
 {
-    string InstanceId { get; }
-    
-    IDictionary<string, string[]> Votes { get; }
-
-    int RequiredVotes { get; }
-
-    string[] Choices { get; }
-
     void Create((string InstanceId, int RequiredVotes, string[] Choices) args);
 
     void Delete();
-
-    Task<IVote> Get();
+    
+    Task<Vote> Get();
     
     public void AddVote((string UserId, string Choice) args);
 
@@ -62,9 +54,9 @@ public class Vote : IVote
 
     public void Delete() =>
         Entity.Current.DeleteState();
-
-    public Task<IVote> Get() =>
-        Task.FromResult((IVote)this);
+    
+    public Task<Vote> Get() =>
+        Task.FromResult(this);
 
     public void AddVote((string UserId, string Choice) args)
     {

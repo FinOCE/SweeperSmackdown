@@ -10,21 +10,11 @@ namespace SweeperSmackdown.Entities;
 
 public interface IBoard
 {
-    string InstanceId { get; }
-
-    string UserId { get; }
-    
-    int Height { get; }
-
-    int Width { get; }
-
-    byte[] GameState { get; }
-
     void Create((string InstanceId, string UserId, int Height, int Width, byte[] GameState) args);
 
     void Delete();
 
-    Task<IBoard> Get();
+    Task<Board> Get();
 
     void SetBoard(byte[] gameState);
 }
@@ -67,8 +57,8 @@ public class Board : IBoard
     public void Delete() =>
         Entity.Current.DeleteState();
     
-    public Task<IBoard> Get() =>
-        Task.FromResult((IBoard)this);
+    public Task<Board> Get() =>
+        Task.FromResult(this);
 
     public void SetBoard(byte[] gameState)
     {

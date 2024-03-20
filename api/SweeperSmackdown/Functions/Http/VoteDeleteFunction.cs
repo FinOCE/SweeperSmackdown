@@ -25,7 +25,7 @@ public static class VoteDeleteFunction
         string userId)
     {
         // Check if a vote is in progress
-        var vote = await entityClient.ReadEntityStateAsync<IVote>(Id.For<Vote>(lobbyId));
+        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
         if (!vote.EntityExists)
             return new NotFoundResult();
@@ -45,13 +45,13 @@ public static class VoteDeleteFunction
         await entityClient.SignalEntityAsync<IVote>(
             Id.For<Vote>(lobbyId),
             vote => vote.RemoveVote(userId));
-
+        
         // Notify voted item if dropped below required votes
-        vote = await entityClient.ReadEntityStateAsync<IVote>(Id.For<Vote>(lobbyId));
+        vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
         
         if (vote.EntityState.Votes[kvp.Key].Length == vote.EntityState.RequiredVotes - 1)
         {
-            var lobby = await entityClient.ReadEntityStateAsync<ILobby>(Id.For<Lobby>(lobbyId));
+            var lobby = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
             switch (lobby.EntityState.Status)
             {

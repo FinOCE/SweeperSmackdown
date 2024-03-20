@@ -21,7 +21,7 @@ public static class VoteGetFunction
         string userId)
     {
         // Check if a vote is in progress
-        var vote = await entityClient.ReadEntityStateAsync<IVote>(Id.For<Vote>(lobbyId));
+        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
         if (!vote.EntityExists)
             return new NotFoundResult();

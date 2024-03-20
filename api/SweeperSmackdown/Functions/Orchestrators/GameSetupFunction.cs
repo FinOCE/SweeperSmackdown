@@ -54,7 +54,7 @@ public static class GameSetupFunction
         // TODO: Confirm the above restarted suborchestrator doesn't complete task on loop
 
         // Get current game conditions
-        var lobby = await ctx.CallEntityAsync<ILobby>(
+        var lobby = await ctx.CallEntityAsync<Lobby>(
             Id.For<Lobby>(props.InstanceId),
             nameof(Lobby.Get));
         

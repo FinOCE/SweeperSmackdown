@@ -17,7 +17,7 @@ public static class VoteGetAllFunction
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
-        var vote = await entityClient.ReadEntityStateAsync<IVote>(Id.For<Vote>(lobbyId));
+        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
         return vote.EntityExists
             ? new OkObjectResult(vote.EntityState.Votes)

@@ -52,7 +52,7 @@ public static class GameCelebrationFunction
             timeoutCts.Cancel();
 
         // Delete all board entities
-        var lobby = await ctx.CallEntityAsync<ILobby>(
+        var lobby = await ctx.CallEntityAsync<Lobby>(
             Id.For<Lobby>(props.InstanceId),
             nameof(Lobby.Get));
 
