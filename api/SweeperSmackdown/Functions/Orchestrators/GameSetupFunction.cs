@@ -37,19 +37,11 @@ public static class GameSetupFunction
         // TODO: Figure out how to handle user IDs being present here if the user left
         //       (e.g. when the celebration ends and a new game starts)
 
-        // Setup game conditions
-        var lifetimeTask = ctx.WaitForExternalEvent(DurableEvents.SET_LIFETIME);
-        var modeTask = ctx.WaitForExternalEvent(DurableEvents.SET_MODE);
-        var heightTask = ctx.WaitForExternalEvent(DurableEvents.SET_HEIGHT);
-        var widthTask = ctx.WaitForExternalEvent(DurableEvents.SET_WIDTH);
-
-        await Task.WhenAll(lifetimeTask, modeTask, heightTask, widthTask);
-
         // Wait for countdown to complete
         await ctx.CallSubOrchestratorAsync(
             nameof(CountdownFunction),
             Id.ForInstance(nameof(CountdownFunction), props.InstanceId),
-            new CountdownFunctionProps(props.InstanceId, 10));
+            new CountdownFunctionProps(props.InstanceId, Constants.SETUP_COUNTDOWN_DURATION));
 
         // TODO: Confirm the above restarted suborchestrator doesn't complete task on loop
 
@@ -57,28 +49,22 @@ public static class GameSetupFunction
         var lobby = await ctx.CallEntityAsync<Lobby>(
             Id.For<Lobby>(props.InstanceId),
             nameof(Lobby.Get));
-        
-        var userIds = lobby.UserIds;
-        var lifetime = lobby.Lifetime!.Value;
-        var mode = lobby.Mode!.Value;
-        var height = lobby.Height!.Value;
-        var width = lobby.Width!.Value;
 
         // Create game boards
-        var gameState = GameStateFactory.Create(mode, height, width);
+        var gameState = GameStateFactory.Create(lobby.Settings);
         
-        var tasks = userIds.Select(userId =>
+        var tasks = lobby.UserIds.Select(userId =>
             ctx.CallEntityAsync(
                 Id.For<Board>(props.InstanceId, userId),
                 nameof(Board.Create),
-                (props.InstanceId, userIds, height, width, gameState)));
+                (props.InstanceId, userId, lobby.Settings, gameState)));
         
         await Task.WhenAll(tasks);
 
         // Start the game
         ctx.StartNewOrchestration(
             nameof(GameActiveFunction),
-            new GameActiveFunctionProps(props.InstanceId, userIds, lifetime, mode, height, width),
+            new GameActiveFunctionProps(props.InstanceId, lobby.UserIds, lobby.Settings),
             Id.ForInstance(nameof(GameActiveFunction), props.InstanceId));
     }
 }

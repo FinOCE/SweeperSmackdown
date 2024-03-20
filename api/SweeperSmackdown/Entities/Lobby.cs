@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
+using SweeperSmackdown.Structures;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -12,23 +13,17 @@ public interface ILobby
 {
     void Create((string InstanceId, string[] UserIds) args);
 
-    void Create((string InstanceId, string[] UserIds, int? Lifetime, int? Mode, int? Height, int? Width) args);
+    void Create((string InstanceId, string[] UserIds, GameSettings Settings) args);
 
     void Delete();
     
     Task<Lobby> Get();
 
     void AddUser(string userId);
-
+    
     void RemoveUser(string userId);
 
-    void SetLifetime(int lifetime);
-
-    void SetMode(int mode);
-
-    void SetHeight(int height);
-
-    void SetWidth(int width);
+    void SetSettings(GameSettings settings);
 
     void SetStatus(ELobbyStatus status);
 }
@@ -47,24 +42,9 @@ public class Lobby : ILobby
     public string[] UserIds { get; private set; } = null!;
 
     [DataMember]
-    [JsonProperty("lifetime")]
-    [JsonPropertyName("lifetime")]
-    public int? Lifetime { get; private set; }
-
-    [DataMember]
-    [JsonProperty("mode")]
-    [JsonPropertyName("mode")]
-    public int? Mode { get; private set; }
-
-    [DataMember]
-    [JsonProperty("height")]
-    [JsonPropertyName("height")]
-    public int? Height { get; private set; }
-
-    [DataMember]
-    [JsonProperty("width")]
-    [JsonPropertyName("width")]
-    public int? Width { get; private set; }
+    [JsonProperty("settings")]
+    [JsonPropertyName("settings")]
+    public GameSettings Settings { get; private set; } = null!;
 
     [DataMember]
     [JsonProperty("status")]
@@ -75,21 +55,15 @@ public class Lobby : ILobby
     {
         InstanceId = args.InstanceId;
         UserIds = args.UserIds;
-        Lifetime = null;
-        Mode = null;
-        Height = null;
-        Width = null;
+        Settings = new GameSettings();
         Status = ELobbyStatus.Setup;
     }
 
-    public void Create((string InstanceId, string[] UserIds, int? Lifetime, int? Mode, int? Height, int? Width) args)
+    public void Create((string InstanceId, string[] UserIds, GameSettings Settings) args)
     {
         InstanceId = args.InstanceId;
         UserIds = args.UserIds;
-        Lifetime = args.Lifetime;
-        Mode = args.Mode;
-        Height = args.Height;
-        Width = args.Width;
+        Settings = args.Settings;
         Status = ELobbyStatus.Setup;
     }
 
@@ -101,33 +75,22 @@ public class Lobby : ILobby
 
     public void AddUser(string userId)
     {
-        if (!UserIds.Contains(userId))
-            UserIds = UserIds.Append(userId).ToArray();
+        UserIds = UserIds
+            .Append(userId)
+            .Distinct()
+            .ToArray();
     }
 
     public void RemoveUser(string userId)
     {
-        UserIds = UserIds.Where(id => id != userId).ToArray();
+        UserIds = UserIds
+            .Where(id => id != userId)
+            .ToArray();
     }
 
-    public void SetLifetime(int lifetime)
+    public void SetSettings(GameSettings settings)
     {
-        Lifetime = lifetime;
-    }
-
-    public void SetMode(int mode)
-    {
-        Mode = mode;
-    }
-
-    public void SetHeight(int height)
-    {
-        Height = height;
-    }
-
-    public void SetWidth(int width)
-    {
-        Width = width;
+        Settings = settings;
     }
 
     public void SetStatus(ELobbyStatus status)

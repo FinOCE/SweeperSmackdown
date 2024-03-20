@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -17,31 +18,16 @@ public class GameActiveFunctionProps
     public string[] UserIds { get; }
 
     [DataMember]
-    public int Lifetime { get; }
-
-    [DataMember]
-    public int Mode { get; }
-
-    [DataMember]
-    public int Height { get; }
-
-    [DataMember]
-    public int Width { get; }
+    public GameSettings Settings { get; }
 
     public GameActiveFunctionProps(
         string instanceId,
         string[] userIds,
-        int lifetime,
-        int mode,
-        int height,
-        int width)
+        GameSettings settings)
     {
         InstanceId = instanceId;
         UserIds = userIds;
-        Lifetime = lifetime;
-        Mode = mode;
-        Height = height;
-        Width = width;
+        Settings = settings;
     }
 }
 
@@ -58,7 +44,7 @@ public static class GameActiveFunction
         // Wait until a user completes their board or timeout
         using var timeoutCts = new CancellationTokenSource();
 
-        var expiration = ctx.CurrentUtcDateTime.AddSeconds(props.Lifetime);
+        var expiration = ctx.CurrentUtcDateTime.AddSeconds(props.Settings.TimeLimit);
         var timeoutTask = ctx.CreateTimer(expiration, timeoutCts.Token);
 
         var completedTask = ctx.WaitForExternalEvent<string>("GameCompleted");

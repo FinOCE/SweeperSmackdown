@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
 using System.Linq;
@@ -39,6 +40,12 @@ public static class GameCelebrationFunction
         [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var props = ctx.GetInput<GameCelebrationFunctionProps>();
+
+        // Wait for countdown to complete
+        await ctx.CallSubOrchestratorAsync(
+            nameof(CountdownFunction),
+            Id.ForInstance(nameof(CountdownFunction), props.InstanceId),
+            new CountdownFunctionProps(props.InstanceId, Constants.CELEBRATION_COUNTDOWN_DURATION));
 
         // Wait until celebration end event or timeout
         using var timeoutCts = new CancellationTokenSource();

@@ -1,21 +1,20 @@
-﻿using System;
+﻿using SweeperSmackdown.Structures;
+using System;
 
 namespace SweeperSmackdown.Factories;
 
 public static class GameStateFactory
 {
     public static readonly int[] VALID_MODES = new int[] { 1 };
-    
-    public static byte[] Create(int mode, int height, int width)
-    {
-        return mode switch
+
+    public static byte[] Create(GameSettings settings) =>
+        settings.Mode switch
         {
-            1 => CreateNormal(height, width),
+            0 => CreateNormal(settings.Height, settings.Width, settings.Mines),
             _ => throw new ArgumentException("Invalid game mode provided"),
         };
-    }
 
-    public static byte[] CreateNormal(int height, int width)
+    public static byte[] CreateNormal(int height, int width, int mines)
     {
         // TODO: Implement
         return Array.Empty<byte>();

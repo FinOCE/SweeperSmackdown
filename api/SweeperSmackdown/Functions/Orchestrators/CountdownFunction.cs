@@ -14,12 +14,12 @@ public class CountdownFunctionProps
     public string InstanceId { get; }
 
     [DataMember]
-    public int Lifetime { get; }
+    public int Duration { get; }
 
-    public CountdownFunctionProps(string instanceId, int lifetime)
+    public CountdownFunctionProps(string instanceId, int duration)
     {
         InstanceId = instanceId;
-        Lifetime = lifetime;
+        Duration = duration;
     }
 }
 
@@ -36,12 +36,13 @@ public static class CountdownFunction
 
         // Start countdown
         using var timeoutCts = new CancellationTokenSource();
-
-        var expiration = ctx.CurrentUtcDateTime.AddSeconds(props.Lifetime);
+        
+        var expiration = ctx.CurrentUtcDateTime.AddSeconds(props.Duration);
         var timeoutTask = ctx.CreateTimer(expiration, timeoutCts.Token);
         var cancelTask = ctx.WaitForExternalEvent(DurableEvents.CANCEL_COUNTDOWN);
+        var skipTask = ctx.WaitForExternalEvent(DurableEvents.SKIP_COUNTDOWN);
 
-        var winner = await Task.WhenAny(timeoutTask, cancelTask);
+        var winner = await Task.WhenAny(timeoutTask, cancelTask, skipTask);
 
         if (!timeoutTask.IsCompleted)
             timeoutCts.Cancel();

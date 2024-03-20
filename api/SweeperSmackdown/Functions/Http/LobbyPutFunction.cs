@@ -13,14 +13,12 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
+using SweeperSmackdown.Structures;
 
 namespace SweeperSmackdown.Functions.Http;
 
 public class LobbyPutFunctionPayload
 {
-    [JsonProperty("lifetime")]
-    public int? Lifetime { get; }
-
     [JsonProperty("mode")]
     public int? Mode { get; }
 
@@ -29,6 +27,15 @@ public class LobbyPutFunctionPayload
 
     [JsonProperty("width")]
     public int? Width { get; }
+
+    [JsonProperty("mines")]
+    public int? Mines { get; }
+
+    [JsonProperty("lives")]
+    public int? Lives { get; }
+
+    [JsonProperty("timeLimit")]
+    public int? TimeLimit { get; }
 }
 
 public static class LobbyPutFunction
@@ -43,12 +50,9 @@ public static class LobbyPutFunction
     {
         // TODO: Get userId for person that made request
         var userId = "userId";
-        
+
         // Handle validation failures
         var errors = new List<string>();
-
-        if (payload.Lifetime != null && payload.Lifetime <= 0)
-            errors.Add("The 'lifetime' must be greater than 0");
 
         if (payload.Mode != null && !GameStateFactory.VALID_MODES.Contains(payload.Mode.Value))
             errors.Add($"The 'mode' is not a valid option ({string.Join(", ", GameStateFactory.VALID_MODES)})");
@@ -59,12 +63,33 @@ public static class LobbyPutFunction
         if (payload.Width != null && payload.Width >= Constants.MAX_GAME_WIDTH || payload.Width <= Constants.MIN_GAME_WIDTH)
             errors.Add($"The 'width' must be between {Constants.MIN_GAME_WIDTH} and {Constants.MAX_GAME_WIDTH}");
 
+        if (payload.Mines != null && payload.Mines <= 0)
+            errors.Add($"The 'mines' must be greater than 0");
+
+        if (payload.Lives != null && payload.Lives < -1)
+            errors.Add($"The 'lives' must be greater than or equal to 0 (0 means unlimited)");
+
+        if (payload.TimeLimit != null && payload.TimeLimit <= 0)
+            errors.Add("The 'timeLimit' must be greater than or equal to 0 (0 means unlimited)");
+
         if (errors.Count > 0)
             return new BadRequestObjectResult(errors);
 
         // Check if lobby exists
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         var initiallyExisted = entity.EntityExists;
+
+        // Confirm mine count is realistic
+        var defaultSettings = new GameSettings();
+        var newHeight = payload.Height ?? entity.EntityState?.Settings?.Height ?? defaultSettings.Height;
+        var newWidth = payload.Width ?? entity.EntityState?.Settings?.Width ?? defaultSettings.Width;
+        var newMines = payload.Mines ?? entity.EntityState?.Settings?.Mines ?? defaultSettings.Height;
+
+        if (newHeight * newWidth > newMines)
+            return new BadRequestObjectResult(new string[]
+            {
+                "Cannot update because this would result in more mines than there are board squares"
+            });
 
         if (!initiallyExisted)
         {
@@ -74,76 +99,33 @@ public static class LobbyPutFunction
                 lobby => lobby.Create((
                     lobbyId,
                     Array.Empty<string>(),
-                    payload.Lifetime,
-                    payload.Mode,
-                    payload.Height,
-                    payload.Width)));
+                    new GameSettings().Update(
+                        payload.Mode,
+                        payload.Height,
+                        payload.Width,
+                        payload.Mines,
+                        payload.Lives,
+                        payload.TimeLimit))));
 
             await orchestrationClient.StartNewAsync(nameof(GameSetupFunction), lobbyId);
         }
         else
         {
             // Apply changes to entity
-            var entityTasks = new List<Task>();
-
-            if (payload.Lifetime != null)
-                entityTasks.Add(
-                    entityClient.SignalEntityAsync<ILobby>(
-                        Id.For<Lobby>(lobbyId),
-                        lobby => lobby.SetLifetime(payload.Lifetime.Value)));
-
-            if (payload.Mode != null)
-                entityTasks.Add(
-                    entityClient.SignalEntityAsync<ILobby>(
-                        Id.For<Lobby>(lobbyId),
-                        lobby => lobby.SetMode(payload.Mode.Value)));
-
-            if (payload.Height != null)
-                entityTasks.Add(
-                    entityClient.SignalEntityAsync<ILobby>(
-                        Id.For<Lobby>(lobbyId),
-                        lobby => lobby.SetHeight(payload.Height.Value)));
-
-            if (payload.Width != null)
-                entityTasks.Add(
-                    entityClient.SignalEntityAsync<ILobby>(
-                        Id.For<Lobby>(lobbyId),
-                        lobby => lobby.SetWidth(payload.Width.Value)));
-
-            await Task.WhenAll(entityTasks);
+            await entityClient.SignalEntityAsync<ILobby>(
+                Id.For<Lobby>(lobbyId),
+                lobby => lobby.SetSettings(
+                    entity.EntityState!.Settings.Update(
+                        payload.Mode,
+                        payload.Height,
+                        payload.Width,
+                        payload.Mines,
+                        payload.Lives,
+                        payload.TimeLimit)));
         }
 
         entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, entity.EntityState));
-
-        // Send events to orchestrator
-        var orchestrationTasks = new List<Task>();
-
-        if (payload.Lifetime != null)
-            orchestrationTasks.Add(
-                orchestrationClient.RaiseEventAsync(
-                    Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    DurableEvents.SET_LIFETIME));
-
-        if (payload.Mode != null)
-            orchestrationTasks.Add(
-                orchestrationClient.RaiseEventAsync(
-                    Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    DurableEvents.SET_MODE));
-
-        if (payload.Height != null)
-            orchestrationTasks.Add(
-                orchestrationClient.RaiseEventAsync(
-                    Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    DurableEvents.SET_HEIGHT));
-
-        if (payload.Width != null)
-            orchestrationTasks.Add(
-                orchestrationClient.RaiseEventAsync(
-                    Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    DurableEvents.SET_WIDTH));
-
-        await Task.WhenAll(orchestrationTasks);
 
         // Return created/updated lobby        
         return initiallyExisted

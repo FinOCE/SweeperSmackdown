@@ -1,21 +1,24 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
+using SweeperSmackdown.Factories;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Entities;
 
 public interface IBoard
 {
-    void Create((string InstanceId, string UserId, int Height, int Width, byte[] GameState) args);
+    void Create((string InstanceId, string UserId, GameSettings Settings) args);
 
     void Delete();
 
     Task<Board> Get();
-
+    
     void SetBoard(byte[] gameState);
 }
 
@@ -24,36 +27,43 @@ public class Board : IBoard
 {
     [DataMember]
     [JsonProperty("instanceId")]
+    [JsonPropertyName("instanceId")]
     public string InstanceId { get; private set; } = null!;
 
     [DataMember]
     [JsonProperty("userId")]
+    [JsonPropertyName("userId")]
     public string UserId { get; private set; } = null!;
-    
-    [DataMember]
-    [JsonProperty("height")]
-    public int Height { get; private set; }
 
     [DataMember]
-    [JsonProperty("width")]
-    public int Width { get; private set; }
+    [JsonProperty("settings")]
+    [JsonPropertyName("settings")]
+    public GameSettings Settings { get; private set; } = null!;
 
     [DataMember]
-    [JsonProperty("gameState")]
+    [JsonProperty("state")]
+    [JsonPropertyName("state")]
     public byte[] GameState { get; private set; } = null!;
 
-    public void Create((string InstanceId, string UserId, int Height, int Width, byte[] GameState) args)
+    public void Create((string InstanceId, string UserId, GameSettings Settings) args)
     {
-        if (args.GameState.Length != args.Height * args.Width)
+        InstanceId = args.InstanceId;
+        UserId = args.UserId;
+        Settings = args.Settings;
+        GameState = GameStateFactory.Create(args.Settings);
+    }
+
+    public void Create((string InstanceId, string UserId, GameSettings Settings, byte[] GameState) args)
+    {
+        if (args.GameState.Length != args.Settings.Height * args.Settings.Width)
             throw new ArgumentException("The game state must match the size of the height and width");
 
         InstanceId = args.InstanceId;
         UserId = args.UserId;
-        Height = args.Height;
-        Width = args.Width;
+        Settings = args.Settings;
         GameState = args.GameState;
     }
-
+    
     public void Delete() =>
         Entity.Current.DeleteState();
     

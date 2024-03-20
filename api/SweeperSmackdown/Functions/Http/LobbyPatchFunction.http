@@ -12,10 +12,12 @@ PATCH http://localhost:7071/lobbies/{{lobbyId}}
 PATCH http://localhost:7071/lobbies/{{lobbyId}}
 
 {
-  "lifetime": 60,
-  "mode": 1,
-  "height": 16,
-  "width": 16"
+  "mode": 0,
+  "height": 9,
+  "width": 9,
+  "mines": 10,
+  "lives": 1,
+  "timeLimit": 600
 }
 
 ###

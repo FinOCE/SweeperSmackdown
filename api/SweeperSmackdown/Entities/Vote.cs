@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Entities;
@@ -27,18 +28,22 @@ public class Vote : IVote
 {
     [DataMember]
     [JsonProperty("instanceId")]
+    [JsonPropertyName("instanceId")]
     public string InstanceId { get; private set; } = null!;
 
     [DataMember]
     [JsonProperty("votes")]
+    [JsonPropertyName("votes")]
     public IDictionary<string, string[]> Votes { get; private set; } = null!;
 
     [DataMember]
     [JsonProperty("requiredVotes")]
+    [JsonPropertyName("requiredVotes")]
     public int RequiredVotes { get; private set; }
 
     [DataMember]
     [JsonProperty("choices")]
+    [JsonPropertyName("choices")]
     public string[] Choices { get; private set; } = null!;
 
     public void Create((string InstanceId, int RequiredVotes, string[] Choices) args)
