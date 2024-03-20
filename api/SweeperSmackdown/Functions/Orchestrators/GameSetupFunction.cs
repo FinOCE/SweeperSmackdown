@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Utils;
@@ -37,10 +38,10 @@ public static class GameSetupFunction
         //       (e.g. when the celebration ends and a new game starts)
 
         // Setup game conditions
-        var lifetimeTask = ctx.WaitForExternalEvent("SetLifetime");
-        var modeTask = ctx.WaitForExternalEvent("SetMode");
-        var heightTask = ctx.WaitForExternalEvent("SetHeight");
-        var widthTask = ctx.WaitForExternalEvent("SetWidth");
+        var lifetimeTask = ctx.WaitForExternalEvent(Events.SET_LIFETIME);
+        var modeTask = ctx.WaitForExternalEvent(Events.SET_MODE);
+        var heightTask = ctx.WaitForExternalEvent(Events.SET_HEIGHT);
+        var widthTask = ctx.WaitForExternalEvent(Events.SET_WIDTH);
 
         await Task.WhenAll(lifetimeTask, modeTask, heightTask, widthTask);
 

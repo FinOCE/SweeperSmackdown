@@ -115,25 +115,25 @@ public static class LobbyPutFunction
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    "SetLifetime"));
+                    Events.SET_LIFETIME));
 
         if (payload.Mode != null)
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    "SetMode"));
+                    Events.SET_MODE));
 
         if (payload.Height != null)
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    "SetHeight"));
+                    Events.SET_HEIGHT));
 
         if (payload.Width != null)
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    "SetWidth"));
+                    Events.SET_WIDTH));
 
         await Task.WhenAll(orchestrationTasks);
 

@@ -2,6 +2,7 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
@@ -55,7 +56,7 @@ public static class VotePutFunction
                 case ELobbyStatus.Setup:
                     await orchestrationClient.RaiseEventAsync(
                         Id.ForInstance(nameof(CountdownFunction), lobbyId),
-                        "StartCountdown");
+                        Events.START_COUNTDOWN);
                     break;
             }
         }

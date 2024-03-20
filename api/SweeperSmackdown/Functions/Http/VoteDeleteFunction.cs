@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
@@ -57,7 +58,7 @@ public static class VoteDeleteFunction
                 case ELobbyStatus.Setup:
                     await orchestrationClient.RaiseEventAsync(
                         Id.ForInstance(nameof(CountdownFunction), lobbyId),
-                        "CancelCountdown");
+                        Events.CANCEL_COUNTDOWN);
                     break;
             }
         }
