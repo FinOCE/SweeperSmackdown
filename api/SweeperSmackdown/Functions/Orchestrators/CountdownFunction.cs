@@ -33,19 +33,14 @@ public static class CountdownFunction
         // Wait for setup countdown to be initiated
         await ctx.WaitForExternalEvent("StartCountdown");
 
-        // TODO: Implement above event
-
-        // Wait until lobby is manually started or timeout
+        // Start countdown
         using var timeoutCts = new CancellationTokenSource();
 
         var expiration = ctx.CurrentUtcDateTime.AddSeconds(props.Lifetime);
         var timeoutTask = ctx.CreateTimer(expiration, timeoutCts.Token);
-        var cancelTask = ctx.WaitForExternalEvent("CancelSetupCountdown");
-        var skipTask = ctx.WaitForExternalEvent("SkipCountdown");
+        var cancelTask = ctx.WaitForExternalEvent("CancelCountdown");
 
-        // TODO: Implement above events
-
-        var winner = await Task.WhenAny(timeoutTask, cancelTask, skipTask);
+        var winner = await Task.WhenAny(timeoutTask, cancelTask);
 
         if (!timeoutTask.IsCompleted)
             timeoutCts.Cancel();

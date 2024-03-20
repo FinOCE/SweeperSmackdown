@@ -3,6 +3,6 @@
 
 ###
 
-GET http://localhost:7071/lobbies/{{lobbyId}}/users{{userId}}
+GET http://localhost:7071/lobbies/{{lobbyId}}/users/{{userId}}
 
 ###

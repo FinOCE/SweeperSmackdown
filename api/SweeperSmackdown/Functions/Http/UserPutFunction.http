@@ -3,7 +3,7 @@
 
 ###
 
-PUT http://localhost:7071/lobbies/{{lobbyId}}/users{{userId}}
+PUT http://localhost:7071/lobbies/{{lobbyId}}/users/{{userId}}
 
 {
 }

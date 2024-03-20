@@ -1,0 +1,8 @@
+@lobbyId = "lobbyId"
+@userId = "userId"
+
+###
+
+DELETE http://localhost:7071/lobbies/{{lobbyId}}/votes/{{userId}}
+
+###

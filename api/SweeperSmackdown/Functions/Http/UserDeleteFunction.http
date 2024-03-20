@@ -3,6 +3,6 @@
 
 ###
 
-DELETE http://localhost:7071/lobbies/{{lobbyId}}/users{{userId}}
+DELETE http://localhost:7071/lobbies/{{lobbyId}}/users/{{userId}}
 
 ###

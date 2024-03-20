@@ -3,7 +3,7 @@
 
 ###
 
-PATCH http://localhost:7071/lobbies/{{lobbyId}}/users{{userId}}
+PATCH http://localhost:7071/lobbies/{{lobbyId}}/users/{{userId}}
 
 {
 }

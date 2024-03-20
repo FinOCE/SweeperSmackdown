@@ -1,0 +1,13 @@
+@lobbyId = "lobbyId"
+@userId = "userId"
+@choice = "choice"
+
+###
+
+PUT http://localhost:7071/lobbies/{{lobbyId}}/votes/{{userId}}
+
+{
+  "choice": "{{choice}}"
+}
+
+###
