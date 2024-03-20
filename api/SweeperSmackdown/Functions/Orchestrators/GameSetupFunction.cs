@@ -38,10 +38,10 @@ public static class GameSetupFunction
         //       (e.g. when the celebration ends and a new game starts)
 
         // Setup game conditions
-        var lifetimeTask = ctx.WaitForExternalEvent(Events.SET_LIFETIME);
-        var modeTask = ctx.WaitForExternalEvent(Events.SET_MODE);
-        var heightTask = ctx.WaitForExternalEvent(Events.SET_HEIGHT);
-        var widthTask = ctx.WaitForExternalEvent(Events.SET_WIDTH);
+        var lifetimeTask = ctx.WaitForExternalEvent(DurableEvents.SET_LIFETIME);
+        var modeTask = ctx.WaitForExternalEvent(DurableEvents.SET_MODE);
+        var heightTask = ctx.WaitForExternalEvent(DurableEvents.SET_HEIGHT);
+        var widthTask = ctx.WaitForExternalEvent(DurableEvents.SET_WIDTH);
 
         await Task.WhenAll(lifetimeTask, modeTask, heightTask, widthTask);
 

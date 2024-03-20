@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System;
@@ -22,7 +24,8 @@ public static class VoteDeleteFunction
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
-        string userId)
+        string userId,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
     {
         // Check if a vote is in progress
         var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
@@ -45,7 +48,9 @@ public static class VoteDeleteFunction
         await entityClient.SignalEntityAsync<IVote>(
             Id.For<Vote>(lobbyId),
             vote => vote.RemoveVote(userId));
-        
+
+        await actions.AddAsync(ActionFactory.RemoveVote(userId, lobbyId, kvp.Key));
+
         // Notify voted item if dropped below required votes
         vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
         
@@ -58,7 +63,7 @@ public static class VoteDeleteFunction
                 case ELobbyStatus.Setup:
                     await orchestrationClient.RaiseEventAsync(
                         Id.ForInstance(nameof(CountdownFunction), lobbyId),
-                        Events.CANCEL_COUNTDOWN);
+                        DurableEvents.CANCEL_COUNTDOWN);
                     break;
             }
         }

@@ -12,6 +12,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -37,8 +38,12 @@ public static class LobbyPutFunction
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}")] LobbyPutFunctionPayload payload,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
-        string lobbyId)
+        string lobbyId,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
     {
+        // TODO: Get userId for person that made request
+        var userId = "userId";
+        
         // Handle validation failures
         var errors = new List<string>();
 
@@ -108,6 +113,9 @@ public static class LobbyPutFunction
             await Task.WhenAll(entityTasks);
         }
 
+        entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+        await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, entity.EntityState));
+
         // Send events to orchestrator
         var orchestrationTasks = new List<Task>();
 
@@ -115,30 +123,29 @@ public static class LobbyPutFunction
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    Events.SET_LIFETIME));
+                    DurableEvents.SET_LIFETIME));
 
         if (payload.Mode != null)
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    Events.SET_MODE));
+                    DurableEvents.SET_MODE));
 
         if (payload.Height != null)
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    Events.SET_HEIGHT));
+                    DurableEvents.SET_HEIGHT));
 
         if (payload.Width != null)
             orchestrationTasks.Add(
                 orchestrationClient.RaiseEventAsync(
                     Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-                    Events.SET_WIDTH));
+                    DurableEvents.SET_WIDTH));
 
         await Task.WhenAll(orchestrationTasks);
 
-        // Return created/updated lobby
-        entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+        // Return created/updated lobby        
         return initiallyExisted
             ? new OkObjectResult(entity.EntityState)
             : new CreatedResult($"/lobbies/{lobbyId}", entity.EntityState);

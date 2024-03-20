@@ -2,7 +2,10 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Utils;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,7 +23,8 @@ public static class UserPutFunction
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/users/{userId}")] UserPutFunctionPayload payload,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
-        string userId)
+        string userId,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
     {
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
@@ -33,6 +37,9 @@ public static class UserPutFunction
         await entityClient.SignalEntityAsync<ILobby>(
             Id.For<Lobby>(lobbyId),
             lobby => lobby.AddUser(userId));
+
+        await actions.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+        await actions.AddAsync(ActionFactory.AddUser(userId, lobbyId));
 
         return new CreatedResult($"/lobbies/{lobbyId}/users/{userId}", new { userId, lobbyId });
     }

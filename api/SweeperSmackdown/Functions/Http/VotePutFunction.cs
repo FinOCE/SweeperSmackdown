@@ -2,8 +2,10 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System.Linq;
@@ -24,7 +26,8 @@ public static class VotePutFunction
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
-        string userId)
+        string userId,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
     {
         // Check if a vote is in progress
         var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
@@ -44,6 +47,8 @@ public static class VotePutFunction
             Id.For<Vote>(lobbyId),
             vote => vote.AddVote((userId, payload.Choice)));
 
+        await actions.AddAsync(ActionFactory.AddVote(userId, lobbyId, payload.Choice));
+
         // Notify voted item if required votes reached
         vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
@@ -56,7 +61,7 @@ public static class VotePutFunction
                 case ELobbyStatus.Setup:
                     await orchestrationClient.RaiseEventAsync(
                         Id.ForInstance(nameof(CountdownFunction), lobbyId),
-                        Events.START_COUNTDOWN);
+                        DurableEvents.START_COUNTDOWN);
                     break;
             }
         }

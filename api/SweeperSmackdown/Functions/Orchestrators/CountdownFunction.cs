@@ -32,14 +32,14 @@ public static class CountdownFunction
         var props = ctx.GetInput<CountdownFunctionProps>();
 
         // Wait for setup countdown to be initiated
-        await ctx.WaitForExternalEvent(Events.START_COUNTDOWN);
+        await ctx.WaitForExternalEvent(DurableEvents.START_COUNTDOWN);
 
         // Start countdown
         using var timeoutCts = new CancellationTokenSource();
 
         var expiration = ctx.CurrentUtcDateTime.AddSeconds(props.Lifetime);
         var timeoutTask = ctx.CreateTimer(expiration, timeoutCts.Token);
-        var cancelTask = ctx.WaitForExternalEvent(Events.CANCEL_COUNTDOWN);
+        var cancelTask = ctx.WaitForExternalEvent(DurableEvents.CANCEL_COUNTDOWN);
 
         var winner = await Task.WhenAny(timeoutTask, cancelTask);
 

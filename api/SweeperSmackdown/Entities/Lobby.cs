@@ -3,6 +3,7 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Entities;
@@ -37,30 +38,37 @@ public class Lobby : ILobby
 {
     [DataMember]
     [JsonProperty("instanceId")]
+    [JsonPropertyName("instanceId")]
     public string InstanceId { get; private set; } = null!;
 
     [DataMember]
     [JsonProperty("userIds")]
+    [JsonPropertyName("userIds")]
     public string[] UserIds { get; private set; } = null!;
 
     [DataMember]
     [JsonProperty("lifetime")]
+    [JsonPropertyName("lifetime")]
     public int? Lifetime { get; private set; }
 
     [DataMember]
     [JsonProperty("mode")]
+    [JsonPropertyName("mode")]
     public int? Mode { get; private set; }
 
     [DataMember]
     [JsonProperty("height")]
+    [JsonPropertyName("height")]
     public int? Height { get; private set; }
 
     [DataMember]
     [JsonProperty("width")]
+    [JsonPropertyName("width")]
     public int? Width { get; private set; }
 
     [DataMember]
     [JsonProperty("status")]
+    [JsonPropertyName("status")]
     public ELobbyStatus Status { get; private set; }
 
     public void Create((string InstanceId, string[] UserIds) args)

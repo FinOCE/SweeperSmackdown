@@ -8,6 +8,9 @@ using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
+using SweeperSmackdown.Assets;
+using SweeperSmackdown.Factories;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -18,7 +21,8 @@ public static class UserDeleteFunction
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
-        string userId)
+        string userId,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
     {
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
@@ -28,6 +32,9 @@ public static class UserDeleteFunction
         await entityClient.SignalEntityAsync<ILobby>(
             Id.For<Lobby>(lobbyId),
             lobby => lobby.RemoveUser(userId));
+
+        await actions.AddAsync(ActionFactory.RemoveUserFromLobby(userId, lobbyId));
+        await actions.AddAsync(ActionFactory.RemoveUser(userId, lobbyId));
 
         return new NoContentResult();
     }
