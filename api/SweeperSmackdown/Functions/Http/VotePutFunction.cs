@@ -60,7 +60,7 @@ public static class VotePutFunction
             {
                 case ELobbyStatus.Setup:
                     await orchestrationClient.RaiseEventAsync(
-                        Id.ForInstance(nameof(CountdownFunction), lobbyId),
+                        Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
                         DurableEvents.START_COUNTDOWN);
                     break;
             }

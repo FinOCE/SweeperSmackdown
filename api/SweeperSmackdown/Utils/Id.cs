@@ -31,4 +31,12 @@ public static class Id
     /// <returns>The ID for an instance of the type for the given instance ID</returns>
     public static string ForInstance(string nameof, string instanceId) =>
         $"{nameof}:{instanceId}";
+
+    /// <summary>
+    /// Get the game lobby ID from an orchestrator instance ID.
+    /// </summary>
+    /// <param name="instanceId">The orchestrator's instance ID</param>
+    /// <returns>The game lobby ID</returns>
+    public static string FromInstance(string instanceId) =>
+        instanceId.Split(":")[1];
 }

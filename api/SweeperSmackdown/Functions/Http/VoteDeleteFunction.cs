@@ -62,7 +62,7 @@ public static class VoteDeleteFunction
             {
                 case ELobbyStatus.Setup:
                     await orchestrationClient.RaiseEventAsync(
-                        Id.ForInstance(nameof(CountdownFunction), lobbyId),
+                        Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
                         DurableEvents.CANCEL_COUNTDOWN);
                     break;
             }
