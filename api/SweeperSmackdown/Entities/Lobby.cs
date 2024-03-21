@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Structures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -10,7 +11,7 @@ namespace SweeperSmackdown.Entities;
 
 public interface ILobby
 {
-    void Create(string[] UserIds);
+    void Create();
 
     void Delete();
 
@@ -41,9 +42,9 @@ public class Lobby : ILobby
     [DataMember]
     public GameSettings Settings { get; private set; } = null!;
 
-    public void Create(string[] userIds)
+    public void Create()
     {
-        UserIds = userIds;
+        UserIds = Array.Empty<string>();
         Wins = new Dictionary<string, int>();
         Settings = new GameSettings();
     }

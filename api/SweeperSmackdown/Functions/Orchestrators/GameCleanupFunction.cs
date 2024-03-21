@@ -34,9 +34,9 @@ public static class GameCleanupFunction
 
         var tasks = userIds.Select(userId =>
             ctx.CallActivityAsync(
-                Id.ForInstance(nameof(BoardDeleteActivityFunction), lobbyId, userId),
-                null));
-
+                nameof(BoardDeleteActivityFunction),
+                new BoardDeleteActivityFunctionProps(lobbyId, userId)));
+        
         await Task.WhenAll(tasks);
 
         // Add winner

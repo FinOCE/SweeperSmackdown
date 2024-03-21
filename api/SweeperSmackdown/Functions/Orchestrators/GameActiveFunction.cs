@@ -1,8 +1,11 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.Entities;
+using SweeperSmackdown.Functions.Activities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -26,19 +29,36 @@ public static class GameActiveFunction
         var lobbyId = Id.FromInstance(ctx.InstanceId);
         var props = ctx.GetInput<GameActiveFunctionProps>();
 
-        // Wait until a user completes their board or timeout
+        var tasks = new List<Task>();
+
+        // Setup timer if needed
         var timerTask = ctx.CallSubOrchestratorAsync(
             nameof(TimerOrchestratorFunction),
             Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
             new TimerOrchestratorFunctionProps(props.Settings.TimeLimit, true));
 
-        var eventTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_COMPLETED);
-        
-        var winner = await Task.WhenAny(timerTask, eventTask);
+        if (props.Settings.TimeLimit != 0)
+            tasks.Add(timerTask);
 
+        // Create board manager for each user
+        var userIds = await ctx.CallEntityAsync<string[]>(
+            Id.For<Lobby>(lobbyId),
+            nameof(Lobby.GetUserIds));
+        
+        foreach (var userId in userIds)
+            _ = ctx.CallActivityAsync(
+                nameof(BoardManagerCreateActivityFunction),
+                new BoardManagerCreateActivityFunctionProps(lobbyId, userId, props.Settings));
+
+        // Listen for a winner
+        var winnerTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_WON);
+        tasks.Add(winnerTask);
+        
         // Determine the winner
-        return (winner == eventTask)
-            ? eventTask.Result
+        var winner = await Task.WhenAny(tasks);
+        
+        return (winner == winnerTask)
+            ? winnerTask.Result
             : null;
     }
 }

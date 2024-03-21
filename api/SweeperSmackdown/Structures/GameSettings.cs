@@ -29,7 +29,23 @@ public class GameSettings
     [JsonPropertyName("timeLimit")]
     public int TimeLimit { get; private set; } = 0;
 
-    public GameSettings Update(int? mode, int? height, int? width, int? mines, int? lives, int? timeLimit)
+    [JsonProperty("boardCount")]
+    [JsonPropertyName("boardCount")]
+    public int BoardCount { get; private set; } = 0;
+
+    [JsonProperty("shareBoards")]
+    [JsonPropertyName("shareBoards")]
+    public bool ShareBoards { get; private set; } = false;
+
+    public GameSettings Update(
+        int? mode,
+        int? height,
+        int? width,
+        int? mines,
+        int? lives,
+        int? timeLimit,
+        int? boardCount,
+        bool? shareBoards)
     {
         return new GameSettings()
         {
@@ -38,7 +54,9 @@ public class GameSettings
             Width = width ?? Width,
             Mines = mines ?? Mines,
             Lives = lives ?? Lives,
-            TimeLimit = timeLimit ?? TimeLimit
+            TimeLimit = timeLimit ?? TimeLimit,
+            BoardCount = boardCount ?? BoardCount,
+            ShareBoards = shareBoards ?? ShareBoards
         };
     }
 }

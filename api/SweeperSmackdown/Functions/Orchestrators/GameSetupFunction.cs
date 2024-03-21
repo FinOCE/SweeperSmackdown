@@ -29,7 +29,7 @@ public static class GameSetupFunction
         var lobbyId = Id.FromInstance(ctx.InstanceId);
         var props = ctx.GetInput<GameSetupFunctionProps>();
 
-        var gameState = GameStateFactory.Create(props.Settings); // TODO: Rethink where this is made
+        var gameState = GameStateFactory.Create(props.Settings); // TODO: Handle inconsistent states being generated
 
         // Create new board entities
         var userIds = await ctx.CallEntityAsync<string[]>(
@@ -38,8 +38,8 @@ public static class GameSetupFunction
 
         var tasks = userIds.Select(userId =>
             ctx.CallActivityAsync(
-                Id.ForInstance(nameof(BoardCreateActivityFunction), lobbyId, userId),
-                new BoardCreateActivityFunctionProps(gameState)));
+                nameof(BoardCreateActivityFunction),
+                new BoardCreateActivityFunctionProps(lobbyId, userId, gameState)));
 
         await Task.WhenAll(tasks);
     }

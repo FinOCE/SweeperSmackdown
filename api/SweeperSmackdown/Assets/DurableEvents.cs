@@ -12,5 +12,7 @@ public static class DurableEvents
 
     public const string CANCEL_TIMER = "CANCEL_TIMER";
 
-    public const string GAME_COMPLETED = "GAME_COMPLETED";
+    public const string BOARD_COMPLETED = "BOARD_COMPLETED";
+
+    public const string GAME_WON = "GAME_WON";
 }

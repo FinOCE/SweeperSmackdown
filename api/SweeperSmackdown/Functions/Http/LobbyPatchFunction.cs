@@ -34,6 +34,12 @@ public class LobbyPatchFunctionPayload
 
     [JsonProperty("timeLimit")]
     public int? TimeLimit { get; }
+
+    [JsonProperty("boardCount")]
+    public int? BoardCount { get; }
+
+    [JsonProperty("shareBoards")]
+    public bool? ShareBoards { get; }
 }
 
 public static class LobbyPatchFunction
@@ -64,11 +70,14 @@ public static class LobbyPatchFunction
         if (payload.Mines != null && payload.Mines <= 0)
             errors.Add($"The 'mines' must be greater than 0");
 
-        if (payload.Lives != null && payload.Lives < -1)
+        if (payload.Lives != null && payload.Lives < 0)
             errors.Add($"The 'lives' must be greater than or equal to 0 (0 means unlimited)");
 
-        if (payload.TimeLimit != null && payload.TimeLimit <= 0)
+        if (payload.TimeLimit != null && payload.TimeLimit < 0)
             errors.Add("The 'timeLimit' must be greater than or equal to 0 (0 means unlimited)");
+
+        if (payload.BoardCount != null && payload.BoardCount < 0)
+            errors.Add("The 'boardCount' must be greater than or equal to 0 (0 means unlimited)");
 
         if (errors.Count > 0)
             return new BadRequestObjectResult(errors);
@@ -105,7 +114,9 @@ public static class LobbyPatchFunction
                     payload.Width,
                     payload.Mines,
                     payload.Lives,
-                    payload.TimeLimit)));
+                    payload.TimeLimit,
+                    payload.BoardCount,
+                    payload.ShareBoards)));
 
         entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, entity.EntityState));

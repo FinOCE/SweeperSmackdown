@@ -17,7 +17,8 @@ PATCH http://localhost:7071/lobbies/{{lobbyId}}
   "width": 9,
   "mines": 10,
   "lives": 1,
-  "timeLimit": 600
+  "timeLimit": 600,
+  "boardCount": 2
 }
 
 ###
