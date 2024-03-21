@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Structures;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -22,6 +23,10 @@ public interface ILobby
     void AddUser(string userId);
     
     void RemoveUser(string userId);
+
+    Task<IDictionary<string, int>> GetWins();
+
+    void AddWin(string userId);
 }
 
 [DataContract]
@@ -31,11 +36,15 @@ public class Lobby : ILobby
     public string[] UserIds { get; private set; } = null!;
 
     [DataMember]
+    public IDictionary<string, int> Wins { get; private set; } = null!;
+
+    [DataMember]
     public GameSettings Settings { get; private set; } = null!;
 
     public void Create(string[] userIds)
     {
         UserIds = userIds;
+        Wins = new Dictionary<string, int>();
         Settings = new GameSettings();
     }
 
@@ -66,6 +75,17 @@ public class Lobby : ILobby
         UserIds = UserIds
             .Where(id => id != userId)
             .ToArray();
+    }
+
+    public Task<IDictionary<string, int>> GetWins() =>
+        Task.FromResult(Wins);
+
+    public void AddWin(string userId)
+    {
+        if (!Wins.ContainsKey(userId))
+            Wins[userId] = 1;
+        else
+            Wins[userId] = Wins[userId] + 1;
     }
 
     [FunctionName(nameof(Lobby))]

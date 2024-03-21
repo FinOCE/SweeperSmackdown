@@ -16,38 +16,35 @@ public static class LobbyOrchestratorFunction
 
         // Setup
         var settings = await ctx.CallSubOrchestratorAsync<GameSettings>(
-            nameof(GameSetupFunction),
-            Id.ForInstance(nameof(GameSetupFunction), lobbyId),
+            nameof(GameConfigureFunction),
+            Id.ForInstance(nameof(GameConfigureFunction), lobbyId),
             null);
 
-        // TODO: Figure out when to create boards
+        // Setup game
+        await ctx.CallSubOrchestratorAsync(
+            nameof(GameSetupFunction),
+            Id.ForInstance(nameof(GameSetupFunction), lobbyId),
+            new GameSetupFunctionProps(settings));
 
-        //var gameState = GameStateFactory.Create(settings);
-
-        //var tasks = lobby.UserIds.Select(userId =>
-        //    ctx.CallEntityAsync(
-        //        Id.For<Board>(props.InstanceId, userId),
-        //        nameof(Board.Create),
-        //        (props.InstanceId, userId, lobby.Settings, gameState)));
-
-        //await Task.WhenAll(tasks);
-
-        // Play
+        // Begin play
         var winnerId = await ctx.CallSubOrchestratorAsync<string?>(
             nameof(GameActiveFunction),
             Id.ForInstance(nameof(GameActiveFunction), lobbyId),
             new GameActiveFunctionProps(settings));
 
-        // Delete game boards
+        // Clean up after games
         await ctx.CallSubOrchestratorAsync(
-            nameof(BoardDeleteOrchestratorFunction),
-            Id.ForInstance(nameof(BoardDeleteOrchestratorFunction), lobbyId),
-            null);
+            nameof(GameCleanupFunction),
+            Id.ForInstance(nameof(GameCleanupFunction), lobbyId),
+            new GameCleanupFunctionProps(winnerId));
 
         // Celebrate
         await ctx.CallSubOrchestratorAsync(
             nameof(GameCelebrationFunction),
             Id.ForInstance(nameof(GameCelebrationFunction), lobbyId),
             new GameCelebrationFunctionProps(winnerId));
+
+        // Restart lobby
+        ctx.ContinueAsNew(null);
     }
 }

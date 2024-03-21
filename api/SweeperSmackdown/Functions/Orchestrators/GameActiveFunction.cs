@@ -26,8 +26,6 @@ public static class GameActiveFunction
         var lobbyId = Id.FromInstance(ctx.InstanceId);
         var props = ctx.GetInput<GameActiveFunctionProps>();
 
-        // TODO: Notify users the game has started
-
         // Wait until a user completes their board or timeout
         var timerTask = ctx.CallSubOrchestratorAsync(
             nameof(TimerOrchestratorFunction),

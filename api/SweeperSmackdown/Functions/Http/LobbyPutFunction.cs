@@ -107,7 +107,7 @@ public static class LobbyPutFunction
                         payload.Lives,
                         payload.TimeLimit))));
 
-            await orchestrationClient.StartNewAsync(nameof(GameSetupFunction), lobbyId);
+            await orchestrationClient.StartNewAsync(nameof(GameConfigureFunction), lobbyId);
         }
         else
         {
