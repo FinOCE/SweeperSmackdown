@@ -91,38 +91,42 @@ public static class LobbyPutFunction
                 "Cannot update because this would result in more mines than there are board squares"
             });
 
+        GameSettings currentSettings;
         if (!initiallyExisted)
         {
             // Create lobby
             await entityClient.SignalEntityAsync<ILobby>(
                 Id.For<Lobby>(lobbyId),
-                lobby => lobby.Create((
-                    lobbyId,
-                    Array.Empty<string>(),
-                    new GameSettings().Update(
-                        payload.Mode,
-                        payload.Height,
-                        payload.Width,
-                        payload.Mines,
-                        payload.Lives,
-                        payload.TimeLimit))));
+                lobby => lobby.Create(Array.Empty<string>()));
 
-            await orchestrationClient.StartNewAsync(nameof(GameConfigureFunction), lobbyId);
+            await orchestrationClient.StartNewAsync(
+                nameof(LobbyOrchestratorFunction),
+                Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+
+            currentSettings = new GameSettings();
         }
         else
         {
-            // Apply changes to entity
-            await entityClient.SignalEntityAsync<ILobby>(
-                Id.For<Lobby>(lobbyId),
-                lobby => lobby.SetSettings(
-                    entity.EntityState!.Settings.Update(
-                        payload.Mode,
-                        payload.Height,
-                        payload.Width,
-                        payload.Mines,
-                        payload.Lives,
-                        payload.TimeLimit)));
+            // Ensure game is in configure stage
+            var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+
+            if (status != null && status.CustomStatus.ToString() != ELobbyOrchestratorFunctionStatus.Configure.ToString())
+                return new ConflictResult();
+
+            currentSettings = entity.EntityState!.Settings;
         }
+
+        // Apply changes to entity
+        await entityClient.SignalEntityAsync<ILobby>(
+            Id.For<Lobby>(lobbyId),
+            lobby => lobby.SetSettings(
+                currentSettings.Update(
+                    payload.Mode,
+                    payload.Height,
+                    payload.Width,
+                    payload.Mines,
+                    payload.Lives,
+                    payload.TimeLimit)));
 
         entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, entity.EntityState));

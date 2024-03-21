@@ -8,6 +8,7 @@ using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -54,14 +55,14 @@ public static class VotePutFunction
 
         if (vote.EntityState.Votes[payload.Choice].Length == vote.EntityState.RequiredVotes)
         {
-            var lobby = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+            var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
 
-            switch (lobby.EntityState.Status)
+            switch (Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()))
             {
-                case ELobbyStatus.Setup:
+                case ELobbyOrchestratorFunctionStatus.Configure:
                     await orchestrationClient.RaiseEventAsync(
                         Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                        DurableEvents.START_COUNTDOWN);
+                        DurableEvents.START_TIMER);
                     break;
             }
         }

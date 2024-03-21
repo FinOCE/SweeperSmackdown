@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +41,7 @@ public static class LobbyPatchFunction
     [FunctionName(nameof(LobbyPatchFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchFunctionPayload payload,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
@@ -71,13 +73,15 @@ public static class LobbyPatchFunction
         if (errors.Count > 0)
             return new BadRequestObjectResult(errors);
 
-        // Check if lobby exists and is in setup
+        // Check if lobby exists and is in configure state
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
         if (!entity.EntityExists)
             return new NotFoundResult();
 
-        if (entity.EntityState.Status != ELobbyStatus.Setup)
+        var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+        
+        if (status != null && status.CustomStatus.ToString() != ELobbyOrchestratorFunctionStatus.Configure.ToString())
             return new ConflictResult();
 
         // Confirm mine count is realistic

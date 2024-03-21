@@ -20,7 +20,7 @@ public class GameCleanupFunctionProps
 
 public static class GameCleanupFunction
 {
-    [FunctionName(nameof(GameConfigureFunction))]
+    [FunctionName(nameof(GameCleanupFunction))]
     public static async Task Run(
         [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {

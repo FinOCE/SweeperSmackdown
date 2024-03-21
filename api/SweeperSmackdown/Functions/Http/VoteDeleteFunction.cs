@@ -56,14 +56,14 @@ public static class VoteDeleteFunction
         
         if (vote.EntityState.Votes[kvp.Key].Length == vote.EntityState.RequiredVotes - 1)
         {
-            var lobby = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+            var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
 
-            switch (lobby.EntityState.Status)
+            switch (Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()))
             {
-                case ELobbyStatus.Setup:
+                case ELobbyOrchestratorFunctionStatus.Configure:
                     await orchestrationClient.RaiseEventAsync(
                         Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                        DurableEvents.CANCEL_COUNTDOWN);
+                        DurableEvents.RESET_TIMER);
                     break;
             }
         }

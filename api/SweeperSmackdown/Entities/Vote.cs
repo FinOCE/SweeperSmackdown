@@ -1,54 +1,46 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Entities;
 
 public interface IVote
 {
-    void Create((string InstanceId, int RequiredVotes, string[] Choices) args);
+    void Create((int RequiredVotes, string[] Choices) args);
 
     void Delete();
     
-    Task<Vote> Get();
+    Task<IDictionary<string, string[]>> GetVotes();
     
     public void AddVote((string UserId, string Choice) args);
 
     public void RemoveVote(string userId);
+
+    public Task<int> GetRequiredVotes();
+
+    public void SetRequiredVotes(int requiredVotes);
+
+    public Task<string[]> GetChoices();
 }
 
 [DataContract]
 public class Vote : IVote
 {
     [DataMember]
-    [JsonProperty("instanceId")]
-    [JsonPropertyName("instanceId")]
-    public string InstanceId { get; private set; } = null!;
-
-    [DataMember]
-    [JsonProperty("votes")]
-    [JsonPropertyName("votes")]
     public IDictionary<string, string[]> Votes { get; private set; } = null!;
 
     [DataMember]
-    [JsonProperty("requiredVotes")]
-    [JsonPropertyName("requiredVotes")]
     public int RequiredVotes { get; private set; }
 
     [DataMember]
-    [JsonProperty("choices")]
-    [JsonPropertyName("choices")]
     public string[] Choices { get; private set; } = null!;
 
-    public void Create((string InstanceId, int RequiredVotes, string[] Choices) args)
+    public void Create((int RequiredVotes, string[] Choices) args)
     {
-        InstanceId = args.InstanceId;
         Votes = new Dictionary<string, string[]>();
         RequiredVotes = args.RequiredVotes;
         Choices = args.Choices;
@@ -60,8 +52,8 @@ public class Vote : IVote
     public void Delete() =>
         Entity.Current.DeleteState();
     
-    public Task<Vote> Get() =>
-        Task.FromResult(this);
+    public Task<IDictionary<string, string[]>> GetVotes() =>
+        Task.FromResult(Votes);
 
     public void AddVote((string UserId, string Choice) args)
     {
@@ -85,6 +77,15 @@ public class Vote : IVote
         {
         }
     }
+
+    public Task<int> GetRequiredVotes() =>
+        Task.FromResult(RequiredVotes);
+
+    public void SetRequiredVotes(int requiredVotes) =>
+        RequiredVotes = requiredVotes;
+
+    public Task<string[]> GetChoices() =>
+        Task.FromResult(Choices);
 
     [FunctionName(nameof(Vote))]
     public static Task Run([EntityTrigger] IDurableEntityContext ctx) =>

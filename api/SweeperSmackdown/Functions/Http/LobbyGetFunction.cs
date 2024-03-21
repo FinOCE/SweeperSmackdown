@@ -19,8 +19,14 @@ public static class LobbyGetFunction
     {
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
-        return entity.EntityExists
-            ? new OkObjectResult(entity.EntityState)
-            : new NotFoundResult();
+        if (!entity.EntityExists)
+            return new NotFoundResult();
+
+        return new OkObjectResult(new
+        {
+            users = entity.EntityState.UserIds,
+            wins = entity.EntityState.Wins,
+            settings = entity.EntityState.Settings
+        });
     }
 }
