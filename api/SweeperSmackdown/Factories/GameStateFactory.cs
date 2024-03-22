@@ -7,6 +7,8 @@ public static class GameStateFactory
 {
     public static readonly int[] VALID_MODES = new int[] { 1 };
 
+    // TODO: Refactor this into factories and builders
+
     public static byte[] Create(GameSettings settings) =>
         settings.Mode switch
         {
@@ -17,6 +19,6 @@ public static class GameStateFactory
     public static byte[] CreateNormal(int height, int width, int mines)
     {
         // TODO: Implement
-        return Array.Empty<byte>();
+        return new byte[height * width];
     }
 }
