@@ -2,6 +2,7 @@
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace SweeperSmackdown.Factories;
 
@@ -49,6 +50,12 @@ public static class ActionFactory
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
             MessageFactory.Create(PubSubEvents.VOTE_REMOVE, userId, choice, null),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction UpdateVoteRequirement(string userId, string lobbyId, int votesRequired) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.VOTE_UPDATE_REQUIREMENT, userId, votesRequired, null),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction CreateBoard(string userId, string lobbyId) =>

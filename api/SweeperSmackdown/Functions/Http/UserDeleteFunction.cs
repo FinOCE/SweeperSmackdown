@@ -19,6 +19,7 @@ public static class UserDeleteFunction
     [FunctionName(nameof(UserDeleteFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
         string userId,
@@ -36,6 +37,25 @@ public static class UserDeleteFunction
         await actions.AddAsync(ActionFactory.RemoveUserFromLobby(userId, lobbyId));
         await actions.AddAsync(ActionFactory.RemoveUser(userId, lobbyId));
 
+        // Update votes required
+        entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
+
+        var requiredVotes = (int)Math.Floor(entity.EntityState.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
+
+        if (vote.EntityExists)
+        {
+            await entityClient.SignalEntityAsync<IVote>(
+                Id.For<Vote>(lobbyId),
+                vote => vote.SetRequiredVotes((
+                    requiredVotes,
+                    lobbyId,
+                    orchestrationClient)));
+
+            await actions.AddAsync(ActionFactory.UpdateVoteRequirement(userId, lobbyId, requiredVotes));
+        }
+
+        // Return no content result
         return new NoContentResult();
     }
 }

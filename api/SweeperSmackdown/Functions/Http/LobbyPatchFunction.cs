@@ -9,6 +9,7 @@ using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -90,7 +91,7 @@ public static class LobbyPatchFunction
 
         var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
         
-        if (status != null && status.CustomStatus.ToString() != ELobbyOrchestratorFunctionStatus.Configure.ToString())
+        if (status != null && Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()) != ELobbyOrchestratorFunctionStatus.Configure)
             return new ConflictResult();
 
         // Confirm mine count is realistic

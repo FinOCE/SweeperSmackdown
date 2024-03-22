@@ -7,7 +7,6 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System;
 using System.Collections.Generic;
@@ -47,26 +46,9 @@ public static class VoteDeleteFunction
         // Remove user vote
         await entityClient.SignalEntityAsync<IVote>(
             Id.For<Vote>(lobbyId),
-            vote => vote.RemoveVote(userId));
+            vote => vote.RemoveVote((userId, lobbyId, orchestrationClient)));
 
         await actions.AddAsync(ActionFactory.RemoveVote(userId, lobbyId, kvp.Key));
-
-        // Notify voted item if dropped below required votes
-        vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
-        
-        if (vote.EntityState.Votes[kvp.Key].Length == vote.EntityState.RequiredVotes - 1)
-        {
-            var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-
-            switch (Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()))
-            {
-                case ELobbyOrchestratorFunctionStatus.Configure:
-                    await orchestrationClient.RaiseEventAsync(
-                        Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                        DurableEvents.RESET_TIMER);
-                    break;
-            }
-        }
         
         // Return no content
         return new NoContentResult();

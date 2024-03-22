@@ -6,7 +6,6 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
@@ -46,26 +45,9 @@ public static class VotePutFunction
         // Add user vote
         await entityClient.SignalEntityAsync<IVote>(
             Id.For<Vote>(lobbyId),
-            vote => vote.AddVote((userId, payload.Choice)));
+            vote => vote.AddVote((userId, payload.Choice, lobbyId, orchestrationClient)));
 
         await actions.AddAsync(ActionFactory.AddVote(userId, lobbyId, payload.Choice));
-
-        // Notify voted item if required votes reached
-        vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
-
-        if (vote.EntityState.Votes[payload.Choice].Length == vote.EntityState.RequiredVotes)
-        {
-            var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-
-            switch (Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()))
-            {
-                case ELobbyOrchestratorFunctionStatus.Configure:
-                    await orchestrationClient.RaiseEventAsync(
-                        Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                        DurableEvents.START_TIMER);
-                    break;
-            }
-        }
 
         // Get updated results and return to user
         return new CreatedResult($"/lobbies/{lobbyId}/votes", vote.EntityState.Votes);

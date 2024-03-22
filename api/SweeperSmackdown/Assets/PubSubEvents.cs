@@ -14,5 +14,7 @@ public static class PubSubEvents
 
     public const string VOTE_REMOVE = "VOTE_REMOVE";
 
+    public const string VOTE_UPDATE_REQUIREMENT = "VOTE_UPDATE_REQUIREMENT";
+
     public const string BOARD_CREATE = "BOARD_CREATE";
 }

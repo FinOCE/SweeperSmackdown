@@ -12,5 +12,7 @@ public static class Constants
 
     public const int SETUP_COUNTDOWN_DURATION = 10;
 
+    public const float SETUP_REQUIRED_VOTE_RATIO = 1 / 2;
+
     public const int CELEBRATION_COUNTDOWN_DURATION = 60;
 }
