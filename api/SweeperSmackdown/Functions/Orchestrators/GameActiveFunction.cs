@@ -2,7 +2,6 @@
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
-using SweeperSmackdown.Functions.Activities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Collections.Generic;
@@ -44,11 +43,14 @@ public static class GameActiveFunction
         var userIds = await ctx.CallEntityAsync<string[]>(
             Id.For<Lobby>(lobbyId),
             nameof(Lobby.GetUserIds));
-        
+
         foreach (var userId in userIds)
-            _ = ctx.CallActivityAsync(
-                nameof(BoardManagerCreateActivityFunction),
-                new BoardManagerCreateActivityFunctionProps(lobbyId, userId, props.Settings));
+            _ = ctx.CallSubOrchestratorAsync(
+                nameof(BoardManagerOrchestrationFunction),
+                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId),
+                new BoardManagerOrchestrationFunctionProps(props.Settings));
+
+        // TODO: Ensure all players have a board created before starting
 
         // Listen for a winner
         var winnerTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_WON);

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Entities;
-using SweeperSmackdown.Functions.Activities;
 using SweeperSmackdown.Utils;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,10 +32,10 @@ public static class GameCleanupFunction
             nameof(Lobby.GetUserIds));
 
         var tasks = userIds.Select(userId =>
-            ctx.CallActivityAsync(
-                nameof(BoardDeleteActivityFunction),
-                new BoardDeleteActivityFunctionProps(lobbyId, userId)));
-        
+            ctx.CallEntityAsync(
+                Id.For<Board>(lobbyId, userId),
+                nameof(Board.Delete)));
+
         await Task.WhenAll(tasks);
 
         // Add winner

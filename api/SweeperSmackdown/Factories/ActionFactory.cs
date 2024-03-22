@@ -16,7 +16,7 @@ public static class ActionFactory
     public static WebPubSubAction UpdateLobby(string userId, string lobbyId, Lobby lobby) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, userId, lobby),
+            MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, userId, lobby, null),
             WebPubSubDataType.Json);
     
     public static WebPubSubAction AddUser(string userId, string lobbyId) =>
@@ -28,7 +28,7 @@ public static class ActionFactory
     public static WebPubSubAction UpdateUser(string userId, string lobbyId) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.USER_UPDATE, userId, userId),
+            MessageFactory.Create(PubSubEvents.USER_UPDATE, userId, userId, null),
             WebPubSubDataType.Json);
 
     // TODO: Implement users beyond just userId in order to implement above meaningfully
@@ -42,12 +42,18 @@ public static class ActionFactory
     public static WebPubSubAction AddVote(string userId, string lobbyId, string choice) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.VOTE_ADD, userId, choice),
+            MessageFactory.Create(PubSubEvents.VOTE_ADD, userId, choice, null),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction RemoveVote(string userId, string lobbyId, string choice) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.VOTE_REMOVE, userId, choice),
+            MessageFactory.Create(PubSubEvents.VOTE_REMOVE, userId, choice, null),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction CreateBoard(string userId, string lobbyId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.BOARD_CREATE, userId, userId, null),
             WebPubSubDataType.Json);
 }

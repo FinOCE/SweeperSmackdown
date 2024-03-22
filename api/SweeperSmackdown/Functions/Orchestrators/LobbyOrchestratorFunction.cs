@@ -22,14 +22,6 @@ public static class LobbyOrchestratorFunction
             Id.ForInstance(nameof(GameConfigureFunction), lobbyId),
             null);
 
-        // Setup game
-        ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Setup.ToString());
-        
-        await ctx.CallSubOrchestratorAsync(
-            nameof(GameSetupFunction),
-            Id.ForInstance(nameof(GameSetupFunction), lobbyId),
-            new GameSetupFunctionProps(settings));
-
         // Begin play
         ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Play.ToString());
         
@@ -62,7 +54,6 @@ public static class LobbyOrchestratorFunction
 public enum ELobbyOrchestratorFunctionStatus
 {
     Configure,
-    Setup,
     Play,
     Clean,
     Celebrate
