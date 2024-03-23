@@ -1,6 +1,6 @@
-import { GameInfoProvider } from "./hooks/useGameInfo"
-import { WebsocketProvider } from "./hooks/useWebsocket"
-import MainMenu from "./screens/MainMenu"
+import { GameInfoProvider } from "../../hooks/useGameInfo"
+import { WebsocketProvider } from "../../hooks/useWebsocket"
+import MainMenu from "../../screens/MainMenu"
 import "./style.scss"
 
 export function Page() {
