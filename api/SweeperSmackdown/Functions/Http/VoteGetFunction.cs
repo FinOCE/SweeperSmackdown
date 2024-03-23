@@ -15,7 +15,7 @@ public static class VoteGetFunction
 {
     [FunctionName(nameof(VoteGetFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "/lobbies/{lobbyId}/votes/{userId}")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes/{userId}")] HttpRequest req,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
         string userId)

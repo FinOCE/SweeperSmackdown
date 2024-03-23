@@ -31,18 +31,22 @@ public static class UserPutFunction
     {
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
+        // Return 404 if lobby doesn't exist
         if (!entity.EntityExists)
             return new NotFoundResult();
 
+        // Add user to ws group and notify
+        await actions.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+        await actions.AddAsync(ActionFactory.AddUser(userId, lobbyId));
+
+        // Return 200 if user already in lobby (probably reconnecting)
         if (entity.EntityState.UserIds.Contains(userId))
             return new OkObjectResult(new { userId, lobbyId });
 
+        // Add to lobby
         await entityClient.SignalEntityAsync<ILobby>(
             Id.For<Lobby>(lobbyId),
             lobby => lobby.AddUser(userId));
-
-        await actions.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
-        await actions.AddAsync(ActionFactory.AddUser(userId, lobbyId));
 
         // Start new board manager if lobby in play
         var status = await orchestrationClient.GetStatusAsync(

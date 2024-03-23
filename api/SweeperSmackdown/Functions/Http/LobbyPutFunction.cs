@@ -23,8 +23,14 @@ public static class LobbyPutFunction
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
         if (entity.EntityExists)
-            return new OkObjectResult(entity.EntityState);
-        
+            return new OkObjectResult(new
+            {
+                lobbyId,
+                userIds = entity.EntityState.UserIds,
+                wins = entity.EntityState.Wins,
+                settings = entity.EntityState.Settings
+            });
+
         // Create lobby
         await entityClient.SignalEntityAsync<ILobby>(
             Id.For<Lobby>(lobbyId),
@@ -33,8 +39,16 @@ public static class LobbyPutFunction
         await orchestrationClient.StartNewAsync(
             nameof(LobbyOrchestratorFunction),
             Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-
+        
         // Return created/updated lobby        
-        return new CreatedResult($"/lobbies/{lobbyId}", entity.EntityState);
+        return new CreatedResult(
+            $"/lobbies/{lobbyId}",
+            new
+            {
+                lobbyId,
+                userIds = entity.EntityState.UserIds,
+                wins = entity.EntityState.Wins,
+                settings = entity.EntityState.Settings
+            });
     }
 }

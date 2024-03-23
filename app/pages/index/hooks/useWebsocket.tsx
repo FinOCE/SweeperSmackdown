@@ -1,34 +1,25 @@
-import { WebPubSubClient } from "@azure/web-pubsub-client"
+import {
+  OnConnectedArgs,
+  OnDisconnectedArgs,
+  OnGroupDataMessageArgs,
+  OnRejoinGroupFailedArgs,
+  OnServerDataMessageArgs,
+  OnStoppedArgs,
+  WebPubSubClient
+} from "@azure/web-pubsub-client"
 import { createContext, JSX } from "preact"
-import { useContext, useEffect, useState } from "preact/hooks"
-import { Http, Ws } from "../types/Api"
+import { useContext, useEffect, useMemo, useState } from "preact/hooks"
+import { useApi } from "./useApi"
+import { EventManager, IEventManager } from "../managers/EventManager"
 
-const WebsocketContext = createContext<{
-  client: WebPubSubClient
-  ready: boolean
-}>(null)
+const WebsocketContext = createContext<IEventManager>(null)
 
-export function useWebsocket(...listeners: Ws.Listener[]) {
-  const ctx = useContext(WebsocketContext)
+export function useWebsocket() {
+  const manager = useContext(WebsocketContext)
 
-  useEffect(() => {
-    if (!ctx.ready) return
+  useEffect(() => () => manager.clear(), [manager])
 
-    // TODO: Figure out how to fix these typescript errors
-
-    ///@ts-ignore
-    listeners.forEach(listener => ctx.client.on(listener.event, listener.handler))
-
-    ///@ts-ignore
-    return () => listeners.forEach(listener => ctx.client.off(listener.event, listener.handler))
-  }, [ctx.client, ctx.ready, listeners])
-
-  return {
-    joinGroup: ctx.client.joinGroup,
-    leaveGroup: ctx.client.leaveGroup,
-    sendEvent: ctx.client.sendEvent,
-    sendToGroup: ctx.client.sendToGroup
-  }
+  return manager
 }
 
 type WebsocketProviderProps = {
@@ -36,19 +27,51 @@ type WebsocketProviderProps = {
 }
 
 export function WebsocketProvider({ children }: WebsocketProviderProps) {
+  const api = useApi()
+
   const [ready, setReady] = useState(false)
 
-  const client = new WebPubSubClient({
-    getClientAccessUrl: async () =>
-      fetch(`http://localhost:7071/negotiate`)
-        .then(res => res.json())
-        .then((data: Http.Negotiate) => data.url)
-  })
+  const client = useMemo(
+    () =>
+      new WebPubSubClient({
+        getClientAccessUrl: () => api.negotiate().then(res => res.url)
+      }),
+    [api]
+  )
 
   useEffect(() => {
     client.start().then(() => setReady(true))
     return () => client.stop()
   }, [client])
 
-  return <WebsocketContext.Provider value={{ client, ready }}>{children}</WebsocketContext.Provider>
+  const manager = new EventManager()
+
+  useEffect(() => {
+    if (!ready) return
+
+    const onConnected = (e: OnConnectedArgs) => manager.emit("connected", e)
+    const onDisconnected = (e: OnDisconnectedArgs) => manager.emit("disconnected", e)
+    const onStopped = (e: OnStoppedArgs) => manager.emit("stopped", e)
+    const onRejoinGroupFailed = (e: OnRejoinGroupFailedArgs) => manager.emit("rejoin-group-failed", e)
+    const onGroupMessage = (e: OnGroupDataMessageArgs) => manager.emit("group-message", e)
+    const onServerMessage = (e: OnServerDataMessageArgs) => manager.emit("server-message", e)
+
+    client.on("connected", onConnected)
+    client.on("disconnected", onDisconnected)
+    client.on("stopped", onStopped)
+    client.on("rejoin-group-failed", onRejoinGroupFailed)
+    client.on("group-message", onGroupMessage)
+    client.on("server-message", onServerMessage)
+
+    return () => {
+      client.off("connected", onConnected)
+      client.off("disconnected", onDisconnected)
+      client.off("stopped", onStopped)
+      client.off("rejoin-group-failed", onRejoinGroupFailed)
+      client.off("group-message", onGroupMessage)
+      client.off("server-message", onServerMessage)
+    }
+  }, [ready, client, manager])
+
+  return <WebsocketContext.Provider value={manager}>{children}</WebsocketContext.Provider>
 }

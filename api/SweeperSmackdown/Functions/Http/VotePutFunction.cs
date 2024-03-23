@@ -22,7 +22,7 @@ public static class VotePutFunction
 {
     [FunctionName(nameof(VotePutFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "/lobbies/{lobbyId}/votes/{userId}")] VotePutFunctionPayload payload,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/votes/{userId}")] VotePutFunctionPayload payload,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,

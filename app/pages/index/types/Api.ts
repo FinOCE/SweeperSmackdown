@@ -1,31 +1,32 @@
-import {
-  OnConnectedArgs,
-  OnDisconnectedArgs,
-  OnGroupDataMessageArgs,
-  OnRejoinGroupFailedArgs,
-  OnServerDataMessageArgs,
-  OnStoppedArgs
-} from "@azure/web-pubsub-client"
-
-export namespace Http {
-  export type Negotiate = {
-    baseUrl: string
-    url: string
-    accessToken: string
-  }
-}
-
-export namespace Ws {
-  type EventHandler<T> = (e: T) => void
-
-  type Event = {
-    connected: EventHandler<OnConnectedArgs>
-    disconnected: EventHandler<OnDisconnectedArgs>
-    stopped: EventHandler<OnStoppedArgs>
-    "server-message": EventHandler<OnServerDataMessageArgs>
-    "group-message": EventHandler<OnGroupDataMessageArgs>
-    "rejoin-group-failed": EventHandler<OnRejoinGroupFailedArgs>
+export namespace Api {
+  export type GameSettings = {
+    mode: number
+    height: number
+    width: number
+    mines: number
+    lives: number
+    timeLimit: number
+    boardCount: number
+    shareBoards: boolean
   }
 
-  export type Listener = { [K in keyof Event]: { event: K; handler: Event[K] } }[keyof Event]
+  export namespace Response {
+    export type Negotiate = {
+      baseUrl: string
+      url: string
+      accessToken: string
+    }
+
+    export type LobbyPut = {
+      lobbyId: string
+      userIds: string[]
+      wins: Record<string, number>
+      settings: Api.GameSettings
+    }
+
+    export type UserPut = {
+      userId: string
+      lobbyId: string
+    }
+  }
 }
