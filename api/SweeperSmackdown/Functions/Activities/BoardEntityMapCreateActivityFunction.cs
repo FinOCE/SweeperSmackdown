@@ -31,7 +31,7 @@ public static class BoardEntityMapCreateActivityFunction
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.BOARD_CONTAINER_NAME);
 
-        return await container.CreateItemAsync(
+        return await container.UpsertItemAsync(
             new BoardEntityMap(
                 props.LobbyId,
                 Array.Empty<string>()));

@@ -10,7 +10,7 @@ public static class NegotiateFunction
 {
     [FunctionName(nameof(NegotiateFunction))]
     public static WebPubSubConnection Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "negotiate")] HttpRequest _,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "negotiate")] HttpRequest req,
         [WebPubSubConnection(Hub = PubSubConstants.HUB_NAME, UserId = "{query.userId}")] WebPubSubConnection connection)
     {
         // TODO: Add validation to ensure query.userId matches the requester's authorized account
