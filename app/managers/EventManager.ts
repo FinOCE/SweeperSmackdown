@@ -61,7 +61,7 @@ export class EventManager extends EventEmitter implements IEventManager {
   }
 
   public register<T extends keyof Event>(event: T, callback: Event[T]) {
-    this.handlers[event].push(callback)
+    if (!this.handlers[event].includes(callback)) this.handlers[event].push(callback)
   }
 
   public clear() {

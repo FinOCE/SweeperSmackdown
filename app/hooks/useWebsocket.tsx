@@ -11,35 +11,41 @@ import { createContext, JSX } from "preact"
 import { useContext, useEffect, useMemo, useState } from "preact/hooks"
 import { useApi } from "./useApi"
 import { EventManager, IEventManager } from "../managers/EventManager"
+import { useGameInfo } from "./useGameInfo"
 
 const WebsocketContext = createContext<IEventManager>(null)
 
 export function useWebsocket() {
   const manager = useContext(WebsocketContext)
 
-  useEffect(() => () => manager.clear(), [manager])
+  useEffect(() => () => manager.clear(), [])
 
   return manager
 }
 
 type WebsocketProviderProps = {
-  children: JSX.Element
+  children?: JSX.Element | JSX.Element[]
 }
 
 export function WebsocketProvider({ children }: WebsocketProviderProps) {
+  const { userId } = useGameInfo()
   const api = useApi()
 
   const [ready, setReady] = useState(false)
 
   const client = useMemo(
     () =>
-      new WebPubSubClient({
-        getClientAccessUrl: () => api.negotiate().then(res => res.url)
-      }),
-    [api]
+      !userId
+        ? null
+        : new WebPubSubClient({
+            getClientAccessUrl: () => api.negotiate(userId).then(res => res.url)
+          }),
+    [userId]
   )
 
   useEffect(() => {
+    if (!client) return
+
     client.start().then(() => setReady(true))
     return () => client.stop()
   }, [client])
@@ -47,7 +53,7 @@ export function WebsocketProvider({ children }: WebsocketProviderProps) {
   const manager = new EventManager()
 
   useEffect(() => {
-    if (!ready) return
+    if (!client) return
 
     const onConnected = (e: OnConnectedArgs) => manager.emit("connected", e)
     const onDisconnected = (e: OnDisconnectedArgs) => manager.emit("disconnected", e)

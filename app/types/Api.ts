@@ -10,6 +10,18 @@ export namespace Api {
     shareBoards: boolean
   }
 
+  export type Lobby = {
+    lobbyId: string
+    userIds: string[]
+    wins: Record<string, number>
+    settings: Api.GameSettings
+  }
+
+  export type User = {
+    userId: string
+    lobbyId: string
+  }
+
   export namespace Response {
     export type Negotiate = {
       baseUrl: string
@@ -17,16 +29,10 @@ export namespace Api {
       accessToken: string
     }
 
-    export type LobbyPut = {
-      lobbyId: string
-      userIds: string[]
-      wins: Record<string, number>
-      settings: Api.GameSettings
-    }
+    export type LobbyGet = Lobby
 
-    export type UserPut = {
-      userId: string
-      lobbyId: string
-    }
+    export type LobbyPut = Lobby
+
+    export type UserPut = User
   }
 }

@@ -12,7 +12,7 @@ const GameInfoContext = createContext<GameInfo>(null)
 export const useGameInfo = () => useContext(GameInfoContext)
 
 type GameInfoProviderProps = {
-  children: JSX.Element
+  children?: JSX.Element | JSX.Element[]
 }
 
 export function GameInfoProvider({ children }: GameInfoProviderProps) {
