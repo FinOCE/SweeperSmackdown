@@ -49,6 +49,17 @@ public class Lobby : ILobby
         Settings = new GameSettings();
     }
 
+    /// <summary>
+    /// Utility method to assume the state result of a newly created entity.
+    /// </summary>
+    /// <returns>The new assumed entity</returns>
+    public static Lobby Initial()
+    {
+        var lobby = new Lobby();
+        lobby.Create();
+        return lobby;
+    }
+
     public void Delete() =>
         Entity.Current.DeleteState();
 

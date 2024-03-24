@@ -21,7 +21,7 @@ public static class LobbyPutFunction
         string lobbyId)
     {
         // Check if lobby exists
-        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));       
 
         if (entity.EntityExists)
             return new OkObjectResult(
@@ -36,17 +36,21 @@ public static class LobbyPutFunction
             Id.For<Lobby>(lobbyId),
             lobby => lobby.Create());
 
+        // TODO: Find alternative approach so that this waits until the entity EXISTS
+
+        var expectedLobby = Lobby.Initial();
+
         await orchestrationClient.StartNewAsync(
             nameof(LobbyOrchestratorFunction),
             Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-        
-        // Return created/updated lobby        
+
+        // Return created/updated lobby
         return new CreatedResult(
             $"/lobbies/{lobbyId}",
             new LobbyResponseDto(
                 lobbyId,
-                entity.EntityState.UserIds,
-                entity.EntityState.Wins,
-                entity.EntityState.Settings));
+                expectedLobby.UserIds,
+                expectedLobby.Wins,
+                expectedLobby.Settings));
     }
 }

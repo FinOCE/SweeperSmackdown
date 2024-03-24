@@ -3,7 +3,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
-using Newtonsoft.Json;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Entities;
@@ -80,28 +79,31 @@ public static class LobbyPatchFunction
             });
 
         // Apply changes to entity
+        var newSettings = entity.EntityState.Settings.Update(
+            payload.Mode,
+            payload.Height,
+            payload.Width,
+            payload.Mines,
+            payload.Lives,
+            payload.TimeLimit,
+            payload.BoardCount,
+            payload.ShareBoards);
+        
         await entityClient.SignalEntityAsync<ILobby>(
             Id.For<Lobby>(lobbyId),
-            lobby => lobby.SetSettings(
-                entity.EntityState.Settings.Update(
-                    payload.Mode,
-                    payload.Height,
-                    payload.Width,
-                    payload.Mines,
-                    payload.Lives,
-                    payload.TimeLimit,
-                    payload.BoardCount,
-                    payload.ShareBoards)));
+            lobby => lobby.SetSettings(newSettings));
 
-        entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
-        await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, entity.EntityState));
+        var expectedLobby = entity.EntityState;
+        expectedLobby.SetSettings(newSettings);
+
+        await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, expectedLobby));
 
         // Respond to request
         return new OkObjectResult(
             new LobbyResponseDto(
                 lobbyId,
-                entity.EntityState.UserIds,
-                entity.EntityState.Wins,
-                entity.EntityState.Settings));
+                expectedLobby.UserIds,
+                expectedLobby.Wins,
+                expectedLobby.Settings));
     }
 }

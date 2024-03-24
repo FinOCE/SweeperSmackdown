@@ -34,14 +34,16 @@ public static class UserDeleteFunction
             Id.For<Lobby>(lobbyId),
             lobby => lobby.RemoveUser(userId));
 
+        var expectedEntity = entity.EntityState;
+        expectedEntity.RemoveUser(userId);
+
         await actions.AddAsync(ActionFactory.RemoveUserFromLobby(userId, lobbyId));
         await actions.AddAsync(ActionFactory.RemoveUser(userId, lobbyId));
 
         // Update votes required
-        entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
-        var requiredVotes = (int)Math.Floor(entity.EntityState.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
+        var requiredVotes = (int)Math.Floor(expectedEntity.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
 
         if (vote.EntityExists)
         {

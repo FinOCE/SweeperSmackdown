@@ -52,6 +52,17 @@ public class Vote : IVote
             Votes.Add(choice, Array.Empty<string>());
     }
 
+    /// <summary>
+    /// Utility method to assume the state result of a newly created entity.
+    /// </summary>
+    /// <returns>The new assumed entity</returns>
+    public static Vote Initial(int requiredVotes, string[] choices)
+    {
+        var vote = new Vote();
+        vote.Create((requiredVotes, choices));
+        return vote;
+    }
+
     public void Delete() =>
         Entity.Current.DeleteState();
     

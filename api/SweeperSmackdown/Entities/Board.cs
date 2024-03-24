@@ -28,7 +28,18 @@ public class Board : IBoard
     {
         GameState = gameState;
     }
-    
+
+    /// <summary>
+    /// Utility method to assume the state result of a newly created entity.
+    /// </summary>
+    /// <returns>The new assumed entity</returns>
+    public static Board Initial(byte[] gameState)
+    {
+        var board = new Board();
+        board.Create(gameState);
+        return board;
+    }
+
     public void Delete() =>
         Entity.Current.DeleteState();
     

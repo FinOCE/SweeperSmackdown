@@ -45,6 +45,9 @@ public static class UserPutFunction
         await entityClient.SignalEntityAsync<ILobby>(
             Id.For<Lobby>(lobbyId),
             lobby => lobby.AddUser(userId));
+        
+        var expectedEntity = entity.EntityState;
+        expectedEntity.AddUser(userId);
 
         // Start new board manager if lobby in play
         var status = await orchestrationClient.GetStatusAsync(
@@ -59,10 +62,9 @@ public static class UserPutFunction
         }
 
         // Update votes required
-        entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
         var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
-        var requiredVotes = (int)Math.Floor(entity.EntityState.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
+        var requiredVotes = (int)Math.Floor(expectedEntity.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
 
         if (vote.EntityExists)
         {
