@@ -2,12 +2,15 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using SweeperSmackdown.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Models;
+using SweeperSmackdown.Assets;
+using SweeperSmackdown.Structures;
+using System.Collections.Generic;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -15,42 +18,45 @@ public static class LobbyPutFunction
 {
     [FunctionName(nameof(LobbyPutFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}")] HttpRequest _,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Lobby? existing,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%")]
+            IAsyncCollector<Lobby> db,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
-        // Check if lobby exists
-        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));       
-
-        if (entity.EntityExists)
-            return new OkObjectResult(
-                new LobbyResponseDto(
-                    lobbyId,
-                    entity.EntityState.UserIds,
-                    entity.EntityState.Wins,
-                    entity.EntityState.Settings));
+        // TODO: Get userId for person that made request
+        var requesterId = "userId";
+        
+        // Return existing lobby if already exists
+        if (existing != null)
+            return new OkObjectResult(LobbyResponseDto.FromModel(existing));
 
         // Create lobby
-        await entityClient.SignalEntityAsync<ILobby>(
-            Id.For<Lobby>(lobbyId),
-            lobby => lobby.Create());
+        var lobby = new Lobby(
+            lobbyId,
+            requesterId,
+            new[] { requesterId },
+            new Dictionary<string, int>(),
+            new GameSettings());
+        
+        await db.AddAsync(lobby);
 
-        // TODO: Find alternative approach so that this waits until the entity EXISTS
-
-        var expectedLobby = Lobby.Initial();
-
+        // Start orchestrator
         await orchestrationClient.StartNewAsync(
             nameof(LobbyOrchestratorFunction),
             Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
 
-        // Return created/updated lobby
-        return new CreatedResult(
-            $"/lobbies/{lobbyId}",
-            new LobbyResponseDto(
-                lobbyId,
-                expectedLobby.UserIds,
-                expectedLobby.Wins,
-                expectedLobby.Settings));
+        // Return created lobby
+        return new CreatedResult($"/lobbies/{lobbyId}", LobbyResponseDto.FromModel(lobby));
     }
 }

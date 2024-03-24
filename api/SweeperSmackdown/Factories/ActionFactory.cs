@@ -1,8 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Entities;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
+using SweeperSmackdown.DTOs;
 
 namespace SweeperSmackdown.Factories;
 
@@ -14,7 +13,7 @@ public static class ActionFactory
     public static WebPubSubAction RemoveUserFromLobby(string userId, string lobbyId) =>
         WebPubSubAction.CreateRemoveUserFromGroupAction(userId, lobbyId);
 
-    public static WebPubSubAction UpdateLobby(string userId, string lobbyId, Lobby lobby) =>
+    public static WebPubSubAction UpdateLobby(string userId, string lobbyId, LobbyResponseDto lobby) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
             MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, userId, lobby, null),

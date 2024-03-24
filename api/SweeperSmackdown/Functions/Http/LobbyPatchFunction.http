@@ -1,4 +1,5 @@
 @lobbyId = "lobbyId"
+@newHostId = "userId2"
 
 ###
 
@@ -19,6 +20,14 @@ PATCH http://localhost:7071/lobbies/{{lobbyId}}
   "lives": 1,
   "timeLimit": 600,
   "boardCount": 2
+}
+
+###
+
+PATCH http://localhost:7071/lobbies{{lobbyId}}
+
+{
+  "hostId": "{{newHostId}}"
 }
 
 ###

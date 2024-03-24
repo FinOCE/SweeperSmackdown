@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SweeperSmackdown.Models;
 
 namespace SweeperSmackdown.DTOs;
 
@@ -15,4 +16,7 @@ public class UserResponseDto
         LobbyId = lobbyId;
         UserId = userId;
     }
+
+    public static UserResponseDto FromModel(Lobby lobby, string userId) =>
+        new(lobby.Id, userId);
 }

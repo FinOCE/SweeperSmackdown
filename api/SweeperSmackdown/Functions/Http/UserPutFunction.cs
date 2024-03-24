@@ -6,9 +6,9 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
-using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
+using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
@@ -22,63 +22,86 @@ public static class UserPutFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%")]
+            IAsyncCollector<Lobby> lobbyDb,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Vote? vote,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%")]
+            IAsyncCollector<Vote> voteDb,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId,
-        string userId,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
+        string userId)
     {
-        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
+        // TODO: Get userId for person that made request
+        var requesterId = "userId";
 
-        // Return 404 if lobby doesn't exist
-        if (!entity.EntityExists)
+        // Check if lobby exists and that user is in it
+        if (lobby == null || !lobby.UserIds.Contains(userId))
             return new NotFoundResult();
 
+        // Only allow the specific user and the host to delete them
+        if (requesterId != userId && lobby.HostId != userId)
+            return new ForbidResult();
+        
         // Add user to ws group and notify
-        await actions.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
-        await actions.AddAsync(ActionFactory.AddUser(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
 
         // Return 200 if user already in lobby (probably reconnecting)
-        if (entity.EntityState.UserIds.Contains(userId))
-            return new OkObjectResult(new UserResponseDto(lobbyId, userId));
+        if (lobby.UserIds.Contains(userId))
+            return new OkObjectResult(UserResponseDto.FromModel(lobby, userId));
 
         // Add to lobby
-        await entityClient.SignalEntityAsync<ILobby>(
-            Id.For<Lobby>(lobbyId),
-            lobby => lobby.AddUser(userId));
-        
-        var expectedEntity = entity.EntityState;
-        expectedEntity.AddUser(userId);
+        lobby.UserIds = lobby.UserIds.Append(userId).ToArray();
+        await lobbyDb.AddAsync(lobby);
 
         // Start new board manager if lobby in play
-        var status = await orchestrationClient.GetStatusAsync(
-            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId));
+        var orchestrationStatus = await orchestrationClient.GetStatusAsync(
+            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
 
-        if (status != null && Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()) == ELobbyOrchestratorFunctionStatus.Play)
+        if (orchestrationStatus != null)
         {
-            await orchestrationClient.StartNewAsync(
-                nameof(BoardManagerOrchestrationFunction),
-                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
-                new BoardManagerOrchestrationFunctionProps(entity.EntityState.Settings));
+            var customStatus = orchestrationStatus.CustomStatus.ToString();
+            var status = Enum.Parse<ELobbyOrchestratorFunctionStatus>(customStatus);
+
+            if (status == ELobbyOrchestratorFunctionStatus.Play)
+                await orchestrationClient.StartNewAsync(
+                    nameof(BoardManagerOrchestrationFunction),
+                    Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
+                    new BoardManagerOrchestrationFunctionProps(lobby.Settings));
         }
 
         // Update votes required
-        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
+        var requiredVotes = (int)Math.Floor(lobby.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
 
-        var requiredVotes = (int)Math.Floor(expectedEntity.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
-
-        if (vote.EntityExists)
+        if (vote != null && vote.RequiredVotes != requiredVotes)
         {
-            await entityClient.SignalEntityAsync<IVote>(
-                Id.For<Vote>(lobbyId),
-                vote => vote.SetRequiredVotes((
-                    requiredVotes,
-                    lobbyId,
-                    orchestrationClient)));
-
-            await actions.AddAsync(ActionFactory.UpdateVoteRequirement(userId, lobbyId, requiredVotes));
+            vote.RequiredVotes = requiredVotes;
+            await voteDb.AddAsync(vote);
+            await ws.AddAsync(ActionFactory.UpdateVoteRequirement(userId, lobbyId, requiredVotes));
         }
 
-        // Return created result
-        return new CreatedResult($"/lobbies/{lobbyId}/users/{userId}", new UserResponseDto(lobbyId, userId));
+        // Respond to request
+        return new CreatedResult(
+            $"/lobbies/{lobbyId}/users/{userId}",
+            UserResponseDto.FromModel(lobby, userId));
     }
 }

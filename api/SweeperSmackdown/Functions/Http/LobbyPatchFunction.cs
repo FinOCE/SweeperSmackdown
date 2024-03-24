@@ -5,12 +5,11 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
-using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
+using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,55 +21,52 @@ public static class LobbyPatchFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequestDto payload,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
-        string lobbyId,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%")]
+            IAsyncCollector<Lobby> db,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
+        string lobbyId)
     {
         // TODO: Get userId for person that made request
-        var userId = "userId";
+        var requesterId = "userId";
         
         // Handle validation failures
-        var errors = new List<string>();
+        if (!payload.IsValid)
+            return new BadRequestObjectResult(payload.Errors);
 
-        if (payload.Mode != null && !GameStateFactory.VALID_MODES.Contains(payload.Mode.Value))
-            errors.Add($"The 'mode' is not a valid option ({string.Join(", ", GameStateFactory.VALID_MODES)})");
-
-        if (payload.Height != null && payload.Height >= Constants.MAX_GAME_HEIGHT || payload.Height <= Constants.MIN_GAME_HEIGHT)
-            errors.Add($"The 'height' must be between {Constants.MIN_GAME_HEIGHT} and {Constants.MAX_GAME_HEIGHT}");
-
-        if (payload.Width != null && payload.Width >= Constants.MAX_GAME_WIDTH || payload.Width <= Constants.MIN_GAME_WIDTH)
-            errors.Add($"The 'width' must be between {Constants.MIN_GAME_WIDTH} and {Constants.MAX_GAME_WIDTH}");
-
-        if (payload.Mines != null && payload.Mines <= 0)
-            errors.Add($"The 'mines' must be greater than 0");
-
-        if (payload.Lives != null && payload.Lives < 0)
-            errors.Add($"The 'lives' must be greater than or equal to 0 (0 means unlimited)");
-
-        if (payload.TimeLimit != null && payload.TimeLimit < 0)
-            errors.Add("The 'timeLimit' must be greater than or equal to 0 (0 means unlimited)");
-
-        if (payload.BoardCount != null && payload.BoardCount < 0)
-            errors.Add("The 'boardCount' must be greater than or equal to 0 (0 means unlimited)");
-
-        if (errors.Count > 0)
-            return new BadRequestObjectResult(errors);
-
-        // Check if lobby exists and is in configure state
-        var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
-
-        if (!entity.EntityExists)
+        // Check if lobby exists or is not in configure state
+        if (lobby == null)
             return new NotFoundResult();
 
-        var status = await orchestrationClient.GetStatusAsync(Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-        
-        if (status != null && Enum.Parse<ELobbyOrchestratorFunctionStatus>(status.CustomStatus.ToString()) != ELobbyOrchestratorFunctionStatus.Configure)
-            return new ConflictResult();
+        var orchestrationStatus = await orchestrationClient.GetStatusAsync(
+            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+
+        if (orchestrationStatus != null)
+        {
+            var customStatus = orchestrationStatus.CustomStatus.ToString();
+            var status = Enum.Parse<ELobbyOrchestratorFunctionStatus>(customStatus);
+
+            if (status != ELobbyOrchestratorFunctionStatus.Configure)
+                return new ConflictResult();
+        }
+
+        // Only allow lobby members to modify
+        if (!lobby.UserIds.Contains(requesterId))
+            return new ForbidResult();
 
         // Confirm mine count is realistic
-        var newHeight = payload.Height ?? entity.EntityState.Settings.Height;
-        var newWidth = payload.Width ?? entity.EntityState.Settings.Width;
-        var newMines = payload.Mines ?? entity.EntityState.Settings.Mines;
+        var newHeight = payload.Height ?? lobby.Settings.Height;
+        var newWidth = payload.Width ?? lobby.Settings.Width;
+        var newMines = payload.Mines ?? lobby.Settings.Mines;
 
         if (newHeight * newWidth > newMines)
             return new BadRequestObjectResult(new string[]
@@ -78,8 +74,16 @@ public static class LobbyPatchFunction
                 "Cannot update because this would result in more mines than there are board squares"
             });
 
-        // Apply changes to entity
-        var newSettings = entity.EntityState.Settings.Update(
+        // Confirm user is allowed to change host ID if attempted
+        if (payload.HostId != null && lobby.HostId != requesterId)
+            return new BadRequestObjectResult(new string[]
+            {
+                "Cannot change host ID because you are not the current host"
+            });
+
+        // Update lobby settings
+        lobby.HostId = payload.HostId ?? lobby.HostId;
+        lobby.Settings = lobby.Settings.Update(
             payload.Mode,
             payload.Height,
             payload.Width,
@@ -88,22 +92,13 @@ public static class LobbyPatchFunction
             payload.TimeLimit,
             payload.BoardCount,
             payload.ShareBoards);
-        
-        await entityClient.SignalEntityAsync<ILobby>(
-            Id.For<Lobby>(lobbyId),
-            lobby => lobby.SetSettings(newSettings));
 
-        var expectedLobby = entity.EntityState;
-        expectedLobby.SetSettings(newSettings);
-
-        await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, expectedLobby));
+        await db.AddAsync(lobby);
 
         // Respond to request
-        return new OkObjectResult(
-            new LobbyResponseDto(
-                lobbyId,
-                expectedLobby.UserIds,
-                expectedLobby.Wins,
-                expectedLobby.Settings));
+        var dto = LobbyResponseDto.FromModel(lobby);
+        
+        await ws.AddAsync(ActionFactory.UpdateLobby(requesterId, lobbyId, dto));
+        return new OkObjectResult(dto);
     }
 }

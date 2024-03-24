@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SweeperSmackdown.Models;
 using System.Collections.Generic;
 
 namespace SweeperSmackdown.DTOs;
@@ -24,4 +25,11 @@ public class VoteGroupResponseDto
         Choices = choices;
         Votes = votes;
     }
+
+    public static VoteGroupResponseDto FromModel(Vote vote) =>
+        new(
+            vote.LobbyId,
+            vote.RequiredVotes,
+            vote.Choices,
+            vote.Votes);
 }

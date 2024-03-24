@@ -1,15 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
-using SweeperSmackdown.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,38 +16,49 @@ public static class VoteDeleteFunction
 {
     [FunctionName(nameof(VoteDeleteFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}/votes/{userId}")] HttpRequest req,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}/votes/{userId}")] HttpRequest _,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Vote? vote,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%")]
+            IAsyncCollector<Vote> voteDb,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId,
-        string userId,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> actions)
+        string userId)
     {
-        // Check if a vote is in progress
-        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
+        // TODO: Get userId for person that made request
+        var requesterId = "userId";
 
-        if (!vote.EntityExists)
+        // Check if a vote is in progress and that the user has a vote
+        if (vote == null || vote.Votes.Any(kvp => kvp.Value.Contains(userId)) || lobby == null)
             return new NotFoundResult();
 
-        // Indicate if vote didn't exist
-        KeyValuePair<string, string[]> kvp;
-        try
-        {
-            kvp = vote.EntityState.Votes.First(kvp => kvp.Value.Contains(userId));
-        }
-        catch (Exception)
-        {
-            return new NotFoundResult();
-        }
+        // Only allow the specific user to delete their vote
+        if (lobby.UserIds.Contains(userId) && requesterId != userId)
+            return new ForbidResult();
 
         // Remove user vote
-        await entityClient.SignalEntityAsync<IVote>(
-            Id.For<Vote>(lobbyId),
-            vote => vote.RemoveVote((userId, lobbyId, orchestrationClient)));
+        var choice = vote.Votes.First(kvp => kvp.Value.Contains(userId)).Key;
+        vote.Votes[choice] = vote.Votes[choice].Where(id => id != userId).ToArray();
 
-        await actions.AddAsync(ActionFactory.RemoveVote(userId, lobbyId, kvp.Key));
-        
-        // Return no content
+        await voteDb.AddAsync(vote);
+        await ws.AddAsync(ActionFactory.RemoveVote(userId, lobbyId, choice));
+
+        // Respond to request
         return new NoContentResult();
     }
 }

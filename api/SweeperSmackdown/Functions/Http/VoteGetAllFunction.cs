@@ -1,33 +1,43 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
-using SweeperSmackdown.Entities;
-using SweeperSmackdown.Utils;
-using System.Threading.Tasks;
+using SweeperSmackdown.Models;
+using System.Linq;
 
 namespace SweeperSmackdown.Functions.Http;
 
 public static class VoteGetAllFunction
 {
     [FunctionName(nameof(VoteGetAllFunction))]
-    public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes")] HttpRequest req,
-        [DurableClient] IDurableEntityClient entityClient,
-        string lobbyId)
+    public static IActionResult Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes")] HttpRequest _,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "%CosmosDbConnectionString%",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Vote? vote)
     {
-        var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
-
-        if (!vote.EntityExists)
+        // TODO: Get userId for person that made request
+        var requesterId = "userId";
+        
+        if (vote == null || lobby == null)
             return new NotFoundResult();
 
-        return new OkObjectResult(
-            new VoteGroupResponseDto(
-                lobbyId,
-                vote.EntityState.RequiredVotes,
-                vote.EntityState.Choices,
-                vote.EntityState.Votes));
+        if (!lobby.UserIds.Contains(requesterId))
+            return new ForbidResult();
+
+        return new OkObjectResult(VoteGroupResponseDto.FromModel(vote));
     }
 }
