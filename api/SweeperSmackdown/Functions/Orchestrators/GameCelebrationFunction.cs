@@ -1,9 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;

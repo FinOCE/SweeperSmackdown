@@ -23,7 +23,7 @@ public static class BoardEntityMapCreateActivityFunction
     [FunctionName(nameof(BoardEntityMapCreateActivityFunction))]
     public static async Task<BoardEntityMap> Run(
         [ActivityTrigger] IDurableActivityContext ctx,
-        [CosmosDB(Connection = "%CosmosDbConnectionString%")] CosmosClient cosmosClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var props = ctx.GetInput<BoardEntityMapCreateActivityFunctionProps>();
 

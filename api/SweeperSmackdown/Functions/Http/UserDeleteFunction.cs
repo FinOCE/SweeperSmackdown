@@ -20,26 +20,26 @@ public static class UserDeleteFunction
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%",
+            Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%")]
+            Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> lobbyDb,
         [CosmosDB(
             containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%",
+            Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Vote? vote,
         [CosmosDB(
             containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%")]
+            Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Vote> voteDb,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId,

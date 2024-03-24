@@ -26,7 +26,7 @@ public static class BoardDeleteAllActivityFunction
     public static async Task Run(
         [ActivityTrigger] IDurableActivityContext ctx,
         [DurableClient] IDurableEntityClient entityClient,
-        [CosmosDB(Connection = "%CosmosDbConnectionString%")] CosmosClient cosmosClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var props = ctx.GetInput<BoardDeleteAllActivityFunctionProps>();
 

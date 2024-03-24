@@ -28,7 +28,7 @@ public static class BoardCreatedActivityFunction
     [FunctionName(nameof(BoardCreatedActivityFunction))]
     public static async Task Run(
         [ActivityTrigger] IDurableActivityContext ctx,
-        [CosmosDB(Connection = "%CosmosDbConnectionString%")] CosmosClient cosmosClient,
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
     {
         var props = ctx.GetInput<BoardCreatedActivityFunctionProps>();

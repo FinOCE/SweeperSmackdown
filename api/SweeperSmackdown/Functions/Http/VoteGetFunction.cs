@@ -7,26 +7,25 @@ using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Models;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http;
 
 public static class VoteGetFunction
 {
     [FunctionName(nameof(VoteGetFunction))]
-    public static async Task<IActionResult> Run(
+    public static IActionResult Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes/{userId}")] HttpRequest _,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%",
+            Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
             containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%",
+            Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Vote? vote,

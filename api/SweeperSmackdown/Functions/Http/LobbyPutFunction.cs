@@ -22,14 +22,14 @@ public static class LobbyPutFunction
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%",
+            Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Lobby? existing,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%")]
+            Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> db,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         string lobbyId)

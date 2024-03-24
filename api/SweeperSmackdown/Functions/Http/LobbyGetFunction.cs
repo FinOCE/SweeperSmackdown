@@ -17,7 +17,7 @@ public static class LobbyGetFunction
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "%CosmosDbConnectionString%",
+            Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Lobby? lobby)

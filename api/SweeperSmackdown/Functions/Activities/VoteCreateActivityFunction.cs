@@ -24,7 +24,7 @@ public static class VoteCreateActivityFunction
     [FunctionName(nameof(VoteCreateActivityFunction))]
     public static async Task<Vote> Run(
         [ActivityTrigger] IDurableActivityContext ctx,
-        [CosmosDB(Connection = "%CosmosDbConnectionString%")] CosmosClient cosmosClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var props = ctx.GetInput<VoteCreateActivityFunctionProps>();
 

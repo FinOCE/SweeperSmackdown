@@ -17,12 +17,6 @@ public static class GameConfigureFunction
     {
         var lobbyId = Id.FromInstance(ctx.InstanceId);
 
-        // Wait for countdown to complete
-        await ctx.CallSubOrchestratorAsync(
-            nameof(TimerOrchestratorFunction),
-            Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-            new TimerOrchestratorFunctionProps(Constants.SETUP_COUNTDOWN_DURATION, false));
-
         // Get current lobby state
         var lobby = await ctx.CallActivityAsync<Lobby>(
             nameof(LobbyFetchActivityFunction),
@@ -33,6 +27,12 @@ public static class GameConfigureFunction
             nameof(VoteCreateActivityFunction),
             new VoteCreateActivityFunctionProps(lobby));
 
+        // Wait for countdown to complete
+        await ctx.CallSubOrchestratorAsync(
+            nameof(TimerOrchestratorFunction),
+            Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
+            new TimerOrchestratorFunctionProps(Constants.SETUP_COUNTDOWN_DURATION, false));
+        
         // Return settings to use
         return lobby.Settings;
     }

@@ -22,7 +22,7 @@ public static class LobbyFetchActivityFunction
     [FunctionName(nameof(LobbyFetchActivityFunction))]
     public static async Task<Lobby> Run(
         [ActivityTrigger] IDurableActivityContext ctx,
-        [CosmosDB(Connection = "%CosmosDbConnectionString%")] CosmosClient cosmosClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var props = ctx.GetInput<LobbyFetchActivityFunctionProps>();
 

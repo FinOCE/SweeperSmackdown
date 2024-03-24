@@ -23,16 +23,22 @@ public class WinAddActivityFunctionProps
 public static class WinAddActivityFunction
 {
     [FunctionName(nameof(WinAddActivityFunction))]
-    public static async Task<Lobby> Run(
+    public static async Task Run(
         [ActivityTrigger] IDurableActivityContext ctx,
-        [CosmosDB(Connection = "%CosmosDbConnectionString%")] CosmosClient cosmosClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var props = ctx.GetInput<WinAddActivityFunctionProps>();
 
         var container = cosmosClient.GetContainer(
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.LOBBY_CONTAINER_NAME);
+        
+        Lobby lobby = await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
+        var wins = lobby.Wins.ContainsKey(props.WinnerId) ? lobby.Wins[props.WinnerId] + 1 : 1;
 
-        var lobby = await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
+        await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
+        {
+            PatchOperation.Set($"/wins/{props.WinnerId}", wins)
+        });
     }
 }
