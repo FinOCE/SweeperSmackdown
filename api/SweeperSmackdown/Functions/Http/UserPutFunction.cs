@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
@@ -14,15 +16,11 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http;
 
-public class UserPutFunctionPayload
-{
-}
-
 public static class UserPutFunction
 {
     [FunctionName(nameof(UserPutFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/users/{userId}")] UserPutFunctionPayload payload,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
@@ -41,7 +39,7 @@ public static class UserPutFunction
 
         // Return 200 if user already in lobby (probably reconnecting)
         if (entity.EntityState.UserIds.Contains(userId))
-            return new OkObjectResult(new { userId, lobbyId });
+            return new OkObjectResult(new UserResponseDto(lobbyId, userId));
 
         // Add to lobby
         await entityClient.SignalEntityAsync<ILobby>(
@@ -79,6 +77,6 @@ public static class UserPutFunction
         }
 
         // Return created result
-        return new CreatedResult($"/lobbies/{lobbyId}/users/{userId}", new { userId, lobbyId });
+        return new CreatedResult($"/lobbies/{lobbyId}/users/{userId}", new UserResponseDto(lobbyId, userId));
     }
 }

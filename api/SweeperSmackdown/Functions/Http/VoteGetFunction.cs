@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
 using System;
@@ -20,20 +21,14 @@ public static class VoteGetFunction
         string lobbyId,
         string userId)
     {
-        // Check if a vote is in progress
+        // Check if a vote is in progress and the user has votes
         var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
-        if (!vote.EntityExists)
+        if (!vote.EntityExists || !vote.EntityState.Votes.Any(kvp => kvp.Value.Contains(userId)))
             return new NotFoundResult();
         
-        try
-        {
-            var kvp = vote.EntityState.Votes.First(kvp => kvp.Value.Contains(userId));
-            return new OkObjectResult(new { choice = kvp.Key });
-        }
-        catch (Exception)
-        {
-            return new NotFoundResult();
-        }
+        // Get their vote and return
+        var kvp = vote.EntityState.Votes.First(kvp => kvp.Value.Contains(userId));
+        return new OkObjectResult(new VoteSingleResponseDto(lobbyId, userId, kvp.Key));
     }
 }

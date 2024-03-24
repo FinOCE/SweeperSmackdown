@@ -7,6 +7,7 @@ using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using SweeperSmackdown.DTOs;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -23,13 +24,12 @@ public static class LobbyPutFunction
         var entity = await entityClient.ReadEntityStateAsync<Lobby>(Id.For<Lobby>(lobbyId));
 
         if (entity.EntityExists)
-            return new OkObjectResult(new
-            {
-                lobbyId,
-                userIds = entity.EntityState.UserIds,
-                wins = entity.EntityState.Wins,
-                settings = entity.EntityState.Settings
-            });
+            return new OkObjectResult(
+                new LobbyResponseDto(
+                    lobbyId,
+                    entity.EntityState.UserIds,
+                    entity.EntityState.Wins,
+                    entity.EntityState.Settings));
 
         // Create lobby
         await entityClient.SignalEntityAsync<ILobby>(
@@ -43,12 +43,10 @@ public static class LobbyPutFunction
         // Return created/updated lobby        
         return new CreatedResult(
             $"/lobbies/{lobbyId}",
-            new
-            {
+            new LobbyResponseDto(
                 lobbyId,
-                userIds = entity.EntityState.UserIds,
-                wins = entity.EntityState.Wins,
-                settings = entity.EntityState.Settings
-            });
+                entity.EntityState.UserIds,
+                entity.EntityState.Wins,
+                entity.EntityState.Settings));
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
@@ -19,8 +20,14 @@ public static class VoteGetAllFunction
     {
         var vote = await entityClient.ReadEntityStateAsync<Vote>(Id.For<Vote>(lobbyId));
 
-        return vote.EntityExists
-            ? new OkObjectResult(vote.EntityState.Votes)
-            : new NotFoundResult();
+        if (!vote.EntityExists)
+            return new NotFoundResult();
+
+        return new OkObjectResult(
+            new VoteGroupResponseDto(
+                lobbyId,
+                vote.EntityState.RequiredVotes,
+                vote.EntityState.Choices,
+                vote.EntityState.Votes));
     }
 }

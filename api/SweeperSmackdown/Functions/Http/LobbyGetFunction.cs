@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
+using SweeperSmackdown.DTOs;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -22,11 +23,11 @@ public static class LobbyGetFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
-        return new OkObjectResult(new
-        {
-            users = entity.EntityState.UserIds,
-            wins = entity.EntityState.Wins,
-            settings = entity.EntityState.Settings
-        });
+        return new OkObjectResult(
+            new LobbyResponseDto(
+                lobbyId,
+                entity.EntityState.UserIds,
+                entity.EntityState.Wins,
+                entity.EntityState.Settings));
     }
 }

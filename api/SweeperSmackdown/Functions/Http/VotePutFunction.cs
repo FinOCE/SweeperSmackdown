@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Utils;
@@ -13,16 +14,11 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http;
 
-public class VotePutFunctionPayload
-{
-    public string Choice { get; } = null!;
-}
-
 public static class VotePutFunction
 {
     [FunctionName(nameof(VotePutFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/votes/{userId}")] VotePutFunctionPayload payload,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/votes/{userId}")] VotePutRequestDto payload,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
@@ -50,6 +46,11 @@ public static class VotePutFunction
         await actions.AddAsync(ActionFactory.AddVote(userId, lobbyId, payload.Choice));
 
         // Get updated results and return to user
-        return new CreatedResult($"/lobbies/{lobbyId}/votes", vote.EntityState.Votes);
+        return new CreatedResult(
+            $"/lobbies/{lobbyId}/votes/{userId}",
+            new VoteSingleResponseDto(
+                lobbyId,
+                userId,
+                payload.Choice));
     }
 }

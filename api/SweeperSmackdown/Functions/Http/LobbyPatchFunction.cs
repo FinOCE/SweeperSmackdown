@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Newtonsoft.Json;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
@@ -16,38 +17,11 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http;
 
-public class LobbyPatchFunctionPayload
-{
-    [JsonProperty("mode")]
-    public int? Mode { get; }
-
-    [JsonProperty("height")]
-    public int? Height { get; }
-
-    [JsonProperty("width")]
-    public int? Width { get; }
-
-    [JsonProperty("mines")]
-    public int? Mines { get; }
-
-    [JsonProperty("lives")]
-    public int? Lives { get; }
-
-    [JsonProperty("timeLimit")]
-    public int? TimeLimit { get; }
-
-    [JsonProperty("boardCount")]
-    public int? BoardCount { get; }
-
-    [JsonProperty("shareBoards")]
-    public bool? ShareBoards { get; }
-}
-
 public static class LobbyPatchFunction
 {
     [FunctionName(nameof(LobbyPatchFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchFunctionPayload payload,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequestDto payload,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId,
@@ -123,6 +97,11 @@ public static class LobbyPatchFunction
         await actions.AddAsync(ActionFactory.UpdateLobby(userId, lobbyId, entity.EntityState));
 
         // Respond to request
-        return new OkObjectResult(entity.EntityState);
+        return new OkObjectResult(
+            new LobbyResponseDto(
+                lobbyId,
+                entity.EntityState.UserIds,
+                entity.EntityState.Wins,
+                entity.EntityState.Settings));
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using SweeperSmackdown.Entities;
 using SweeperSmackdown.Utils;
 using System.Linq;
+using SweeperSmackdown.DTOs;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -26,7 +27,7 @@ public static class UserGetFunction
 
         if (!entity.EntityState.UserIds.Contains(userId))
             return new NotFoundResult();
-
-        return new OkObjectResult(new { userId, lobbyId });
+        
+        return new OkObjectResult(new UserResponseDto(lobbyId, userId));
     }
 }
