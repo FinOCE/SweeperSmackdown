@@ -35,14 +35,14 @@ public static class UserPutFunction
             Connection = "%CosmosDbConnectionString%")]
             IAsyncCollector<Lobby> lobbyDb,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Vote? vote,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%")]
             IAsyncCollector<Vote> voteDb,

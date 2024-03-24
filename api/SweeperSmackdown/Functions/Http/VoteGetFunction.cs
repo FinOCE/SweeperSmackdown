@@ -24,7 +24,7 @@ public static class VoteGetFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%",
             Id = "{lobbyId}",

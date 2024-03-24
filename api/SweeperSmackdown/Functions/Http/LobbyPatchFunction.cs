@@ -55,6 +55,9 @@ public static class LobbyPatchFunction
             var customStatus = orchestrationStatus.CustomStatus.ToString();
             var status = Enum.Parse<ELobbyOrchestratorFunctionStatus>(customStatus);
 
+            // TODO: Fix this so it doesn't allow requests after countdown rather than any point during configuration
+            //       (edge case, not urgent, but still a potential issue)
+
             if (status != ELobbyOrchestratorFunctionStatus.Configure)
                 return new ConflictResult();
         }

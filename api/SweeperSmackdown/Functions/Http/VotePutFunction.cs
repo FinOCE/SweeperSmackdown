@@ -25,14 +25,14 @@ public static class VotePutFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Vote? vote,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%")]
             IAsyncCollector<Vote> voteDb,

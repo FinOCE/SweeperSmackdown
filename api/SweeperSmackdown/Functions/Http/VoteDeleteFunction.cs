@@ -4,7 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Entities;
+using SweeperSmackdown.Models;
 using SweeperSmackdown.Factories;
 using System;
 using System.Linq;
@@ -25,14 +25,14 @@ public static class VoteDeleteFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Vote? vote,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "%CosmosDbConnectionString%")]
             IAsyncCollector<Vote> voteDb,

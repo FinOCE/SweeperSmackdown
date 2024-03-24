@@ -1,10 +1,10 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Entities;
+using SweeperSmackdown.Functions.Activities;
+using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
-using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -23,25 +23,17 @@ public static class GameConfigureFunction
             Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
             new TimerOrchestratorFunctionProps(Constants.SETUP_COUNTDOWN_DURATION, false));
 
-        // Get votes necessary to start
-        var userIds = await ctx.CallEntityAsync<string[]>(
-            Id.For<Lobby>(lobbyId),
-            nameof(Lobby.GetUserIds),
-            null);
-
-        var requiredVotes = Math.Floor(userIds.Length * Constants.SETUP_REQUIRED_VOTE_RATIO);
+        // Get current lobby state
+        var lobby = await ctx.CallActivityAsync<Lobby>(
+            nameof(LobbyFetchActivityFunction),
+            new LobbyFetchActivityFunctionProps(lobbyId));
 
         // Create vote
-        await ctx.CallEntityAsync(
-            Id.For<Vote>(lobbyId),
-            nameof(Vote.Create),
-            (requiredVotes, new string[] { "READY" }));
+        var vote = await ctx.CallActivityAsync<Vote>(
+            nameof(VoteCreateActivityFunction),
+            new VoteCreateActivityFunctionProps(lobby));
 
-        // Get game settings
-        var settings = await ctx.CallEntityAsync<GameSettings>(
-            Id.For<Lobby>(lobbyId),
-            nameof(Lobby.GetSettings));
-
-        return settings;
+        // Return settings to use
+        return lobby.Settings;
     }
 }

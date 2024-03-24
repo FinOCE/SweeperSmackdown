@@ -5,7 +5,7 @@ using System;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Entities;
+namespace SweeperSmackdown.Functions.Entities;
 
 public interface IBoard
 {
@@ -14,7 +14,7 @@ public interface IBoard
     void Delete();
 
     Task<byte[]> GetGameState();
-    
+
     void SetGameState(byte[] gameState);
 }
 
@@ -42,7 +42,7 @@ public class Board : IBoard
 
     public void Delete() =>
         Entity.Current.DeleteState();
-    
+
     public Task<byte[]> GetGameState() =>
         Task.FromResult(GameState);
 
@@ -52,14 +52,14 @@ public class Board : IBoard
         {
             bool isSameAdjacentBombCount = State.GetAdjacentBombCount(gameState[i]) == State.GetAdjacentBombCount(GameState[i]);
             bool isSameBombPosition = State.IsBomb(gameState[i]) == State.IsBomb(GameState[i]);
-            
+
             if (!isSameAdjacentBombCount || !isSameBombPosition)
                 throw new ArgumentException("The new game state must not have changed the immutable board data");
         }
 
         GameState = gameState;
     }
-    
+
     [FunctionName(nameof(Board))]
     public static Task Run([EntityTrigger] IDurableEntityContext ctx) =>
         ctx.DispatchAsync<Board>();

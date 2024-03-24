@@ -1,9 +1,9 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Entities;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Activities;
+using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;

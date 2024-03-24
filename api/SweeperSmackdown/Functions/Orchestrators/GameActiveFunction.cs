@@ -1,7 +1,8 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Entities;
+using SweeperSmackdown.Functions.Activities;
+using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Collections.Generic;
@@ -40,11 +41,15 @@ public static class GameActiveFunction
             tasks.Add(timerTask);
 
         // Create board manager for each user
-        var userIds = await ctx.CallEntityAsync<string[]>(
-            Id.For<Lobby>(lobbyId),
-            nameof(Lobby.GetUserIds));
+        var lobby = await ctx.CallActivityAsync<Lobby>(
+            nameof(LobbyFetchActivityFunction),
+            new LobbyFetchActivityFunctionProps(lobbyId));
 
-        foreach (var userId in userIds)
+        await ctx.CallActivityAsync<BoardEntityMap>(
+            nameof(BoardEntityMapCreateActivityFunction),
+            new BoardEntityMapCreateActivityFunctionProps(lobbyId));
+        
+        foreach (var userId in lobby.UserIds)
             _ = ctx.CallSubOrchestratorAsync(
                 nameof(BoardManagerOrchestrationFunction),
                 Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId),
