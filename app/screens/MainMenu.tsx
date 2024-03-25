@@ -13,7 +13,7 @@ export function MainMenu() {
   const api = useApi()
 
   // Load until websocket is connected
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(ws.connected)
   ws.register("connected", () => setLoading(false))
 
   if (loading) return <div>Loading...</div>

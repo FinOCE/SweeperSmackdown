@@ -31,6 +31,11 @@ export interface IEventManager {
    * Clear any currently registered handlers.
    */
   clear(): void
+
+  /**
+   * Whether or not the event manager is currently connected to Web PubSub.
+   */
+  connected: boolean
 }
 
 export class EventManager extends EventEmitter implements IEventManager {
@@ -43,8 +48,13 @@ export class EventManager extends EventEmitter implements IEventManager {
     "server-message": []
   }
 
+  public connected: boolean = false
+
   public constructor() {
     super()
+
+    this.on("connected", () => (this.connected = true))
+    this.on("disconnected", () => (this.connected = false))
 
     this.on("connected", (e: OnConnectedArgs) => this.handlers.connected.forEach(handler => handler(e)))
     this.on("disconnected", (e: OnDisconnectedArgs) => this.handlers.disconnected.forEach(handler => handler(e)))

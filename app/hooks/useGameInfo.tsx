@@ -21,7 +21,6 @@ export function GameInfoProvider({ children }: GameInfoProviderProps) {
 
   useEffect(() => {
     setUserId("userId")
-    setLobbyId("lobbyId")
     // TODO: Get game info from discord sdk
   }, [])
 

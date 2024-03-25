@@ -33,6 +33,13 @@ export function useApi() {
       fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/users/${userId ?? gameInfo.userId}`, { method: "PUT" })
         .then(ok)
         .then(res => res.json())
-        .then((res: Api.Response.UserPut) => res)
+        .then((res: Api.Response.UserPut) => res),
+
+    userDelete: (lobbyId?: string, userId?: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/users/${userId ?? gameInfo.userId}`, {
+        method: "DELETE "
+      })
+        .then(ok)
+        .then(() => {})
   }
 }
