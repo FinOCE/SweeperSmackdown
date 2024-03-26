@@ -23,10 +23,7 @@ export function MainMenu() {
   const [error, setError] = useState<string>()
 
   async function joinLobby() {
-    const lobby = await api.lobbyGet(localLobbyId).catch(() => setError("Lobby not found"))
-    if (!lobby) return
-
-    const user = await api.userPut(lobby.lobbyId).catch(() => setError("Failed to join lobby"))
+    const user = await api.userPut(localLobbyId).catch(() => setError("Failed to join lobby"))
     if (!user) return
 
     setLobbyId(user.lobbyId)
