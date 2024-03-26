@@ -5,6 +5,7 @@ import { useNavigation } from "../hooks/useNavigation"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { isEvent } from "../utils/isEvent"
+import { Api } from "../types/Api"
 
 export function GameConfigure() {
   const { navigate } = useNavigation()
@@ -12,56 +13,51 @@ export function GameConfigure() {
   const ws = useWebsocket()
   const api = useApi()
 
-  const [hostId, setHostId] = useState("")
-  const [currentVotes, setCurrentVotes] = useState<Record<string, string[]>>({})
-  const [requiredVotes, setRequiredVotes] = useState(0)
-
-  const readyVotes = (currentVotes?.READY ?? []).length
+  let [lobby, setLobby] = useState<Api.Lobby>()
+  let [vote, setVote] = useState<Api.VoteGroup>()
 
   useEffect(() => {
-    if (!lobbyId) return
+    if (!lobbyId || !userId) return
 
-    api.lobbyGet().then(({ hostId }) => setHostId(hostId))
-    api.voteGetAll().then(({ votes, requiredVotes }) => (setCurrentVotes(votes), setRequiredVotes(requiredVotes)))
-  }, [lobbyId])
+    api.lobbyGet().then(setLobby)
+    api.voteGetAll().then(setVote)
+  }, [lobbyId, userId])
 
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.UserJoin>("USER_JOIN", data)) return
+  const isReady = vote?.votes?.READY?.includes(userId!) ?? false
 
-    // TODO: Handle users joining
-  })
+  // Register websocket events
+  useEffect(() => {
+    ws.register("group-message", e => {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.VoteAdd>("VOTE_ADD", data)) return
 
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.UserLeave>("USER_LEAVE", data)) return
+      setVote(v => ((v = structuredClone(v!)), v.votes.READY.push(data.userId), v))
+    })
 
-    // TODO: Handle users leaving
-  })
+    ws.register("group-message", e => {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.VoteRemove>("VOTE_REMOVE", data)) return
 
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.VoteAdd>("VOTE_ADD", data)) return
+      setVote(v => ((v = structuredClone(v!)), (v.votes.READY = v.votes.READY.filter(id => id !== data.userId)), v))
+    })
 
-    setCurrentVotes(prev => ((prev[data.data] = (prev[data.data] ?? []).concat(userId!)), prev))
-  })
+    ws.register("group-message", e => {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.VoteUpdateRequirement>("VOTE_UPDATE_REQUIREMENT", data)) return
 
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.VoteRemove>("VOTE_REMOVE", data)) return
+      setVote(v => ((v = structuredClone(v!)), (v.requiredVotes = data.data), v))
+    })
+  }, [])
 
-    setCurrentVotes(prev => ((prev[data.data] = prev[data.data].filter(id => id !== userId)), prev))
-  })
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.VoteUpdateRequirement>("VOTE_UPDATE_REQUIREMENT", data)) return
-
-    setRequiredVotes(data.data)
-  })
-
+  // Setup UI functions
   async function voteStart() {
     await api.votePut("READY")
+    setVote(v => ((v = structuredClone(v!)), v.votes.READY.push(userId!), v))
+  }
+
+  async function voteCancel() {
+    await api.voteDelete()
+    setVote(v => ((v = structuredClone(v!)), (v.votes.READY = v.votes.READY.filter(id => id !== userId)), v))
   }
 
   async function voteForce() {
@@ -74,11 +70,23 @@ export function GameConfigure() {
     navigate("MainMenu")
   }
 
+  // Prevent rendering until TODO
+  if (!lobby || !vote) return <div>Loading...</div>
+
+  // Render page
   return (
     <div>
       <p>Welcome to lobby {lobbyId}</p>
-      <input type="button" onClick={voteStart} value={`Vote Start (${readyVotes}/${requiredVotes})`} />
-      <input type="button" onClick={voteForce} value="Force Countdown" disabled={userId === hostId} />
+      <input
+        type="button"
+        onClick={isReady ? voteCancel : voteStart}
+        value={
+          isReady
+            ? `Cancel Vote (${vote.votes.READY.length}/${vote.requiredVotes})`
+            : `Vote Start (${vote.votes.READY.length}/${vote.requiredVotes})`
+        }
+      />
+      <input type="button" onClick={voteForce} value="Force Countdown" disabled={userId !== lobby.hostId} />
       <input type="button" onClick={leaveLobby} value="Leave Lobby" />
     </div>
   )
