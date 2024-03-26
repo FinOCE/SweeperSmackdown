@@ -8,33 +8,32 @@ namespace SweeperSmackdown.DTOs;
 
 public class LobbyPatchRequestDto
 {
-
     [JsonProperty("hostId")]
-    public string? HostId { get; }
-    
+    public string? HostId { get; set; }
+
     [JsonProperty("mode")]
-    public int? Mode { get; }
+    public int? Mode { get; set; }
 
     [JsonProperty("height")]
-    public int? Height { get; }
+    public int? Height { get; set; }
 
     [JsonProperty("width")]
-    public int? Width { get; }
+    public int? Width { get; set; }
 
     [JsonProperty("mines")]
-    public int? Mines { get; }
+    public int? Mines { get; set; }
 
     [JsonProperty("lives")]
-    public int? Lives { get; }
+    public int? Lives { get; set; }
 
     [JsonProperty("timeLimit")]
-    public int? TimeLimit { get; }
+    public int? TimeLimit { get; set; }
 
     [JsonProperty("boardCount")]
-    public int? BoardCount { get; }
+    public int? BoardCount { get; set; }
 
     [JsonProperty("shareBoards")]
-    public bool? ShareBoards { get; }
+    public bool? ShareBoards { get; set; }
 
     [JsonIgnore]
     public bool IsValid

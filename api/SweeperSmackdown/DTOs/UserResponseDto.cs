@@ -6,10 +6,10 @@ namespace SweeperSmackdown.DTOs;
 public class UserResponseDto
 {
     [JsonProperty("lobbyId")]
-    public string LobbyId { get; }
+    public string LobbyId { get; set; }
 
     [JsonProperty("userId")]
-    public string UserId { get; }
+    public string UserId { get; set; }
 
     public UserResponseDto(string lobbyId, string userId)
     {

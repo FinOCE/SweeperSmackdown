@@ -5,5 +5,5 @@ namespace SweeperSmackdown.DTOs;
 public class VotePutRequestDto
 {
     [JsonProperty("choice")]
-    public string Choice { get; } = null!;
+    public string Choice { get; set; } = null!;
 }

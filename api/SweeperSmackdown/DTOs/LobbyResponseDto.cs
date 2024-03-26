@@ -8,19 +8,19 @@ namespace SweeperSmackdown.DTOs;
 public class LobbyResponseDto
 {
     [JsonProperty("lobbyId")]
-    public string LobbyId { get; }
+    public string LobbyId { get; set; }
 
     [JsonProperty("hostId")]
-    public string HostId { get; }
+    public string HostId { get; set; }
     
     [JsonProperty("userIds")]
-    public string[] UserIds { get; }
+    public string[] UserIds { get; set; }
     
     [JsonProperty("wins")]
-    public IDictionary<string, int> Wins { get; }
+    public IDictionary<string, int> Wins { get; set; }
 
     [JsonProperty("settings")]
-    public GameSettings Settings { get; }
+    public GameSettings Settings { get; set; }
 
     public LobbyResponseDto(string lobbyId, string hostId, string[] userIds, IDictionary<string, int> wins, GameSettings settings)
     {

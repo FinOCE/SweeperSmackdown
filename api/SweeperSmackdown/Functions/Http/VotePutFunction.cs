@@ -64,8 +64,6 @@ public static class VotePutFunction
                 $"The 'choice' is not a valid option ({string.Join(", ", vote.Choices)})"
             });
 
-        Console.WriteLine(body.Choice + " -> " + string.Join(", ", vote.Choices));
-
         // Return 200 if old and new choice are the same
         var existingChoice = vote.Votes.Keys.FirstOrDefault(key => vote.Votes[key].Contains(userId));
         if (existingChoice != null && existingChoice == body.Choice)

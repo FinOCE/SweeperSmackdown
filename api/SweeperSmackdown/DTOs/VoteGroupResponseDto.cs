@@ -7,16 +7,16 @@ namespace SweeperSmackdown.DTOs;
 public class VoteGroupResponseDto
 {
     [JsonProperty("lobbyId")]
-    public string LobbyId { get; }
+    public string LobbyId { get; set; }
 
     [JsonProperty("requiredVotes")]
-    public int RequiredVotes { get; }
+    public int RequiredVotes { get; set; }
 
     [JsonProperty("choices")]
-    public string[] Choices { get; }
+    public string[] Choices { get; set; }
 
     [JsonProperty("votes")]
-    public IDictionary<string, string[]> Votes { get; }
+    public IDictionary<string, string[]> Votes { get; set; }
 
     public VoteGroupResponseDto(string lobbyId, int requiredVotes, string[] choices, IDictionary<string, string[]> votes)
     {
