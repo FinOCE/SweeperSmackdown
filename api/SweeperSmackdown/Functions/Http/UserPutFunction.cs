@@ -101,7 +101,7 @@ public static class UserPutFunction
         {
             vote.RequiredVotes = requiredVotes;
             await voteDb.AddAsync(vote);
-            await ws.AddAsync(ActionFactory.UpdateVoteRequirement(userId, lobbyId, requiredVotes));
+            await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
         }
 
         // Respond to request

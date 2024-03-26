@@ -11,6 +11,7 @@ using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.DTOs;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -75,7 +76,7 @@ public static class UserDeleteFunction
         {
             vote.RequiredVotes = requiredVotes;
             await voteDb.AddAsync(vote);
-            await ws.AddAsync(ActionFactory.UpdateVoteRequirement(userId, lobbyId, requiredVotes));
+            await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
         }
 
         // Respond to request

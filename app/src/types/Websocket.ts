@@ -32,28 +32,12 @@ export namespace Websocket {
       data: string
     }
 
-    export type VoteAdd = {
-      eventName: "VOTE_ADD"
+    export type VoteStateUpdate = {
+      eventName: "VOTE_STATE_UPDATE"
       userId: string
 
-      /** Choice */
-      data: string
-    }
-
-    export type VoteRemove = {
-      eventName: "VOTE_REMOVE"
-      userId: string
-
-      /** Choice */
-      data: string
-    }
-
-    export type VoteUpdateRequirement = {
-      eventName: "VOTE_UPDATE_REQUIREMENT"
-      userId: string
-
-      /** Votes required */
-      data: number
+      /** Updated vote state */
+      data: Api.VoteGroup
     }
 
     export type BoardCreate = {

@@ -1,18 +1,22 @@
 ﻿using Newtonsoft.Json;
 using SweeperSmackdown.Models;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;
 
 public class VoteSingleResponseDto
 {
     [JsonProperty("lobbyId")]
+    [JsonPropertyName("lobbyId")]
     public string LobbyId { get; set; }
     
     [JsonProperty("userId")]
+    [JsonPropertyName("userId")]
     public string UserId { get; set; }
     
     [JsonProperty("choice")]
+    [JsonPropertyName("choice")]
     public string Choice { get; set; }
 
     public VoteSingleResponseDto(string lobbyId, string userId, string choice)

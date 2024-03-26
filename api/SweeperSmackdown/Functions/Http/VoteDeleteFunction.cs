@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.DTOs;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -60,7 +61,7 @@ public static class VoteDeleteFunction
         vote.Votes[choice] = vote.Votes[choice].Where(id => id != userId).ToArray();
 
         await voteDb.AddAsync(vote);
-        await ws.AddAsync(ActionFactory.RemoveVote(userId, lobbyId, choice));
+        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
 
         // Respond to request
         return new NoContentResult();

@@ -10,11 +10,7 @@ public static class PubSubEvents
 
     public const string USER_LEAVE = "USER_LEAVE";
 
-    public const string VOTE_ADD = "VOTE_ADD";
-
-    public const string VOTE_REMOVE = "VOTE_REMOVE";
-
-    public const string VOTE_UPDATE_REQUIREMENT = "VOTE_UPDATE_REQUIREMENT";
+    public const string VOTE_STATE_UPDATE = "VOTE_STATE_UPDATE";
 
     public const string BOARD_CREATE = "BOARD_CREATE";
 }

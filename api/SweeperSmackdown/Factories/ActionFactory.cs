@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
+using Newtonsoft.Json;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using System.Text;
@@ -23,35 +24,21 @@ public static class ActionFactory
     public static WebPubSubAction AddUser(string userId, string lobbyId) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.USER_JOIN, userId, $"<@{userId}> has joined the lobby"),
+            MessageFactory.Create(PubSubEvents.USER_JOIN, userId, ""),
             WebPubSubDataType.Json);
-
-    // TODO: Implement users beyond just userId in order to implement above meaningfully
 
     public static WebPubSubAction RemoveUser(string userId, string lobbyId) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.USER_LEAVE, userId, $"<@{userId}> has left the lobby"),
+            MessageFactory.Create(PubSubEvents.USER_LEAVE, userId, ""),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction AddVote(string userId, string lobbyId, string choice) =>
+    public static WebPubSubAction UpdateVoteState(string lobbyId, VoteGroupResponseDto vote) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.VOTE_ADD, userId, choice),
+            MessageFactory.Create(PubSubEvents.VOTE_STATE_UPDATE, "SYSTEM", vote),
             WebPubSubDataType.Json);
-
-    public static WebPubSubAction RemoveVote(string userId, string lobbyId, string choice) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.VOTE_REMOVE, userId, choice),
-            WebPubSubDataType.Json);
-
-    public static WebPubSubAction UpdateVoteRequirement(string userId, string lobbyId, int votesRequired) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.VOTE_UPDATE_REQUIREMENT, userId, votesRequired),
-            WebPubSubDataType.Json);
-
+    
     public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,

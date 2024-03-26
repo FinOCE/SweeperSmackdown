@@ -77,8 +77,8 @@ public static class VotePutFunction
         vote.Votes[body.Choice] = vote.Votes[body.Choice].Append(userId).ToArray();
         
         await voteDb.AddAsync(vote);
-        await ws.AddAsync(ActionFactory.AddVote(userId, lobbyId, body.Choice));
-
+        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
+        
         // Respond to request
         return new CreatedResult(
             $"/lobbies/{lobbyId}/votes/{userId}",

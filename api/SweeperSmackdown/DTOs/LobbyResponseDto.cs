@@ -2,24 +2,30 @@
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;
 
 public class LobbyResponseDto
 {
     [JsonProperty("lobbyId")]
+    [JsonPropertyName("lobbyId")]
     public string LobbyId { get; set; }
 
     [JsonProperty("hostId")]
+    [JsonPropertyName("hostId")]
     public string HostId { get; set; }
     
     [JsonProperty("userIds")]
+    [JsonPropertyName("userIds")]
     public string[] UserIds { get; set; }
     
     [JsonProperty("wins")]
+    [JsonPropertyName("wins")]
     public IDictionary<string, int> Wins { get; set; }
 
     [JsonProperty("settings")]
+    [JsonPropertyName("settings")]
     public GameSettings Settings { get; set; }
 
     public LobbyResponseDto(string lobbyId, string hostId, string[] userIds, IDictionary<string, int> wins, GameSettings settings)

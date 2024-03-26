@@ -23,41 +23,32 @@ export function GameConfigure() {
     api.voteGetAll().then(setVote)
   }, [lobbyId, userId])
 
-  const isReady = vote?.votes?.READY?.includes(userId!) ?? false
-
   // Register websocket events
   useEffect(() => {
     ws.register("group-message", e => {
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.VoteAdd>("VOTE_ADD", data)) return
+      if (!isEvent<Websocket.Response.VoteStateUpdate>("VOTE_STATE_UPDATE", data)) return
 
-      setVote(v => ((v = structuredClone(v!)), v.votes.READY.push(data.userId), v))
+      setVote(data.data)
     })
+  })
 
-    ws.register("group-message", e => {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.VoteRemove>("VOTE_REMOVE", data)) return
+  // Setup UI state
+  const [votePending, setVotePending] = useState(false)
 
-      setVote(v => ((v = structuredClone(v!)), (v.votes.READY = v.votes.READY.filter(id => id !== data.userId)), v))
-    })
-
-    ws.register("group-message", e => {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.VoteUpdateRequirement>("VOTE_UPDATE_REQUIREMENT", data)) return
-
-      setVote(v => ((v = structuredClone(v!)), (v.requiredVotes = data.data), v))
-    })
-  }, [])
+  const isReady = vote?.votes?.READY?.includes(userId!) ?? false
 
   // Setup UI functions
   async function voteStart() {
+    setVotePending(true)
     await api.votePut("READY")
-    setVote(v => ((v = structuredClone(v!)), v.votes.READY.push(userId!), v))
+    setVotePending(false)
   }
 
   async function voteCancel() {
+    setVotePending(true)
     await api.voteDelete()
-    setVote(v => ((v = structuredClone(v!)), (v.votes.READY = v.votes.READY.filter(id => id !== userId)), v))
+    setVotePending(false)
   }
 
   async function voteForce() {
@@ -85,6 +76,7 @@ export function GameConfigure() {
             ? `Cancel Vote (${vote.votes.READY.length}/${vote.requiredVotes})`
             : `Vote Start (${vote.votes.READY.length}/${vote.requiredVotes})`
         }
+        disabled={votePending}
       />
       <input type="button" onClick={voteForce} value="Force Countdown" disabled={userId !== lobby.hostId} />
       <input type="button" onClick={leaveLobby} value="Leave Lobby" />
