@@ -11,6 +11,7 @@ using SweeperSmackdown.Models;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Structures;
 using System.Collections.Generic;
+using SweeperSmackdown.Extensions;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -34,9 +35,12 @@ public static class LobbyPutFunction
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         string lobbyId)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
-        
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
+
         // Return existing lobby if already exists
         if (existing != null)
             return new OkObjectResult(LobbyResponseDto.FromModel(existing));

@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Identity.Client;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
@@ -51,16 +52,19 @@ public static class UserPutFunction
         string lobbyId,
         string userId)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
 
         // Check if lobby exists and that user is in it
-        if (lobby == null || !lobby.UserIds.Contains(userId))
+        if (lobby == null)
             return new NotFoundResult();
 
-        // Only allow the specific user and the host to delete them
-        if (requesterId != userId && lobby.HostId != userId)
-            return new ForbidResult();
+        // Only allow the specific user join themselves
+        if (requesterId != userId)
+            return new StatusCodeResult(403);
         
         // Add user to ws group and notify
         await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));

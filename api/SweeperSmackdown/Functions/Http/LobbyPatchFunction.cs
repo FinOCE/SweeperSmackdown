@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
@@ -20,6 +22,7 @@ public static class LobbyPatchFunction
     [FunctionName(nameof(LobbyPatchFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequestDto payload,
+        HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
@@ -36,9 +39,12 @@ public static class LobbyPatchFunction
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
-        
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
+
         // Handle validation failures
         if (!payload.IsValid)
             return new BadRequestObjectResult(payload.Errors);
@@ -64,7 +70,7 @@ public static class LobbyPatchFunction
 
         // Only allow lobby members to modify
         if (!lobby.UserIds.Contains(requesterId))
-            return new ForbidResult();
+            return new StatusCodeResult(403);
 
         // Confirm mine count is realistic
         var newHeight = payload.Height ?? lobby.Settings.Height;

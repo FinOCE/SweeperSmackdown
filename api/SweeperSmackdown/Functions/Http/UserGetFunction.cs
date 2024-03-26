@@ -6,6 +6,7 @@ using System.Linq;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Models;
+using SweeperSmackdown.Extensions;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -23,12 +24,21 @@ public static class UserGetFunction
             Lobby? lobby,
         string userId)
     {
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
+        
+        // Check if lobby exists
         if (lobby == null)
             return new NotFoundResult();
 
+        // Check if user is in lobby
         if (!lobby.UserIds.Contains(userId))
-            return new NotFoundResult();
+            return new StatusCodeResult(403);
 
+        // Respond to request
         return new OkObjectResult(UserResponseDto.FromModel(lobby, userId));
     }
 }

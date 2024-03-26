@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
 using System.Linq;
 
@@ -29,15 +30,21 @@ public static class VoteGetAllFunction
             PartitionKey = "{lobbyId}")]
             Vote? vote)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
-        
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
+
+        // Check if lobby and vote exist
         if (vote == null || lobby == null)
             return new NotFoundResult();
 
+        // Check if user is in lobby
         if (!lobby.UserIds.Contains(requesterId))
-            return new ForbidResult();
+            return new StatusCodeResult(403);
 
+        // Respond to request
         return new OkObjectResult(VoteGroupResponseDto.FromModel(vote));
     }
 }

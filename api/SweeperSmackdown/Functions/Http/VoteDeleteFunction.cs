@@ -9,6 +9,7 @@ using SweeperSmackdown.Factories;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using SweeperSmackdown.Extensions;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -40,16 +41,19 @@ public static class VoteDeleteFunction
         string lobbyId,
         string userId)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
 
         // Check if a vote is in progress and that the user has a vote
         if (vote == null || vote.Votes.Any(kvp => kvp.Value.Contains(userId)) || lobby == null)
             return new NotFoundResult();
 
         // Only allow the specific user to delete their vote
-        if (lobby.UserIds.Contains(userId) && requesterId != userId)
-            return new ForbidResult();
+        if (!lobby.UserIds.Contains(userId) || requesterId != userId)
+            return new StatusCodeResult(403);
 
         // Remove user vote
         var choice = vote.Votes.First(kvp => kvp.Value.Contains(userId)).Key;

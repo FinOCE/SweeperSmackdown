@@ -10,6 +10,7 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
+using SweeperSmackdown.Extensions;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -46,16 +47,19 @@ public static class UserDeleteFunction
         string lobbyId,
         string userId)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
-        
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
+
         // Check if lobby exists and that user is in it
-        if (lobby == null || !lobby.UserIds.Contains(userId))
+        if (lobby == null)
             return new NotFoundResult();
 
         // Only allow the specific user and the host to delete them
         if (requesterId != userId && lobby.HostId != userId)
-            return new ForbidResult();
+            return new StatusCodeResult(403);
 
         // Remove user from lobby
         lobby.UserIds = lobby.UserIds.Where(id => id != userId).ToArray();

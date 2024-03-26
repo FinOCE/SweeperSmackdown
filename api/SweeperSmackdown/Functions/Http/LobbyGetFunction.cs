@@ -6,6 +6,7 @@ using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Models;
 using System.Linq;
+using SweeperSmackdown.Extensions;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -22,15 +23,21 @@ public static class LobbyGetFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby)
     {
-        // TODO: Get userId for person that made request
-        var requesterId = "userId";
-        
+        // Only allow if user is logged in
+        var requesterId = req.GetUserId();
+
+        if (requesterId == null)
+            return new StatusCodeResult(401);
+
+        // Check if lobby exists
         if (lobby == null)
             return new NotFoundResult();
 
+        // Check if user is in lobby
         if (!lobby.UserIds.Contains(requesterId))
-            return new ForbidResult();
+            return new StatusCodeResult(403);
         
+        // Respond to request
         return new OkObjectResult(LobbyResponseDto.FromModel(lobby));
     }
 }
