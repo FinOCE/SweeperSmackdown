@@ -3,7 +3,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Models;
-using System;
+using SweeperSmackdown.Utils;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -32,7 +32,7 @@ public static class VoteCreateActivityFunction
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.VOTE_CONTAINER_NAME);
 
-        var requiredVotes = (int)Math.Floor(props.Lobby.UserIds.Length * Constants.SETUP_REQUIRED_VOTE_RATIO);
+        var requiredVotes = VoteUtils.CalculateRequiredVotes(props.Lobby.UserIds.Length);
         
         return await container.UpsertItemAsync(
             new Vote(props.Lobby.Id, new Dictionary<string, string[]>(), requiredVotes, new[] { "READY" }),

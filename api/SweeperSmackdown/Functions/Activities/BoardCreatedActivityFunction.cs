@@ -16,10 +16,13 @@ public class BoardCreatedActivityFunctionProps
 
     public string UserId { get; }
 
-    public BoardCreatedActivityFunctionProps(string lobbyId, string userId)
+    public byte[] GameState { get; }
+
+    public BoardCreatedActivityFunctionProps(string lobbyId, string userId, byte[] gameState)
     {
         LobbyId = lobbyId;
         UserId = userId;
+        GameState = gameState;
     }
 }
 
@@ -47,6 +50,6 @@ public static class BoardCreatedActivityFunction
                 PatchOperation.Add("/boardIds", props.UserId)
             });
             
-        await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId));
+        await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState));
     }
 }

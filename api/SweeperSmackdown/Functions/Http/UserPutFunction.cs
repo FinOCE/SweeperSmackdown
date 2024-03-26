@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
+using Microsoft.Identity.Client;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Factories;
@@ -90,7 +91,7 @@ public static class UserPutFunction
         }
 
         // Update votes required
-        var requiredVotes = (int)Math.Floor(lobby.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
+        var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
 
         if (vote != null && vote.RequiredVotes != requiredVotes)
         {

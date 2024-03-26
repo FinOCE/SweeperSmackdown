@@ -44,7 +44,7 @@ public static class BoardManagerOrchestrationFunction
         // Notify users the board was created
         await ctx.CallActivityAsync(
             nameof(BoardCreatedActivityFunction),
-            new BoardCreatedActivityFunctionProps(lobbyId, userId));
+            new BoardCreatedActivityFunctionProps(lobbyId, userId, gameState));
 
         // Wait for new board to be completed
         var eventTask = ctx.WaitForExternalEvent<string>(DurableEvents.BOARD_COMPLETED);

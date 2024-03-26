@@ -9,6 +9,7 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
+using SweeperSmackdown.Utils;
 
 namespace SweeperSmackdown.Functions.Http;
 
@@ -64,7 +65,7 @@ public static class UserDeleteFunction
         await ws.AddAsync(ActionFactory.RemoveUser(userId, lobbyId));
 
         // Update votes required
-        var requiredVotes = (int)Math.Floor(lobby.UserIds.Length / Constants.SETUP_REQUIRED_VOTE_RATIO);
+        var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
 
         if (vote != null && vote.RequiredVotes != requiredVotes)
         {

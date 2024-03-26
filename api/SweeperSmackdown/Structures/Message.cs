@@ -10,17 +10,13 @@ public class Message<T>
     [JsonPropertyName("userId")]
     public string UserId { get; }
 
-    [JsonPropertyName("message")]
+    [JsonPropertyName("data")]
     public T Data { get; }
 
-    [JsonPropertyName("content")]
-    public string? Content { get; }
-
-    public Message(string eventName, string userId, T data, string? content = null)
+    public Message(string eventName, string userId, T data)
     {
         EventName = eventName;
         UserId = userId;
         Data = data;
-        Content = content;
     }
 }
