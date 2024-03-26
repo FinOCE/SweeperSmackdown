@@ -1,23 +1,43 @@
 {
-	"name": "example",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite preview"
-	},
-	"dependencies": {
-		"@azure/web-pubsub-client": "^1.0.0",
-		"events": "^3.3.0",
-		"preact": "^10.16.0",
-		"preact-render-to-string": "^6.2.0"
-	},
-	"devDependencies": {
-		"@preact/preset-vite": "^2.5.0",
-		"sass": "^1.72.0",
-		"typescript": "^5.4.3",
-		"vite": "^4.3.2",
-		"vite-plugin-ssr": "^0.4.133"
-	}
+  "name": "sweeper-smackdown",
+  "version": "1.0.0",
+  "description": "A Discord activity to play competitive minesweeper with your friends!",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "webpack serve --no-open --port 3000 --mode development",
+    "build": "webpack --mode production"
+  },
+  "keywords": [
+    "game",
+    "discord",
+    "minesweeper",
+    "activities"
+  ],
+  "author": "FinOCE",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "@babel/core": "^7.24.3",
+    "@babel/preset-env": "^7.24.3",
+    "@babel/preset-react": "^7.24.1",
+    "@babel/preset-typescript": "^7.24.1",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.22",
+    "babel-loader": "^9.1.3",
+    "css-loader": "^6.10.0",
+    "dotenv-webpack": "^8.1.0",
+    "html-webpack-plugin": "^5.6.0",
+    "sass": "^1.72.0",
+    "sass-loader": "^14.1.1",
+    "style-loader": "^3.3.4",
+    "typescript": "^5.4.3",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
+  },
+  "dependencies": {
+    "@azure/web-pubsub-client": "^1.0.0",
+    "events": "^3.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
 }
