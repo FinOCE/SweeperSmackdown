@@ -48,7 +48,7 @@ public static class VoteDeleteFunction
             return new StatusCodeResult(401);
 
         // Check if a vote is in progress and that the user has a vote
-        if (vote == null || vote.Votes.Any(kvp => kvp.Value.Contains(userId)) || lobby == null)
+        if (vote == null || !vote.Votes.Any(kvp => kvp.Value.Contains(userId)) || lobby == null)
             return new NotFoundResult();
 
         // Only allow the specific user to delete their vote
