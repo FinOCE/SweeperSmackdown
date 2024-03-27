@@ -8,20 +8,27 @@ using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
 using System.Linq;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Votes;
 
-public static class LobbyGetFunction
+public static class VoteGetAllFunction
 {
-    [FunctionName(nameof(LobbyGetFunction))]
+    [FunctionName(nameof(VoteGetAllFunction))]
     public static IActionResult Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes")] HttpRequest req,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
-            Lobby? lobby)
+            Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "CosmosDbConnectionString",
+            Id = "{lobbyId}",
+            PartitionKey = "{lobbyId}")]
+            Vote? vote)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();
@@ -29,15 +36,15 @@ public static class LobbyGetFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobby exists
-        if (lobby == null)
+        // Check if lobby and vote exist
+        if (vote == null || lobby == null)
             return new NotFoundResult();
 
         // Check if user is in lobby
         if (!lobby.UserIds.Contains(requesterId))
             return new StatusCodeResult(403);
-        
+
         // Respond to request
-        return new OkObjectResult(LobbyResponseDto.FromModel(lobby));
+        return new OkObjectResult(VoteGroupResponseDto.FromModel(vote));
     }
 }

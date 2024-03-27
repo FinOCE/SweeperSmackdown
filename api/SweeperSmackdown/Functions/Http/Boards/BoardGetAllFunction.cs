@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Boards;
 
 public static class BoardGetAllFunction
 {
@@ -45,15 +45,15 @@ public static class BoardGetAllFunction
         // Check if lobbby and board exists
         if (lobby == null || boardEntityMap == null)
             return new NotFoundResult();
-        
+
         // Check if requester is a lobby member
         if (!lobby.UserIds.Contains(requesterId))
             return new StatusCodeResult(403);
-        
+
         // Check if board exists
         var entityTasks = boardEntityMap.BoardIds
             .Select(userId => KeyValuePair.Create(userId, entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId))));
-        
+
         await Task.WhenAll(entityTasks.Select(kvp => kvp.Value));
 
         var data = entityTasks

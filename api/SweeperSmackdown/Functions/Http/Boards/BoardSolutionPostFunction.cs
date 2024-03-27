@@ -14,11 +14,11 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardSkipPostFunction
+public static class BoardSolutionPostFunction
 {
-    [FunctionName(nameof(BoardSkipPostFunction))]
+    [FunctionName(nameof(BoardSolutionPostFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -59,20 +59,26 @@ public static class BoardSkipPostFunction
         if (!lobby.UserIds.Contains(requesterId) || requesterId != userId)
             return new StatusCodeResult(403);
 
-        // Check if lobby allows skips (seed existing means sharing boards enabled)
-        if (lobby.Settings.Seed != 0)
-            return new ConflictResult();
-
         // Check if board exists
         var entity = await entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId));
 
         if (!entity.EntityExists)
             return new NotFoundResult();
 
+        // Verify board
+        var initialState = entity.EntityState.InitialState;
+        var gameState = new BinaryData(payload.GameState).ToArray();
+
+        if (!State.IsRevealedEquivalent(initialState, gameState))
+            return new BadRequestObjectResult(new string[]
+            {
+                "The 'gameState' does not match the initial board state"
+            });
+
         // Notify orchestrator
         await orchestrationClient.RaiseEventAsync(
             Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
-            DurableEvents.BOARD_SKIPPED);
+            DurableEvents.BOARD_COMPLETED);
 
         // Respond to request
         return new NoContentResult();

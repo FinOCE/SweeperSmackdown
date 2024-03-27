@@ -4,22 +4,27 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardGetFunction
+public static class BoardSkipPostFunction
 {
-    [FunctionName(nameof(BoardGetFunction))]
+    [FunctionName(nameof(BoardSkipPostFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/boards/{userId}")] HttpRequest req,
+        [HttpTrigger(
+            AuthorizationLevel.Anonymous,
+            "post",
+            Route = "lobbies/{lobbyId}/boards/{userId}/solution")]
+            BoardSolutionPostRequestDto payload,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -34,7 +39,10 @@ public static class BoardGetFunction
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             BoardEntityMap? boardEntityMap,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
+        HttpRequest req,
+        string lobbyId,
         string userId)
     {
         // Ensure request is from logged in user
@@ -42,14 +50,18 @@ public static class BoardGetFunction
 
         if (requesterId == null)
             return new StatusCodeResult(401);
-        
+
         // Check if lobbby and board exist
         if (lobby == null || boardEntityMap == null || !boardEntityMap.BoardIds.Contains(userId))
             return new NotFoundResult();
 
-        // Check if requester is a lobby member
-        if (!lobby.UserIds.Contains(requesterId))
+        // Check if requester is the user
+        if (!lobby.UserIds.Contains(requesterId) || requesterId != userId)
             return new StatusCodeResult(403);
+
+        // Check if lobby allows skips (seed existing means sharing boards enabled)
+        if (lobby.Settings.Seed != 0)
+            return new ConflictResult();
 
         // Check if board exists
         var entity = await entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId));
@@ -57,12 +69,12 @@ public static class BoardGetFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
+        // Notify orchestrator
+        await orchestrationClient.RaiseEventAsync(
+            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
+            DurableEvents.BOARD_SKIPPED);
+
         // Respond to request
-        var data = new Dictionary<string, string>()
-        {
-            { userId, new BinaryData(entity.EntityState.GameState).ToString() }
-        };
-        
-        return new OkObjectResult(data);
+        return new NoContentResult();
     }
 }

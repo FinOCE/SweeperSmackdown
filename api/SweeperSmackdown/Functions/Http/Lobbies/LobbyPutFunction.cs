@@ -13,7 +13,7 @@ using SweeperSmackdown.Utils;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Lobbies;
 
 public static class LobbyPutFunction
 {
@@ -52,7 +52,7 @@ public static class LobbyPutFunction
             new[] { requesterId },
             new Dictionary<string, int>(),
             new GameSettings());
-        
+
         await db.AddAsync(lobby);
 
         // Start orchestrator

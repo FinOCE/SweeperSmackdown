@@ -6,15 +6,16 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
+using System;
 using System.Linq;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Votes;
 
-public static class VoteGetAllFunction
+public static class VoteGetFunction
 {
-    [FunctionName(nameof(VoteGetAllFunction))]
+    [FunctionName(nameof(VoteGetFunction))]
     public static IActionResult Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes/{userId}")] HttpRequest req,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -28,7 +29,8 @@ public static class VoteGetAllFunction
             Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
-            Vote? vote)
+            Vote? vote,
+        string userId)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();
@@ -40,11 +42,11 @@ public static class VoteGetAllFunction
         if (vote == null || lobby == null)
             return new NotFoundResult();
 
-        // Check if user is in lobby
+        // Check the user is in the lobby
         if (!lobby.UserIds.Contains(requesterId))
             return new StatusCodeResult(403);
 
         // Respond to request
-        return new OkObjectResult(VoteGroupResponseDto.FromModel(vote));
+        return new OkObjectResult(VoteSingleResponseDto.FromModel(vote, userId));
     }
 }

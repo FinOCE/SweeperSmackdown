@@ -15,7 +15,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http;
+namespace SweeperSmackdown.Functions.Http.Lobbies;
 
 public static class LobbyPatchFunction
 {
@@ -97,7 +97,7 @@ public static class LobbyPatchFunction
             seed = payload.ShareBoards.Value
                 ? Guid.NewGuid().GetHashCode()
                 : lobby.Settings.Seed;
-        
+
         lobby.HostId = payload.HostId ?? lobby.HostId;
         lobby.Settings = lobby.Settings.Update(
             payload.Mode,
@@ -113,7 +113,7 @@ public static class LobbyPatchFunction
 
         // Respond to request
         var dto = LobbyResponseDto.FromModel(lobby);
-        
+
         await ws.AddAsync(ActionFactory.UpdateLobby(requesterId, lobbyId, dto));
         return new OkObjectResult(dto);
     }
