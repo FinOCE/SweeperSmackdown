@@ -17,12 +17,16 @@ namespace SweeperSmackdown.Models
         [JsonProperty("choices")]
         public string[] Choices { get; set; }
 
+        [JsonProperty("forced")]
+        public bool Forced { get; set; }
+
         public Vote(string lobbyId, IDictionary<string, string[]> votes, int requiredVotes, string[] choices)
         {
             LobbyId = lobbyId;
             Votes = votes;
             RequiredVotes = requiredVotes;
             Choices = choices;
+            Forced = false;
         }
     }
 }

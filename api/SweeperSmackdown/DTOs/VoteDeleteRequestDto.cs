@@ -2,11 +2,8 @@
 
 namespace SweeperSmackdown.DTOs;
 
-public class VotePutRequestDto
+public class VoteDeleteRequestDto
 {
-    [JsonProperty("choice")]
-    public string Choice { get; set; } = null!;
-
     [JsonProperty("force")]
     public bool? Force { get; set; }
 }
