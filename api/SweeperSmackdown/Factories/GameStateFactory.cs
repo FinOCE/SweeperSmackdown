@@ -1,13 +1,13 @@
 ﻿using SweeperSmackdown.Structures;
+using SweeperSmackdown.Utils;
 using System;
+using System.Linq;
 
 namespace SweeperSmackdown.Factories;
 
 public static class GameStateFactory
 {
     public static readonly int[] VALID_MODES = new int[] { 0 };
-
-    // TODO: Refactor this into factories and builders
 
     public static byte[] Create(int seed, GameSettings settings)
     {
@@ -22,8 +22,52 @@ public static class GameStateFactory
     {
         var random = new Random(seed);
         
-        // TODO: Implement
+        // Generate mine mask
+        var mineMask = new bool[height * width];
+        var mineCount = 0;
         
-        return new byte[height * width];
+        while (true)
+        {
+            var x = random.Next(height);
+            var y = random.Next(width);
+
+            if (!mineMask[x + y * width])
+                mineCount++;
+
+            if (mineCount == mines)
+                break;
+        }
+        
+        // Generate adjacent bomb count mask
+        var adjacentMask = new int[height * width];
+
+        for (int i = 0; i < height * width; i++)
+        {
+            var hugsTopEdge = i < width;
+            var hugsBottomEdge = i > height * (width - 1);
+            var hugsLeftEdge = i % width == width - 1;
+            var hugsRightEdge = i % width == 0;
+
+            var adjacentBombs = 0;
+
+            if (!hugsTopEdge && mineMask[i - width]) adjacentBombs++;
+            if (!hugsTopEdge && !hugsRightEdge && mineMask[i - width + 1]) adjacentBombs++;
+            if (!hugsRightEdge && mineMask[i + 1]) adjacentBombs++;
+            if (!hugsRightEdge && !hugsBottomEdge && mineMask[i + width + 1]) adjacentBombs++;
+            if (!hugsBottomEdge && mineMask[i + width]) adjacentBombs++;
+            if (!hugsBottomEdge && !hugsLeftEdge && mineMask[i + width - 1]) adjacentBombs++;
+            if (!hugsLeftEdge && mineMask[i - 1]) adjacentBombs++;
+            if (!hugsLeftEdge && !hugsTopEdge && mineMask[i - width - 1]) adjacentBombs++;
+
+            adjacentMask[i] = adjacentBombs;
+        }
+
+        // Map masks to state bytes
+        var gameState = new byte[height * width];
+        
+        for (int i = 0; i < height * width; i++)
+            gameState[i] = State.Create(isBomb: mineMask[i], adjacentBombs: adjacentMask[i]);
+
+        return gameState;
     }
 }
