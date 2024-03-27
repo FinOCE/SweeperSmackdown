@@ -33,9 +33,9 @@ public class GameSettings
     [JsonPropertyName("boardCount")]
     public int BoardCount { get; private set; } = 0;
 
-    [JsonProperty("shareBoards")]
-    [JsonPropertyName("shareBoards")]
-    public bool ShareBoards { get; private set; } = false;
+    [JsonProperty("seed")]
+    [JsonPropertyName("seed")]
+    public int Seed { get; private set; } = 0;
 
     public GameSettings Update(
         int? mode,
@@ -45,7 +45,7 @@ public class GameSettings
         int? lives,
         int? timeLimit,
         int? boardCount,
-        bool? shareBoards)
+        int? seed)
     {
         return new GameSettings()
         {
@@ -56,7 +56,7 @@ public class GameSettings
             Lives = lives ?? Lives,
             TimeLimit = timeLimit ?? TimeLimit,
             BoardCount = boardCount ?? BoardCount,
-            ShareBoards = shareBoards ?? ShareBoards
+            Seed = seed ?? Seed
         };
     }
 }

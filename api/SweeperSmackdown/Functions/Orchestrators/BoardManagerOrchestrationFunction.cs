@@ -6,6 +6,7 @@ using SweeperSmackdown.Functions.Activities;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -33,8 +34,15 @@ public static class BoardManagerOrchestrationFunction
         var userId = Id.FromInstance(ctx.InstanceId);
         var props = ctx.GetInput<BoardManagerOrchestrationFunctionProps>();
 
-        // Create board
-        var gameState = GameStateFactory.Create(props.Settings); // TODO: Handle consistent states being generated
+        // Create repeatable durable safe random
+        var iteration = props.Settings.BoardCount - props.Remaining;
+
+        var seed = props.Settings.Seed != 0
+            ? props.Settings.Seed + iteration
+            : ctx.NewGuid().GetHashCode();
+        
+        // Generate boards
+        var gameState = GameStateFactory.Create(seed, props.Settings);
 
         await ctx.CallEntityAsync(
             Id.For<Board>(userId),

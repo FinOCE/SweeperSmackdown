@@ -91,6 +91,13 @@ public static class LobbyPatchFunction
             });
 
         // Update lobby settings
+        int? seed = null;
+
+        if (payload.ShareBoards != null)
+            seed = payload.ShareBoards.Value
+                ? Guid.NewGuid().GetHashCode()
+                : lobby.Settings.Seed;
+        
         lobby.HostId = payload.HostId ?? lobby.HostId;
         lobby.Settings = lobby.Settings.Update(
             payload.Mode,
@@ -100,7 +107,7 @@ public static class LobbyPatchFunction
             payload.Lives,
             payload.TimeLimit,
             payload.BoardCount,
-            payload.ShareBoards);
+            seed);
 
         await db.AddAsync(lobby);
 
