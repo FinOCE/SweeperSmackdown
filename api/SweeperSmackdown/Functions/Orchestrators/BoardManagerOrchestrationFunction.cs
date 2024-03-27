@@ -54,10 +54,17 @@ public static class BoardManagerOrchestrationFunction
             new BoardCreatedActivityFunctionProps(lobbyId, userId, gameState));
 
         // Wait for new board to be completed
-        var eventTask = ctx.WaitForExternalEvent<string>(DurableEvents.BOARD_COMPLETED);
+        var skippedTask = ctx.WaitForExternalEvent(DurableEvents.BOARD_SKIPPED);
+        var completedTask = ctx.WaitForExternalEvent(DurableEvents.BOARD_COMPLETED);
+
+        var winner = await Task.WhenAny(skippedTask, completedTask);
+        var decrement = winner == completedTask ? 1 : 0;
 
         if (props.Remaining > 0 || props.Remaining == -1)
-            ctx.ContinueAsNew(new BoardManagerOrchestrationFunctionProps(props.Settings, props.Remaining - 1));
+            ctx.ContinueAsNew(
+                new BoardManagerOrchestrationFunctionProps(
+                    props.Settings,
+                    props.Remaining - decrement));
 
         // Return user ID as winner if completed before any other task
         return userId;
