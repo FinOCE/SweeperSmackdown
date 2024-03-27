@@ -1,9 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
-using Newtonsoft.Json;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
-using SweeperSmackdown.Models;
 using System;
 using System.Text;
 

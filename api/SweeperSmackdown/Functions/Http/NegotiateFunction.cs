@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
-using Microsoft.Azure.WebJobs;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Extensions;
-using Microsoft.AspNetCore.Mvc;
 
 namespace SweeperSmackdown.Functions.Http;
 

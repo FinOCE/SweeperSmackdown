@@ -1,17 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Linq;
+using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
-using SweeperSmackdown.Extensions;
-using SweeperSmackdown.DTOs;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http;
 
