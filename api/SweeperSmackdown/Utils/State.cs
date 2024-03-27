@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using System;
+﻿using System;
 
 namespace SweeperSmackdown.Utils;
 
@@ -30,6 +29,21 @@ public static class State
         bit1 ? ContainsBit(state, 2) : true &&
         bit2 ? ContainsBit(state, 3) : true &&
         bit3 ? ContainsBit(state, 4) : true;
+
+    public static bool IsRevealedEquivalent(byte oldState, byte newState) =>
+        (byte)(oldState | 1) == newState;
+
+    public static bool IsRevealedEquivalent(byte[] initialState, byte[] gameState)
+    {
+        if (initialState.Length != gameState.Length)
+            return false;
+
+        for (int i = 0; i < initialState.Length; i++)
+            if (!IsRevealedEquivalent(initialState[i], gameState[i]))
+                return false;
+
+        return true;
+    }
 
     public static byte Create(
         bool isRevealed = false,

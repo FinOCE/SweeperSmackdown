@@ -37,7 +37,7 @@ public static class BoardManagerOrchestrationFunction
         var gameState = GameStateFactory.Create(props.Settings); // TODO: Handle consistent states being generated
 
         await ctx.CallEntityAsync(
-            Id.For<Board>(lobbyId, userId),
+            Id.For<Board>(userId),
             nameof(Board.Create),
             gameState);
 

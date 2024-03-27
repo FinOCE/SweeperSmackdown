@@ -13,4 +13,6 @@ public static class PubSubEvents
     public const string VOTE_STATE_UPDATE = "VOTE_STATE_UPDATE";
 
     public const string BOARD_CREATE = "BOARD_CREATE";
+
+    public const string MOVE_ADD = "MOVE_ADD";
 }

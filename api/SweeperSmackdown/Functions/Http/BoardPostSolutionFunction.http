@@ -1,0 +1,15 @@
+@lobbyId = "lobbyId"
+@userId = "userId"
+@gameState = ""
+
+# gameState is the binary data of the game state parsed into a string
+
+###
+
+POST http://localhost:7071/lobbies/{{lobbyId}}/boards/{{userId}}/solution
+
+{
+  "gameState": "{{gameState}}"
+}
+
+###

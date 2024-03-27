@@ -13,51 +13,42 @@ public interface IBoard
 
     void Delete();
 
+    Task<byte[]> GetInitialState();
+
     Task<byte[]> GetGameState();
 
-    void SetGameState(byte[] gameState);
+    void MakeMove(int index, byte state);
 }
 
 [DataContract]
 public class Board : IBoard
 {
     [DataMember]
+    public byte[] InitialState { get; private set; } = null!;
+    [DataMember]
     public byte[] GameState { get; private set; } = null!;
 
     public void Create(byte[] gameState)
     {
+        InitialState = gameState;
         GameState = gameState;
-    }
-
-    /// <summary>
-    /// Utility method to assume the state result of a newly created entity.
-    /// </summary>
-    /// <returns>The new assumed entity</returns>
-    public static Board Initial(byte[] gameState)
-    {
-        var board = new Board();
-        board.Create(gameState);
-        return board;
     }
 
     public void Delete() =>
         Entity.Current.DeleteState();
 
+    public Task<byte[]> GetInitialState() =>
+        Task.FromResult(InitialState);
+
     public Task<byte[]> GetGameState() =>
         Task.FromResult(GameState);
 
-    public void SetGameState(byte[] gameState)
+    public void MakeMove(int index, byte state)
     {
-        for (int i = 0; i < GameState.Length; i++)
-        {
-            bool isSameAdjacentBombCount = State.GetAdjacentBombCount(gameState[i]) == State.GetAdjacentBombCount(GameState[i]);
-            bool isSameBombPosition = State.IsBomb(gameState[i]) == State.IsBomb(GameState[i]);
-
-            if (!isSameAdjacentBombCount || !isSameBombPosition)
-                throw new ArgumentException("The new game state must not have changed the immutable board data");
-        }
-
-        GameState = gameState;
+        if (!State.IsRevealedEquivalent(InitialState[index], state))
+            throw new ArgumentException("The new game state must not have changed the immutable board data");
+        
+        GameState[index] = state;
     }
 
     [FunctionName(nameof(Board))]
