@@ -78,10 +78,11 @@ export function useApi() {
         .then(res => res.json())
         .then((res: Api.Response.UserPut) => res),
 
-    voteDelete: (lobbyId?: string, userId?: string) =>
+    voteDelete: (force?: boolean, lobbyId?: string, userId?: string) =>
       fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/votes/${userId ?? gameInfo.userId}`, {
         method: "DELETE",
-        headers
+        body: JSON.stringify({ force }),
+        headers: { ...headers, ...jsonHeader }
       })
         .then(okOrNotFound)
         .then(() => {}),
@@ -101,10 +102,10 @@ export function useApi() {
         .then(res => res.json())
         .then((res: Api.Response.VoteGet) => res),
 
-    votePut: (choice: string, lobbyId?: string, userId?: string) =>
+    votePut: (choice: string, force?: boolean, lobbyId?: string, userId?: string) =>
       fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/votes/${userId ?? gameInfo.userId}`, {
         method: "PUT",
-        body: JSON.stringify({ choice }),
+        body: JSON.stringify({ choice, force }),
         headers: { ...headers, ...jsonHeader }
       })
         .then(ok)

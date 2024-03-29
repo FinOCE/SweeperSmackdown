@@ -6,6 +6,7 @@ import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { isEvent } from "../utils/isEvent"
 import { Api } from "../types/Api"
+import { SliderInput } from "../components/SliderInput"
 
 type Difficulty = "easy" | "normal" | "hard" | "hell"
 
@@ -60,7 +61,10 @@ export function GameConfigure() {
       e: ChangeEvent<HTMLInputElement>,
       key: keyof Api.GameSettings,
       callback: (value: ChangeEvent<HTMLInputElement>) => any
-    ) => setSettings(prev => ({ ...prev, [key]: callback(e) })),
+    ) => {
+      console.log(key, "set to", e.target.value)
+      setSettings(prev => ({ ...prev, [key]: callback(e) }))
+    },
     []
   )
 
@@ -89,12 +93,14 @@ export function GameConfigure() {
 
   async function voteCancel() {
     setVotePending(true)
-    await api.voteDelete()
+    await api.voteDelete(lobby?.hostId === userId)
     setVotePending(false)
   }
 
   async function voteForce() {
-    // TODO: Add api endpoint to force a countdown
+    setVotePending(true)
+    await api.votePut("READY", true)
+    setVotePending(false)
   }
 
   async function leaveLobby() {
@@ -110,12 +116,9 @@ export function GameConfigure() {
   return (
     <div>
       <p>Welcome to lobby {lobbyId}</p>
+      <p>Members: {lobby.userIds.join(", ")}</p>
 
       <section id="controls">
-        <pre>
-          <code>{JSON.stringify(settings)}</code>
-        </pre>
-
         <fieldset>
           <legend>Mode</legend>
 
@@ -130,13 +133,7 @@ export function GameConfigure() {
             />
             <label htmlFor="mode-0">Classic</label>
           </div>
-
-          <div>
-            <p>Coming soon...</p>
-          </div>
         </fieldset>
-
-        <br />
 
         <fieldset>
           <legend>Difficulty</legend>
@@ -190,91 +187,89 @@ export function GameConfigure() {
           </div>
         </fieldset>
 
-        <br />
+        <fieldset>
+          <legend>Height</legend>
 
-        <div>
-          <label htmlFor="height">Height</label>
-          <input
-            type="range"
+          <SliderInput
             name="height"
             id="height"
-            min="9"
-            max="100"
-            defaultValue={settings.height}
-            onChange={e => changeSetting(e, "height", e => Number(e.target.value))}
+            min={9}
+            max={100}
+            value={settings.height}
+            onChange={e => setSettings(prev => ({ ...prev, height: e }))}
           />
-          <output htmlFor="height">{settings.height}</output>
-        </div>
+        </fieldset>
 
-        <div>
-          <label htmlFor="width">Width</label>
-          <input
-            type="range"
+        <fieldset>
+          <legend>Width</legend>
+
+          <SliderInput
             name="width"
             id="width"
-            min="9"
-            max="100"
+            min={9}
+            max={100}
             value={settings.width}
-            onChange={e => changeSetting(e, "width", e => Number(e.target.value))}
+            onChange={e => setSettings(prev => ({ ...prev, width: e }))}
           />
-          <output htmlFor="width">{settings.width}</output>
-        </div>
+        </fieldset>
 
-        <div>
-          <label htmlFor="lives">Lives</label>
-          <input
-            type="range"
+        <fieldset>
+          <legend>Lives</legend>
+
+          <SliderInput
             name="lives"
             id="lives"
-            min="0"
-            max="10"
+            min={0}
+            max={10}
             value={settings.lives}
-            onChange={e => changeSetting(e, "lives", e => Number(e.target.value))}
+            onChange={e => setSettings(prev => ({ ...prev, lives: e }))}
+            display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
-          <output htmlFor="lives">{settings.lives !== 0 ? settings.lives : "Unlimited"}</output>
-        </div>
+        </fieldset>
 
-        <div>
-          <label htmlFor="timeLimit">Time limit</label>
-          <input
-            type="range"
+        <fieldset>
+          <legend>Time Limit</legend>
+
+          <SliderInput
             name="timeLimit"
             id="timeLimit"
-            min="0"
-            max="600"
-            step="10"
+            min={0}
+            max={600}
+            step={10}
             value={settings.timeLimit}
-            onChange={e => changeSetting(e, "timeLimit", e => Number(e.target.value))}
+            onChange={e => setSettings(prev => ({ ...prev, timeLimit: e }))}
+            display={v => (v !== 0 ? `${v}s` : "Unlimited")}
           />
-          <output htmlFor="timeLimit">{settings.timeLimit !== 0 ? settings.timeLimit : "Unlimited"}</output>
-        </div>
+        </fieldset>
 
-        <div>
-          <label htmlFor="boardCount">Board per round</label>
-          <input
-            type="range"
+        <fieldset>
+          <legend>Board Count</legend>
+
+          <SliderInput
             name="boardCount"
             id="boardCount"
-            min="0"
-            max="25"
+            min={0}
+            max={25}
             value={settings.boardCount}
-            onChange={e => changeSetting(e, "boardCount", e => Number(e.target.value))}
+            onChange={e => setSettings(prev => ({ ...prev, boardCount: e }))}
+            display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
-          <output htmlFor="boardCount">{settings.boardCount !== 0 ? settings.boardCount : "Unlimited"}</output>
-        </div>
+        </fieldset>
 
-        <br />
+        <fieldset>
+          <legend>Options</legend>
 
-        <div>
-          <input
-            type="checkbox"
-            name="shareBoards"
-            id="shareBoards"
-            checked={settings.shareBoards}
-            onChange={e => changeSetting(e, "shareBoards", e => e.target.checked)}
-          />
-          <label htmlFor="shareBoards">Share boards</label>
-        </div>
+          <div>
+            <input
+              type="checkbox"
+              name="shareBoards"
+              id="shareBoards"
+              checked={settings.shareBoards}
+              onChange={e => changeSetting(e, "shareBoards", e => e.target.checked)}
+            />
+            <label htmlFor="shareBoards">Share Boards</label>
+          </div>
+        </fieldset>
       </section>
 
       <br />
