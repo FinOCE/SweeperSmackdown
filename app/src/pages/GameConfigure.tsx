@@ -36,6 +36,15 @@ export function GameConfigure() {
     })
   })
 
+  useEffect(() => {
+    ws.register("group-message", e => {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
+
+      setLobby(data.data)
+    })
+  })
+
   // Setup UI state
   const [settings, setSettings] = useState<Api.GameSettings>({
     mode: 0,
@@ -49,10 +58,7 @@ export function GameConfigure() {
   })
 
   useEffect(() => {
-    let timer = setTimeout(() => {
-      console.log("Settings changed!", settings)
-    }, 500)
-
+    let timer = setTimeout(() => api.lobbyPatch(settings), 500)
     return () => clearTimeout(timer)
   }, [settings])
 

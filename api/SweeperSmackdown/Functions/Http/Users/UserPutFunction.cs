@@ -65,28 +65,29 @@ public static class UserPutFunction
         if (requesterId != userId)
             return new StatusCodeResult(403);
 
+        // Add to lobby
+        var alreadyInLobby = lobby.UserIds.Contains(userId);
+        lobby.UserIds = lobby.UserIds.Append(userId).Distinct().ToArray();
+        await lobbyDb.AddAsync(lobby);
+
         // Add user to ws group and notify
         await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.UpdateLobby("SYSTEM", lobbyId, LobbyResponseDto.FromModel(lobby)));
         await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
-
-        // Return 200 if user already in lobby (probably reconnecting)
-        if (lobby.UserIds.Contains(userId))
-            return new OkObjectResult(UserResponseDto.FromModel(lobby, userId));
-
-        // Add to lobby
-        lobby.UserIds = lobby.UserIds.Append(userId).ToArray();
-        await lobbyDb.AddAsync(lobby);
 
         // Start new board manager if lobby in play
         var orchestrationStatus = await orchestrationClient.GetStatusAsync(
             Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+
+        var boardManagerStatus = await orchestrationClient.GetStatusAsync(
+            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId));
 
         if (orchestrationStatus != null)
         {
             var customStatus = orchestrationStatus.CustomStatus.ToString();
             var status = Enum.Parse<ELobbyOrchestratorFunctionStatus>(customStatus);
 
-            if (status == ELobbyOrchestratorFunctionStatus.Play)
+            if (status == ELobbyOrchestratorFunctionStatus.Play && boardManagerStatus.IsInactive())
                 await orchestrationClient.StartNewAsync(
                     nameof(BoardManagerOrchestrationFunction),
                     Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
@@ -104,8 +105,10 @@ public static class UserPutFunction
         }
 
         // Respond to request
-        return new CreatedResult(
-            $"/lobbies/{lobbyId}/users/{userId}",
-            UserResponseDto.FromModel(lobby, userId));
+        return alreadyInLobby
+            ? new OkObjectResult(UserResponseDto.FromModel(lobby, userId))
+            : new CreatedResult(
+                $"/lobbies/{lobbyId}/users/{userId}",
+                UserResponseDto.FromModel(lobby, userId));
     }
 }

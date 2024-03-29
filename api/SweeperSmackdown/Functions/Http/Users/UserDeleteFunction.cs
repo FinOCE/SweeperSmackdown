@@ -66,6 +66,7 @@ public static class UserDeleteFunction
         await lobbyDb.AddAsync(lobby);
 
         await ws.AddAsync(ActionFactory.RemoveUserFromLobby(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.UpdateLobby("SYSTEM", lobbyId, LobbyResponseDto.FromModel(lobby)));
         await ws.AddAsync(ActionFactory.RemoveUser(userId, lobbyId));
 
         // Update votes required
