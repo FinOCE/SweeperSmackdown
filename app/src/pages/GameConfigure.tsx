@@ -24,7 +24,9 @@ export function GameConfigure() {
     // around this. A proper solution on the backend would be ideal, but for now
     // this is fine.
 
-    if (attempts > 5) throw new Error("Vailed to get initial vote") // TODO: Handle gracefully
+    // TODO: Fix api so the vote is created on first load as well
+
+    if (attempts > 5) throw new Error("Vailed to get initial vote")
 
     setTimeout(
       () =>
@@ -65,11 +67,6 @@ export function GameConfigure() {
 
   // Register websocket events
   ws.clear()
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    console.log(data.eventName, data.data)
-  })
 
   ws.register("group-message", e => {
     const data = e.message.data as Websocket.Message

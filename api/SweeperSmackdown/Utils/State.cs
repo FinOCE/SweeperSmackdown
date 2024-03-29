@@ -4,23 +4,32 @@ namespace SweeperSmackdown.Utils;
 
 /// <summary>
 /// Utilities for working with bytes used to store game state. Each bit of the byte is used to represent a piece of
-/// state. Bit 0 indicates if the state is revealed. Bit 1 indicates if the state is a bomb. Bits 2, 3, and 4 are
-/// variable bits which can be used for custom game rules. Bits 5, 6, and 7 are the number of adjacent bombs in the
-/// state. 
+/// state. Bit 0 indicates if the tile has been revealed. Bits 1, 2, 3, and 4 represent how many adjacent bombs there
+/// are to the tile through values 0 to 8 and with 9 meaning the tile is a bomb. The remaining bits 5, 6, and 7 are
+/// variable bits that can behave differently depending on the game mode.
 /// </summary>
 public static class State
 {
+    public static int Mask(int startIndex, int? endIndex = null)
+    {
+        int value = 0;
+        
+        for (int i = startIndex; i <= endIndex; i++)
+            value += 1 << i;
+
+        return value;
+    }
     public static bool ContainsBit(byte state, int offset) =>
-        (1 << offset & state) == state;
+        (Mask(offset) & state) == state;
 
     public static bool IsRevealed(byte state) =>
         ContainsBit(state, 0);
-    
-    public static bool IsBomb(byte state) =>
-        ContainsBit(state, 1);
 
     public static int GetAdjacentBombCount(byte state) =>
-        state >> 5;
+        (Mask(1, 4) & state) >> 1;
+
+    public static bool IsBomb(byte state) =>
+        GetAdjacentBombCount(state) == 9;
 
     public static bool IsEmpty(byte state) =>
         GetAdjacentBombCount(state) == 0;
@@ -59,11 +68,10 @@ public static class State
         int state = 0;
         
         if (isRevealed) state += 1 << 0;
-        if (isBomb) state += 1 << 1;
-        if (bit1) state += 1 << 2;
-        if (bit2) state += 1 << 3;
-        if (bit3) state += 1 << 4;
-        state += adjacentBombs << 5;
+        state += (isBomb ? 9 : adjacentBombs) << 1;
+        if (bit1) state += 1 << 5;
+        if (bit2) state += 1 << 6;
+        if (bit3) state += 1 << 7;
 
         return Convert.ToByte(state);
     }

@@ -35,7 +35,11 @@ public static class BoardCreatedActivityFunction
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
     {
         var props = ctx.GetInput<BoardCreatedActivityFunctionProps>();
+        
+        // Notify user of created game state
+        await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState));
 
+        // Update board entity map
         var container = cosmosClient.GetContainer(
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.BOARD_CONTAINER_NAME);
@@ -49,7 +53,5 @@ public static class BoardCreatedActivityFunction
             {
                 PatchOperation.Add("/boardIds/-", props.UserId)
             });
-            
-        await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState));
     }
 }

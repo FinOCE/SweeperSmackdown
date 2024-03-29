@@ -1,6 +1,7 @@
 ﻿using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System;
+using System.Linq;
 
 namespace SweeperSmackdown.Factories;
 
@@ -31,7 +32,10 @@ public static class GameStateFactory
             var y = random.Next(width);
 
             if (!mineMask[x + y * width])
+            {
+                mineMask[x + y * width] = true;
                 mineCount++;
+            }
 
             if (mineCount == mines)
                 break;
@@ -42,7 +46,6 @@ public static class GameStateFactory
 
         for (int i = 0; i < height * width; i++)
         {
-            
             var hugsTopEdge = i < width;
             var hugsBottomEdge = i >= height * (width - 1);
             var hugsLeftEdge = i % width == 0;
