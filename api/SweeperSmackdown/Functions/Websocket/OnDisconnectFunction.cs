@@ -57,6 +57,18 @@ public static class OnDisconnectFunction
         // Delete lobby
         await lobbyContainer.DeleteItemAsync<Lobby>(lobby.Id, new(lobby.Id));
 
+
+        // Delete vote
+        var voteContainer = cosmosClient.GetContainer(
+            DatabaseConstants.DATABASE_NAME,
+            DatabaseConstants.VOTE_CONTAINER_NAME);
+
+        try
+        {
+            await voteContainer.DeleteItemAsync<Vote>(lobby.Id, new(lobby.Id));
+        }
+        catch (CosmosException) { }
+
         // Delete orchestrations except board managers
         var orchestrationIds = new string[]
         {
@@ -103,17 +115,6 @@ public static class OnDisconnectFunction
                 catch (Exception) { }
 
             await boardContainer.DeleteItemAsync<BoardEntityMap>(lobby.Id, new(lobby.Id));
-        }
-        catch (CosmosException) { }
-
-        // Delete vote
-        var voteContainer = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.VOTE_CONTAINER_NAME);
-
-        try
-        {
-            await voteContainer.DeleteItemAsync<Vote>(lobby.Id, new(lobby.Id));
         }
         catch (CosmosException) { }
     }

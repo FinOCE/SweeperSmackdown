@@ -17,7 +17,7 @@ public interface IBoard
 
     Task<byte[]> GetGameState();
 
-    void MakeMove(int index, byte state);
+    void MakeMove((int Index, byte State) args);
 }
 
 [DataContract]
@@ -43,12 +43,12 @@ public class Board : IBoard
     public Task<byte[]> GetGameState() =>
         Task.FromResult(GameState);
 
-    public void MakeMove(int index, byte state)
+    public void MakeMove((int Index, byte State) args)
     {
-        if (!State.IsRevealedEquivalent(InitialState[index], state))
+        if (!State.IsRevealedEquivalent(InitialState[args.Index], args.State))
             throw new ArgumentException("The new game state must not have changed the immutable board data");
         
-        GameState[index] = state;
+        GameState[args.Index] = args.State;
     }
 
     [FunctionName(nameof(Board))]

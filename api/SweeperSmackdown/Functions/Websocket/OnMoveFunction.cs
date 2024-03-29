@@ -27,6 +27,8 @@ public static class OnMoveFunction
         // Update board state
         await entityClient.SignalEntityAsync<IBoard>(
             Id.For<Board>(userId),
-            board => board.MakeMove(index, state));
+            board => board.MakeMove((index, state)));
+
+        Console.WriteLine($"{userId} made move: {index} to {state}");
     }
 }

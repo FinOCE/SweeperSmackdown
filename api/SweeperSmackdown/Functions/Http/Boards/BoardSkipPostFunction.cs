@@ -23,7 +23,7 @@ public static class BoardSkipPostFunction
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
             "post",
-            Route = "lobbies/{lobbyId}/boards/{userId}/solution")]
+            Route = "lobbies/{lobbyId}/boards/{userId}/skip")]
             BoardSolutionPostRequestDto payload,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
