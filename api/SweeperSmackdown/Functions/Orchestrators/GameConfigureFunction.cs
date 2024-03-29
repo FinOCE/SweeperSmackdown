@@ -31,7 +31,12 @@ public static class GameConfigureFunction
         await ctx.CallSubOrchestratorAsync(
             nameof(TimerOrchestratorFunction),
             Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-            new TimerOrchestratorFunctionProps(Constants.SETUP_COUNTDOWN_DURATION, false));
+            new TimerOrchestratorFunctionProps());
+
+        // Delete vote
+        await ctx.CallActivityAsync(
+            nameof(VoteDeleteActivityFunction),
+            new VoteDeleteActivityFunctionProps(lobbyId));
         
         // Return settings to use
         return lobby.Settings;

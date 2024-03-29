@@ -29,6 +29,6 @@ public static class GameCelebrationFunction
         await ctx.CallSubOrchestratorAsync(
             nameof(TimerOrchestratorFunction),
             Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-            new TimerOrchestratorFunctionProps(Constants.CELEBRATION_COUNTDOWN_DURATION, true));
+            new TimerOrchestratorFunctionProps(Constants.CELEBRATION_COUNTDOWN_DURATION));
     }
 }

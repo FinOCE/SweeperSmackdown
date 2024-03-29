@@ -4,7 +4,7 @@ export namespace Websocket {
   export type Message<T = unknown> = {
     eventName: string
     userId: string
-    data: T
+    data?: T
   }
 
   export namespace Response {
@@ -38,6 +38,19 @@ export namespace Websocket {
 
       /** Updated vote state */
       data: Api.VoteGroup
+    }
+
+    export type TimerStart = {
+      eventName: "TIMER_START"
+      userId: "SYSTEM"
+
+      /** Expiry for the timer as unix time milliseconds */
+      data: { expiry: number }
+    }
+
+    export type TimerReset = {
+      eventName: "TIMER_RESET"
+      userId: "SYSTEM"
     }
 
     export type BoardCreate = {

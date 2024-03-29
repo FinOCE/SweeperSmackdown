@@ -12,6 +12,10 @@ public static class PubSubEvents
 
     public const string VOTE_STATE_UPDATE = "VOTE_STATE_UPDATE";
 
+    public const string TIMER_START = "TIMER_START";
+
+    public const string TIMER_RESET = "TIMER_RESET";
+
     public const string BOARD_CREATE = "BOARD_CREATE";
 
     public const string MOVE_ADD = "MOVE_ADD";

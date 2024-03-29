@@ -90,9 +90,13 @@ public static class VoteDeleteFunction
 
         // Notify orchestration
         if (choice != null && vote.Votes[choice].Length == vote.RequiredVotes - 1 || forced)
+        {
             await orchestrationClient.RaiseEventAsync(
                 Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
                 DurableEvents.RESET_TIMER);
+
+            await ws.AddAsync(ActionFactory.ResetTimer(lobbyId));
+        }
 
         // Respond to request
         return new NoContentResult();

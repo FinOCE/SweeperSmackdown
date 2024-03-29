@@ -2,6 +2,7 @@
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using System;
 using System.Text;
 
@@ -38,7 +39,19 @@ public static class ActionFactory
             lobbyId,
             MessageFactory.Create(PubSubEvents.VOTE_STATE_UPDATE, "SYSTEM", vote),
             WebPubSubDataType.Json);
+
+    public static WebPubSubAction StartTimer(string lobbyId, DateTime expiry) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.TIMER_START, "SYSTEM", new { expiry = expiry.ToUnixTimeMilliseconds() }),
+            WebPubSubDataType.Json);
     
+    public static WebPubSubAction ResetTimer(string lobbyId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.TIMER_RESET, "SYSTEM", ""),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,

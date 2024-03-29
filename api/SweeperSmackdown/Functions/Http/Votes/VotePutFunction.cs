@@ -97,9 +97,16 @@ public static class VotePutFunction
 
         // Notify orchestration
         if (vote.Votes[payload.Choice].Length == vote.RequiredVotes || forced)
+        {
+            var expiry = DateTime.UtcNow.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
+
             await orchestrationClient.RaiseEventAsync(
                 Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                DurableEvents.START_TIMER);
+                DurableEvents.START_TIMER,
+                expiry);
+            
+            await ws.AddAsync(ActionFactory.StartTimer(lobbyId, expiry));
+        }
 
         // Respond to request
         return existingChoice != null && existingChoice == payload.Choice

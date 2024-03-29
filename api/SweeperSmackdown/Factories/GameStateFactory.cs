@@ -42,11 +42,12 @@ public static class GameStateFactory
 
         for (int i = 0; i < height * width; i++)
         {
+            
             var hugsTopEdge = i < width;
-            var hugsBottomEdge = i > height * (width - 1);
-            var hugsLeftEdge = i % width == width - 1;
-            var hugsRightEdge = i % width == 0;
-
+            var hugsBottomEdge = i >= height * (width - 1);
+            var hugsLeftEdge = i % width == 0;
+            var hugsRightEdge = i % width == width - 1;
+            
             var adjacentBombs = 0;
 
             if (!hugsTopEdge && mineMask[i - width]) adjacentBombs++;

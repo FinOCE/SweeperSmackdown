@@ -47,7 +47,7 @@ public static class BoardCreatedActivityFunction
         if (!boardEntityMap.BoardIds.Contains(props.UserId))
             await container.PatchItemAsync<BoardEntityMap>(props.LobbyId, new(props.LobbyId), new[]
             {
-                PatchOperation.Add("/boardIds", props.UserId)
+                PatchOperation.Add("/boardIds/-", props.UserId)
             });
             
         await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState));

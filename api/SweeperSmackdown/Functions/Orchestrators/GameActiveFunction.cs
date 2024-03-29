@@ -35,7 +35,7 @@ public static class GameActiveFunction
         var timerTask = ctx.CallSubOrchestratorAsync(
             nameof(TimerOrchestratorFunction),
             Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-            new TimerOrchestratorFunctionProps(props.Settings.TimeLimit, true));
+            new TimerOrchestratorFunctionProps(props.Settings.TimeLimit));
 
         if (props.Settings.TimeLimit != 0)
             tasks.Add(timerTask);
