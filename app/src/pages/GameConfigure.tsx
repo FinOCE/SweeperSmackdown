@@ -12,11 +12,10 @@ type Difficulty = "easy" | "normal" | "hard" | "hell"
 
 export function GameConfigure() {
   const { navigate } = useNavigation()
-  const { lobbyId, setLobbyId, userId } = useGameInfo()
+  const { lobby, setLobby, userId } = useGameInfo()
   const ws = useWebsocket()
   const api = useApi()
 
-  let [lobby, setLobby] = useState<Api.Lobby>()
   let [vote, setVote] = useState<Api.VoteGroup>()
 
   function getInitialVote(attempts: number = 0) {
@@ -38,23 +37,19 @@ export function GameConfigure() {
   }
 
   useEffect(() => {
-    if (!lobbyId || !userId) return
+    if (!lobby || !userId) return
 
-    api.lobbyGet().then(setLobby)
     getInitialVote()
-  }, [lobbyId, userId])
+  }, [lobby, userId])
 
   let [expiry, setExpiry] = useState<number | null>(null)
   let [countdown, setCountdown] = useState<number | null>(null)
 
   useEffect(() => {
+    if (!expiry) setCountdown(null)
+
     const interval = expiry ? setInterval(() => setCountdown(Math.ceil((expiry - Date.now()) / 1000)), 100) : undefined
-    const timeout = expiry
-      ? setTimeout(() => {
-          setCountdown(null)
-          // TODO: Navigate to board to play
-        }, expiry - Date.now())
-      : undefined
+    const timeout = expiry ? setTimeout(() => navigate("GameActive"), expiry - Date.now()) : undefined
 
     return () => {
       clearInterval(interval)
@@ -70,6 +65,11 @@ export function GameConfigure() {
 
   // Register websocket events
   ws.clear()
+
+  ws.register("group-message", e => {
+    const data = e.message.data as Websocket.Message
+    console.log(data.eventName, data.data)
+  })
 
   ws.register("group-message", e => {
     const data = e.message.data as Websocket.Message
@@ -112,7 +112,7 @@ export function GameConfigure() {
   })
 
   useEffect(() => {
-    if (!lobbyId) return
+    if (!lobby) return
 
     const timer = setTimeout(() => api.lobbyPatch(settings), 500)
     return () => clearTimeout(timer)
@@ -164,7 +164,7 @@ export function GameConfigure() {
 
   async function leaveLobby() {
     await api.userDelete()
-    setLobbyId(null)
+    setLobby(null)
     navigate("MainMenu")
   }
 
@@ -174,7 +174,7 @@ export function GameConfigure() {
   // Render page
   return (
     <div>
-      <p>Welcome to lobby {lobbyId}</p>
+      <p>Welcome to lobby {lobby.lobbyId}</p>
       <p>Members: {lobby.userIds.join(", ")}</p>
       {countdown && <p>Starting in {countdown}</p>}
 
@@ -344,7 +344,9 @@ export function GameConfigure() {
         }
         disabled={votePending}
       />
-      <input type="button" onClick={voteForce} value="Force Countdown" disabled={userId !== lobby.hostId || !isReady} />
+      {isReady && (
+        <input type="button" onClick={voteForce} value="Force Countdown" disabled={userId !== lobby.hostId} />
+      )}
       <input type="button" onClick={leaveLobby} value="Leave Lobby" />
     </div>
   )

@@ -68,9 +68,9 @@ public static class VoteDeleteFunction
             return new StatusCodeResult(403);
 
         // Only allow removal if user has a vote
-        var hasExistingChoice = !vote.Votes.Any(kvp => kvp.Value.Contains(userId));
+        var hasExistingChoice = vote.Votes.Any(kvp => kvp.Value.Contains(userId));
 
-        if (!forced && hasExistingChoice)
+        if (!forced && !hasExistingChoice)
             return new NotFoundResult();
 
         // Remove user vote

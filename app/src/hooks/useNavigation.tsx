@@ -1,6 +1,7 @@
 import React, { createContext, Dispatch, SetStateAction, useContext, useState } from "react"
 import { MainMenu } from "../pages/MainMenu"
 import { GameConfigure } from "../pages/GameConfigure"
+import { GameActive } from "../pages/GameActive"
 
 type Navigation = {
   navigate: Dispatch<SetStateAction<Page>>
@@ -18,8 +19,9 @@ export function NavigationProvider() {
     <NavigationContext.Provider value={{ navigate }}>
       {page === "MainMenu" && <MainMenu />}
       {page === "GameConfigure" && <GameConfigure />}
+      {page === "GameActive" && <GameActive />}
     </NavigationContext.Provider>
   )
 }
 
-type Page = "MainMenu" | "GameConfigure"
+type Page = "MainMenu" | "GameConfigure" | "GameActive"

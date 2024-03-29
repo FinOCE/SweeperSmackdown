@@ -7,7 +7,7 @@ import { useApi } from "../hooks/useApi"
 
 export function MainMenu() {
   const { navigate } = useNavigation()
-  const { userId, setLobbyId } = useGameInfo()
+  const { userId, setLobby } = useGameInfo()
   const ws = useWebsocket()
   const api = useApi()
 
@@ -25,7 +25,10 @@ export function MainMenu() {
     const user = await api.userPut(localLobbyId).catch(() => setError("Failed to join lobby"))
     if (!user) return
 
-    setLobbyId(user.lobbyId)
+    const lobby = await api.lobbyGet(localLobbyId).catch(() => setError("Could not find lobby"))
+    if (!lobby) return
+
+    setLobby(lobby)
   }
 
   async function createLobby() {
@@ -38,7 +41,7 @@ export function MainMenu() {
     const user = await api.userPut(lobby.lobbyId).catch(() => setError("Created lobby but failed to join"))
     if (!user) return
 
-    setLobbyId(user.lobbyId)
+    setLobby(lobby)
   }
 
   ws.register("group-message", e => {
