@@ -3,9 +3,11 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs.Websocket;
 using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
-using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Websocket;
@@ -19,16 +21,11 @@ public static class OnMoveFunction
     {
         // Parse data from request
         var userId = req.ConnectionContext.UserId;
-        var data = req.Data.ToArray();
-
-        var state = data[0];
-        var index = BitConverter.ToInt16(data, 1);
-
+        var data = JsonSerializer.Deserialize<Message<OnMoveData>>(req.Data.ToString())!;
+        
         // Update board state
         await entityClient.SignalEntityAsync<IBoard>(
             Id.For<Board>(userId),
-            board => board.MakeMove((index, state)));
-
-        Console.WriteLine($"{userId} made move: {index} to {state}");
+            board => board.MakeMove(data.Data));
     }
 }

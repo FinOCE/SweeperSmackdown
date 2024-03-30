@@ -4,9 +4,12 @@ import {
   OnGroupDataMessageArgs,
   OnRejoinGroupFailedArgs,
   OnServerDataMessageArgs,
-  OnStoppedArgs
+  OnStoppedArgs,
+  WebPubSubClient
 } from "@azure/web-pubsub-client"
 import EventEmitter from "events"
+import { Websocket } from "../types/Websocket"
+import { Buffer } from "node:buffer"
 
 type EventHandler<T> = (e: T) => void
 
@@ -36,6 +39,19 @@ export interface IEventManager {
    * Whether or not the event manager is currently connected to Web PubSub.
    */
   connected: boolean
+
+  /**
+   * Set the web pubsub client to be used to send messages.
+   * @param client The web pubsub client
+   */
+  setClient(client: WebPubSubClient): void
+
+  /**
+   * Send a message to all members in a lobby.
+   * @param lobbyId The lobby to send the message to
+   * @param data The message to send
+   */
+  sendToLobby<T extends Websocket.Message>(lobbyId: string, data: T): void
 }
 
 export class EventManager extends EventEmitter implements IEventManager {
@@ -48,6 +64,7 @@ export class EventManager extends EventEmitter implements IEventManager {
     "server-message": []
   }
 
+  private _client?: WebPubSubClient
   public connected: boolean = false
 
   public constructor() {
@@ -81,5 +98,15 @@ export class EventManager extends EventEmitter implements IEventManager {
     this.handlers["rejoin-group-failed"] = []
     this.handlers["group-message"] = []
     this.handlers["server-message"] = []
+  }
+
+  public setClient(client: WebPubSubClient) {
+    this._client = client
+  }
+
+  public sendToLobby<T extends Websocket.Message>(lobbyId: string, data: T) {
+    if (!this._client) throw new Error("Client not set")
+
+    this._client.sendToGroup(lobbyId, data, "json", { fireAndForget: true })
   }
 }

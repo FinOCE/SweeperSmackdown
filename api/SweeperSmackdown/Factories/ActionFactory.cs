@@ -57,10 +57,4 @@ public static class ActionFactory
             lobbyId,
             MessageFactory.Create(PubSubEvents.BOARD_CREATE, userId, Encoding.UTF8.GetString(gameState)),
             WebPubSubDataType.Json);
-
-    public static WebPubSubAction AddMove(string userId, string lobbyId, BinaryData move) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.MOVE_ADD, userId, move),
-            WebPubSubDataType.Binary);
 }

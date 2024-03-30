@@ -59,8 +59,14 @@ export namespace Websocket {
 
       /** Game state, serialized */
       data: string
+    }
 
-      // TODO: To serialize: new TextEncoder().encode(data)
+    export type MoveAdd = {
+      eventName: "MOVE_ADD"
+      userId: string
+
+      /** The indices of tiles that were revealed by the move */
+      data: { reveals: number[] } | { flags: number[] }
     }
   }
 }

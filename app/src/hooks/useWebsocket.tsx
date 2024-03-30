@@ -15,7 +15,9 @@ import { useGameInfo } from "./useGameInfo"
 const WebsocketContext = createContext<IEventManager>({
   clear() {},
   connected: false,
-  register() {}
+  register() {},
+  setClient() {},
+  sendToLobby() {}
 })
 
 export function useWebsocket() {
@@ -57,6 +59,8 @@ export function WebsocketProvider({ children }: WebsocketProviderProps) {
 
   useEffect(() => {
     if (!client) return
+
+    manager.setClient(client)
 
     const onConnected = (e: OnConnectedArgs) => manager.emit("connected", e)
     const onDisconnected = (e: OnDisconnectedArgs) => manager.emit("disconnected", e)
