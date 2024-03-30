@@ -47,11 +47,18 @@ public class Board : IBoard
 
     public void MakeMove(OnMoveData data)
     {
-        if (data.Flag != null)
+        if (data.FlagAdd != null)
         {
             // Set flag on state
             GameState = GameState
-                .Select((state, i) => data.Flag == i ? State.Flag(state) : state)
+                .Select((state, i) => data.FlagAdd == i ? State.Flag(state) : state)
+                .ToArray();
+        }
+        else if (data.FlagRemove != null)
+        {
+            // Remove flag on state
+            GameState = GameState
+                .Select((state, i) => data.FlagRemove == i ? State.RemoveFlag(state) : state)
                 .ToArray();
         }
         else if (data.Reveals != null)

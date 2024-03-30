@@ -25,7 +25,8 @@ export function GameActive() {
   const i = (x: number, y: number) => y * lobby.settings.width + x
 
   function render(state: number) {
-    if (!State.isRevealed(state)) return "  "
+    if (State.isFlagged(state)) return "F"
+    else if (!State.isRevealed(state)) return "  "
     else if (State.isBomb(state)) return "B"
     else if (State.getAdjacentBombCount(state) > 0) return String(State.getAdjacentBombCount(state))
     else return "  "
@@ -35,14 +36,24 @@ export function GameActive() {
     if (!localGameState || lost) return
 
     const state = localGameState[i]
+
     if (flagging) {
-      setLocalGameState(prev => prev!.map((state, j) => (i === j ? State.flag(state) : state)))
+      // Determine if flag is to be added or removed
+      const isFlagged = State.isFlagged(state)
+      const newState = isFlagged ? State.removeFlag(state) : State.flag(state)
+
+      setLocalGameState(prev => prev!.map((state, j) => (i === j ? newState : state)))
+
+      // Notify other users of move
       ws.sendToLobby<Websocket.Response.MoveAdd>(lobbyId!, {
         eventName: "MOVE_ADD",
         userId: userId!,
-        data: { flags: [i] }
+        data: isFlagged ? { flagRemove: i } : { flagAdd: i }
       })
     } else {
+      // Prevent clicking on a flagged tile
+      if (State.isFlagged(state)) return
+
       // Lose game if bomb
       if (State.isBomb(state)) console.log("Lost!") // setLost(true)
 
@@ -69,17 +80,16 @@ export function GameActive() {
       <table>
         <tbody>
           {Array.from({ length: lobby.settings.height }).map((_, y) => (
-            <tr>
-              {/*  key={`y${y}`} */}
+            <tr key={`y${y}`}>
               {Array.from({ length: lobby.settings.width })
                 .map((_, x) => localGameState[i(x, y)])
                 .map((state, x) => (
-                  <td>
-                    {/*  key={i(x, y)} */}
+                  <td key={i(x, y)}>
                     <input
                       type="button"
                       value={render(state)}
-                      onClick={e => makeMove(i(x, y), e.button !== 0)}
+                      onClick={() => makeMove(i(x, y), false)}
+                      onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
                       disabled={State.isRevealed(state)}
                     />
                   </td>

@@ -8,11 +8,11 @@ export class State {
   }
 
   public static containsBit(state: number, offset: number): boolean {
-    return (this.mask(offset) & state) === 1
+    return (this.mask(offset) & state) === this.mask(offset)
   }
 
   public static reveal(state: number): number {
-    return 1 | state
+    return (1 << 0) | state
   }
 
   public static isRevealed(state: number): boolean {
@@ -20,7 +20,11 @@ export class State {
   }
 
   public static flag(state: number): number {
-    return (1 << 2) | state
+    return (1 << 1) | state
+  }
+
+  public static removeFlag(state: number): number {
+    return (this.mask(0) | this.mask(2, 7)) & state
   }
 
   public static isFlagged(state: number): boolean {
@@ -44,7 +48,7 @@ export class State {
   }
 
   public static isRevealedEquivalent(oldState: number, newState: number): boolean {
-    return (oldState | 1) === newState
+    return (oldState | this.mask(0)) === newState
   }
 
   public static isRevealEquivalentAll(initialState: number[], gameState: number[]): boolean {

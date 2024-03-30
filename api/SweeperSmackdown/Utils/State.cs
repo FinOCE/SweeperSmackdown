@@ -21,7 +21,7 @@ public static class State
         return value;
     }
     public static bool ContainsBit(byte state, int offset) =>
-        (Mask(offset) & state) == 1;
+        (Mask(offset) & state) == Mask(offset);
 
     public static byte Reveal(byte state) =>
         (byte)(1 << 0 | state);
@@ -31,6 +31,9 @@ public static class State
 
     public static byte Flag(byte state) =>
         (byte)(1 << 1 | state);
+
+    public static byte RemoveFlag(byte state) =>
+        (byte)((Mask(0) | Mask(2, 7)) & state);
 
     public static bool IsFlagged(byte state) =>
         ContainsBit(state, 1);
@@ -49,7 +52,7 @@ public static class State
         bit2 ? ContainsBit(state, 7) : true;
 
     public static bool IsRevealedEquivalent(byte oldState, byte newState) =>
-        (byte)(oldState | 1) == newState;
+        (byte)(oldState | Mask(0)) == newState;
 
     public static bool IsRevealedEquivalent(byte[] initialState, byte[] gameState)
     {
