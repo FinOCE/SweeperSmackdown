@@ -33,11 +33,14 @@ export function GameActive() {
   }
 
   function makeMove(i: number, flagging: boolean) {
-    if (!localGameState || lost) return
+    if (!localGameState || !lobby || lost) return
 
     const state = localGameState[i]
 
     if (flagging) {
+      // Prevent flagging a revealed tile
+      if (State.isRevealed(state)) return
+
       // Determine if flag is to be added or removed
       const isFlagged = State.isFlagged(state)
       const newState = isFlagged ? State.removeFlag(state) : State.flag(state)
@@ -51,8 +54,9 @@ export function GameActive() {
         data: isFlagged ? { flagRemove: i } : { flagAdd: i }
       })
     } else {
-      // Prevent clicking on a flagged tile
+      // Prevent clicking on a flagged or revealed tile
       if (State.isFlagged(state)) return
+      if (State.isRevealed(state)) return
 
       // Lose game if bomb
       if (State.isBomb(state)) console.log("Lost!") // setLost(true)
@@ -61,7 +65,30 @@ export function GameActive() {
       const reveals = [i]
 
       if (State.isEmpty(state)) {
-        // TODO: branch out to find other tiles to reveal
+        const travelled: number[] = []
+
+        const spread = (index: number) => {
+          if (travelled.includes(index)) return
+
+          travelled.push(index)
+          reveals.push(index)
+
+          if (State.isEmpty(localGameState[index])) {
+            const width = lobby.settings.width
+            const height = lobby.settings.height
+
+            if (index % width !== 0) spread(index - 1)
+            if (index % width !== width - 1) spread(index + 1)
+            if (index >= width) spread(index - width)
+            if (index < width * (height - 1)) spread(index + width)
+            if (index % width !== 0 && index >= width) spread(index - width - 1)
+            if (index % width !== width - 1 && index >= width) spread(index - width + 1)
+            if (index % width !== 0 && index < width * (height - 1)) spread(index + width - 1)
+            if (index % width !== width - 1 && index < width * (height - 1)) spread(index + width + 1)
+          }
+        }
+
+        spread(i)
       }
 
       setLocalGameState(prev => prev!.map((state, j) => (reveals.includes(j) ? State.reveal(state) : state)))
