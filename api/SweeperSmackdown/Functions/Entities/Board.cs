@@ -20,6 +20,8 @@ public interface IBoard
     Task<byte[]> GetGameState();
     
     void MakeMove(OnMoveData data);
+
+    void Reset();
 }
 
 [DataContract]
@@ -74,6 +76,9 @@ public class Board : IBoard
                 .ToArray();
         }
     }
+
+    public void Reset() =>
+        GameState = InitialState;
 
     [FunctionName(nameof(Board))]
     public static Task Run([EntityTrigger] IDurableEntityContext ctx) =>

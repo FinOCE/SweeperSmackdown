@@ -52,7 +52,7 @@ public static class GameActiveFunction
         foreach (var userId in lobby.UserIds)
             _ = ctx.CallSubOrchestratorAsync(
                 nameof(BoardManagerOrchestrationFunction),
-                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId),
+                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
                 new BoardManagerOrchestrationFunctionProps(props.Settings));
 
         // TODO: Ensure all players have a board created before starting

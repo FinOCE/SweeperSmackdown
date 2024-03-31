@@ -77,7 +77,7 @@ public static class LobbyPatchFunction
         var newWidth = payload.Width ?? lobby.Settings.Width;
         var newMines = payload.Mines ?? lobby.Settings.Mines;
 
-        if (newHeight * newWidth > newMines)
+        if (newHeight * newWidth < newMines)
             return new BadRequestObjectResult(new string[]
             {
                 "Cannot update because this would result in more mines than there are board squares"

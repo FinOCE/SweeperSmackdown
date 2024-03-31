@@ -1,7 +1,6 @@
 ﻿using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System;
-using System.Linq;
 
 namespace SweeperSmackdown.Factories;
 

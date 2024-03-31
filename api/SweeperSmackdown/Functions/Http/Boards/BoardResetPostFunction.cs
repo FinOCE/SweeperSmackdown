@@ -4,10 +4,8 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
@@ -16,15 +14,15 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardSolutionPostFunction
+public static class BoardResetPostFunction
 {
-    [FunctionName(nameof(BoardSolutionPostFunction))]
+    [FunctionName(nameof(BoardResetPostFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
             "post",
-            Route = "lobbies/{lobbyId}/boards/{userId}/solution")]
-            BoardSolutionPostRequestDto payload,
+            Route = "lobbies/{lobbyId}/boards/{userId}/reset")]
+            HttpRequest req,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -39,10 +37,7 @@ public static class BoardSolutionPostFunction
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             BoardEntityMap? boardEntityMap,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
-        HttpRequest req,
-        string lobbyId,
         string userId)
     {
         // Ensure request is from logged in user
@@ -66,25 +61,9 @@ public static class BoardSolutionPostFunction
             return new NotFoundResult();
 
         // Verify board
-        var initialState = entity.EntityState.InitialState;
-        var gameState = new BinaryData(payload.GameState).ToArray();
-
-        if (!State.IsEquivalent(initialState, gameState))
-            return new BadRequestObjectResult(new string[]
-            {
-                "The 'gameState' does not match the initial board state"
-            });
-
-        if (!State.IsCompleted(gameState))
-            return new BadRequestObjectResult(new string[]
-            {
-                "The 'gameState' is not yet completed"
-            });
-
-        // Notify orchestrator
-        await orchestrationClient.RaiseEventAsync(
-            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
-            DurableEvents.BOARD_COMPLETED);
+        await entityClient.SignalEntityAsync<IBoard>(
+            Id.For<Board>(userId),
+            board => board.Reset());
 
         // Respond to request
         return new NoContentResult();

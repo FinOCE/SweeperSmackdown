@@ -51,11 +51,23 @@ export class State {
     return (oldState | this.mask(0)) === newState
   }
 
-  public static isRevealEquivalentAll(initialState: number[], gameState: number[]): boolean {
+  public static isEquivalent(initialState: Uint8Array, gameState: Uint8Array): boolean {
     if (initialState.length !== gameState.length) return false
 
-    for (let i = 0; i < initialState.length; i++)
-      if (!this.isRevealedEquivalent(initialState[i], gameState[1])) return false
+    for (let i = 0; i < initialState.length; i++) {
+      const oldState = initialState[i]
+      const newState = gameState[i]
+
+      if (this.isBomb(oldState) !== this.isBomb(newState)) return false
+      if (this.getAdjacentBombCount(oldState) !== this.getAdjacentBombCount(newState)) return false
+    }
+
+    return true
+  }
+
+  public static isCompleted(gameState: Uint8Array): boolean {
+    for (let i = 0; i < gameState.length; i++)
+      if (!this.isBomb(gameState[i]) && !this.isRevealed(gameState[i])) return false
 
     return true
   }

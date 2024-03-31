@@ -6,6 +6,7 @@ using SweeperSmackdown.Functions.Activities;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -18,8 +19,10 @@ public class BoardManagerOrchestrationFunctionProps
 
     public BoardManagerOrchestrationFunctionProps(GameSettings settings, int? remaining = null)
     {
+        int boardCount = settings.BoardCount != 0 ? settings.BoardCount : -1;
+        
         Settings = settings;
-        Remaining = remaining ?? settings.BoardCount;
+        Remaining = remaining ?? boardCount;
     }
 }
 
@@ -30,7 +33,7 @@ public static class BoardManagerOrchestrationFunction
         [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var lobbyId = Id.FromInstance(ctx.InstanceId);
-        var userId = Id.FromInstance(ctx.InstanceId);
+        var userId = Id.UserFromInstance(ctx.InstanceId);
         var props = ctx.GetInput<BoardManagerOrchestrationFunctionProps>();
 
         // Create repeatable durable safe random
@@ -39,7 +42,7 @@ public static class BoardManagerOrchestrationFunction
         var seed = props.Settings.Seed != 0
             ? props.Settings.Seed + iteration
             : ctx.NewGuid().GetHashCode();
-        
+
         // Generate boards
         var gameState = GameStateFactory.Create(seed, props.Settings);
 
@@ -60,11 +63,14 @@ public static class BoardManagerOrchestrationFunction
         var winner = await Task.WhenAny(skippedTask, completedTask);
         var decrement = winner == completedTask ? 1 : 0;
 
+        // Start new board if boards still remaining
+        props.Remaining = Math.Min(props.Remaining - decrement, -1);
+        
         if (props.Remaining > 0 || props.Remaining == -1)
             ctx.ContinueAsNew(
                 new BoardManagerOrchestrationFunctionProps(
                     props.Settings,
-                    props.Remaining - decrement));
+                    props.Remaining));
 
         // Return user ID as winner if completed before any other task
         return userId;

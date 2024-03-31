@@ -1,15 +1,25 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useGameInfo } from "../hooks/useGameInfo"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { State } from "../utils/State"
+import { useApi } from "../hooks/useApi"
 
 export function GameActive() {
   const { lobby, lobbyId, userId } = useGameInfo()
   const ws = useWebsocket()
+  const api = useApi()
 
+  const [localInitialState, setLocalInitialState] = useState<Uint8Array>()
   const [localGameState, setLocalGameState] = useState<Uint8Array>()
   const [lost, setLost] = useState(false)
+  const [won, setWon] = useState(false)
+
+  useEffect(() => {
+    if (!localGameState) return
+
+    if (State.isCompleted(localGameState)) setWon(true)
+  }, [localGameState])
 
   ws.clear()
 
@@ -17,6 +27,7 @@ export function GameActive() {
     const data = e.message.data as Websocket.Response.BoardCreate
 
     const gameState = new TextEncoder().encode(data.data)
+    setLocalInitialState(gameState)
     setLocalGameState(gameState)
   })
 
@@ -59,7 +70,7 @@ export function GameActive() {
       if (State.isRevealed(state)) return
 
       // Lose game if bomb
-      if (State.isBomb(state)) console.log("Lost!") // setLost(true)
+      if (State.isBomb(state)) setLost(true)
 
       // Calculate tiles to reveal
       const reveals = [i]
@@ -102,6 +113,21 @@ export function GameActive() {
     }
   }
 
+  async function reset() {
+    await api.boardReset()
+    setLocalGameState(localInitialState)
+    setLost(false)
+  }
+
+  async function skip() {
+    await api.boardSkip()
+    setLost(false)
+  }
+
+  async function solve() {
+    await api.boardSolution(localGameState!)
+  }
+
   return (
     <div>
       <table>
@@ -117,7 +143,7 @@ export function GameActive() {
                       value={render(state)}
                       onClick={() => makeMove(i(x, y), false)}
                       onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
-                      disabled={State.isRevealed(state)}
+                      disabled={lost || State.isRevealed(state)}
                     />
                   </td>
                 ))}
@@ -125,6 +151,12 @@ export function GameActive() {
           ))}
         </tbody>
       </table>
+
+      <div>
+        <input type="button" value="Reset" onClick={reset} />
+        <input type="button" value="Skip" onClick={skip} />
+        <input type="button" value="Solve" onClick={solve} disabled={!won} />
+      </div>
     </div>
   )
 }

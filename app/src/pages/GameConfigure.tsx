@@ -133,8 +133,9 @@ export function GameConfigure() {
       hard: 0.234375,
       hell: 0.3125
     }
+
     setSettings(prev => ({ ...prev, mines: Math.floor(prev.height * prev.width * ratio[difficulty]) }))
-  }, [difficulty])
+  }, [difficulty, settings.height, settings.width])
 
   const [votePending, setVotePending] = useState(false)
 

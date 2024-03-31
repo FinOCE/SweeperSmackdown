@@ -51,10 +51,10 @@ public class LobbyPatchRequestDto
             if (Mode != null && !GameStateFactory.VALID_MODES.Contains(Mode.Value))
                 errors.Add($"The 'mode' is not a valid option ({string.Join(", ", GameStateFactory.VALID_MODES)})");
 
-            if (Height != null && Height >= Constants.MAX_GAME_HEIGHT || Height <= Constants.MIN_GAME_HEIGHT)
+            if (Height != null && Height > Constants.MAX_GAME_HEIGHT || Height < Constants.MIN_GAME_HEIGHT)
                 errors.Add($"The 'height' must be between {Constants.MIN_GAME_HEIGHT} and {Constants.MAX_GAME_HEIGHT}");
 
-            if (Width != null && Width >= Constants.MAX_GAME_WIDTH || Width <= Constants.MIN_GAME_WIDTH)
+            if (Width != null && Width > Constants.MAX_GAME_WIDTH || Width < Constants.MIN_GAME_WIDTH)
                 errors.Add($"The 'width' must be between {Constants.MIN_GAME_WIDTH} and {Constants.MAX_GAME_WIDTH}");
 
             if (Mines != null && Mines <= 0)

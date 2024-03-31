@@ -110,6 +110,31 @@ export function useApi() {
       })
         .then(ok)
         .then(res => res.json())
-        .then((res: Api.Response.VotePut) => res)
+        .then((res: Api.Response.VotePut) => res),
+
+    boardReset: (lobbyId?: string, userId?: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/boards/${userId ?? gameInfo.userId}/reset`, {
+        method: "POST",
+        headers
+      })
+        .then(ok)
+        .then(() => {}),
+
+    boardSkip: (lobbyId?: string, userId?: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/boards/${userId ?? gameInfo.userId}/skip`, {
+        method: "POST",
+        headers
+      })
+        .then(ok)
+        .then(() => {}),
+
+    boardSolution: (gameState: Uint8Array, lobbyId?: string, userId?: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/boards/${userId ?? gameInfo.userId}/solution`, {
+        method: "POST",
+        body: JSON.stringify({ gameState: new TextDecoder("utf-8").decode(gameState) }),
+        headers: { ...headers, ...jsonHeader }
+      })
+        .then(ok)
+        .then(() => {})
   }
 }

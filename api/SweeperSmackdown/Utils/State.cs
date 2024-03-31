@@ -4,10 +4,9 @@ namespace SweeperSmackdown.Utils;
 
 /// <summary>
 /// Utilities for working with bytes used to store game state. Each bit of the byte is used to represent a piece of
-/// state. Bit 0 indicates if the tile has been revealed. Bit 1 indicates if the tile has been flagged.  Bits 2, 3,
-/// 4, and 5 represent how many adjacent bombs there are to the tile through values 0 to 8 and with 9 meaning the
-/// tile is a bomb. The remaining bits 6 and 7 are variable bits that can behave differently depending on the game
-/// mode.
+/// state. Bit 0 indicates if the tile has been revealed. Bit 1 indicates if the tile has been flagged. Bits 2, 3, 4,
+/// and 5 represent how many adjacent bombs there are to the tile through values 0 to 8 and with 9 meaning the tile is
+/// a bomb. The remaining bits 6 and 7 are variable bits that can behave differently depending on the game mode.
 /// </summary>
 public static class State
 {
@@ -54,13 +53,27 @@ public static class State
     public static bool IsRevealedEquivalent(byte oldState, byte newState) =>
         (byte)(oldState | Mask(0)) == newState;
 
-    public static bool IsRevealedEquivalent(byte[] initialState, byte[] gameState)
+    public static bool IsEquivalent(byte[] initialState, byte[] gameState)
     {
         if (initialState.Length != gameState.Length)
             return false;
 
         for (int i = 0; i < initialState.Length; i++)
-            if (!IsRevealedEquivalent(initialState[i], gameState[i]))
+        {
+            var oldState = initialState[i];
+            var newState = gameState[i];
+
+            if (IsBomb(oldState) != IsBomb(newState)) return false;
+            if (GetAdjacentBombCount(oldState) != GetAdjacentBombCount(newState)) return false;
+        }
+
+        return true;
+    }
+
+    public static bool IsCompleted(byte[] gameState)
+    {
+        for (int i = 0; i < gameState.Length; i++)
+            if (!IsBomb(gameState[i]) && !IsRevealed(gameState[i]))
                 return false;
 
         return true;
