@@ -30,7 +30,7 @@ export function useApi() {
         .then(res => res.json())
         .then((res: Api.Response.LobbyGet) => res),
 
-    lobbyPatch: (settings: Partial<Api.GameSettings>, lobbyId?: string) =>
+    lobbyPatch: (settings: Api.Request.LobbyPatch, lobbyId?: string) =>
       fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}`, {
         method: "PATCH",
         body: JSON.stringify(settings),

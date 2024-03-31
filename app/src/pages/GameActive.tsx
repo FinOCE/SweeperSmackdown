@@ -4,6 +4,7 @@ import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { State } from "../utils/State"
 import { useApi } from "../hooks/useApi"
+import { isEvent } from "../utils/isEvent"
 
 export function GameActive() {
   const { lobby, lobbyId, userId } = useGameInfo()
@@ -24,11 +25,16 @@ export function GameActive() {
   ws.clear()
 
   ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Response.BoardCreate
+    const data = e.message.data as Websocket.Message
+    if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
+
+    if (data.userId !== userId) return // TODO: Handle other users to see their progress
 
     const gameState = new TextEncoder().encode(data.data)
     setLocalInitialState(gameState)
     setLocalGameState(gameState)
+    setLost(false)
+    setWon(false)
   })
 
   if (!lobby || !localGameState) return <div>Loading...</div>
@@ -155,7 +161,7 @@ export function GameActive() {
       <div>
         <input type="button" value="Reset" onClick={reset} />
         <input type="button" value="Skip" onClick={skip} />
-        <input type="button" value="Solve" onClick={solve} disabled={!won} />
+        <input type="button" value="Solve" onClick={solve} /> {/* disabled={!won} */}
       </div>
     </div>
   )

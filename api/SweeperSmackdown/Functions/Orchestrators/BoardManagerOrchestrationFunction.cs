@@ -43,6 +43,8 @@ public static class BoardManagerOrchestrationFunction
             ? props.Settings.Seed + iteration
             : ctx.NewGuid().GetHashCode();
 
+        Console.WriteLine(lobbyId + " " + userId + " " + seed);
+
         // Generate boards
         var gameState = GameStateFactory.Create(seed, props.Settings);
 
@@ -64,7 +66,7 @@ public static class BoardManagerOrchestrationFunction
         var decrement = winner == completedTask ? 1 : 0;
 
         // Start new board if boards still remaining
-        props.Remaining = Math.Min(props.Remaining - decrement, -1);
+        props.Remaining = Math.Max(props.Remaining - decrement, -1);
         
         if (props.Remaining > 0 || props.Remaining == -1)
             ctx.ContinueAsNew(

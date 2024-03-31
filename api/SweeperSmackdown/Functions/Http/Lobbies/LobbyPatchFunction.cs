@@ -96,7 +96,7 @@ public static class LobbyPatchFunction
         if (payload.ShareBoards != null)
             seed = payload.ShareBoards.Value
                 ? Guid.NewGuid().GetHashCode()
-                : lobby.Settings.Seed;
+                : 0;
 
         lobby.HostId = payload.HostId ?? lobby.HostId;
         lobby.Settings = lobby.Settings.Update(

@@ -7,7 +7,7 @@ export namespace Api {
     lives: number
     timeLimit: number
     boardCount: number
-    shareBoards: boolean
+    seed: number
   }
 
   export type Lobby = {
@@ -34,6 +34,20 @@ export namespace Api {
     requiredVotes: number
     choices: string[]
     votes: Record<string, string[]>
+  }
+
+  export namespace Request {
+    export type LobbyPatch = {
+      hostId?: string
+      mode?: number
+      height?: number
+      width?: number
+      mines?: number
+      lives?: number
+      timeLimit?: number
+      boardCount?: number
+      shareBoards?: boolean
+    }
   }
 
   export namespace Response {

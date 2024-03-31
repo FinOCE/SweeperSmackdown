@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
@@ -46,8 +47,12 @@ public static class OnDisconnectFunction
             PatchOperation.Set($"/userIds", lobby.UserIds.Where(id => id != userId).ToArray())
         });
 
+        var updatedLobby = lobby;
+        updatedLobby.UserIds = updatedLobby.UserIds.Where(id => id != userId).ToArray();
+
         // Notify others in lobby
         await ws.AddAsync(ActionFactory.RemoveUserFromLobby(userId, lobby.Id));
+        await ws.AddAsync(ActionFactory.UpdateLobby("SYSTEM", lobby.Id, LobbyResponseDto.FromModel(updatedLobby)));
         await ws.AddAsync(ActionFactory.RemoveUser(userId, lobby.Id));
 
         // Don't delete everything if users still in lobby

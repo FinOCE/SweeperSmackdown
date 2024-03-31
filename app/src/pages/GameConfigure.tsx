@@ -7,12 +7,13 @@ import { Websocket } from "../types/Websocket"
 import { isEvent } from "../utils/isEvent"
 import { Api } from "../types/Api"
 import { SliderInput } from "../components/SliderInput"
+import { useLobbySettingsState } from "../hooks/useLobbySettingsState"
 
 type Difficulty = "easy" | "normal" | "hard" | "hell"
 
 export function GameConfigure() {
   const { navigate } = useNavigation()
-  const { lobby, setLobby, userId } = useGameInfo()
+  const { lobby, lobbyId, setLobby, userId } = useGameInfo()
   const ws = useWebsocket()
   const api = useApi()
 
@@ -39,10 +40,10 @@ export function GameConfigure() {
   }
 
   useEffect(() => {
-    if (!lobby || !userId) return
+    if (!lobbyId || !userId) return
 
     getInitialVote()
-  }, [lobby, userId])
+  }, [lobbyId, userId])
 
   let [expiry, setExpiry] = useState<number | null>(null)
   let [countdown, setCountdown] = useState<number | null>(null)
@@ -96,8 +97,10 @@ export function GameConfigure() {
     setExpiry(null)
   })
 
-  // Setup UI state
-  const [settings, setSettings] = useState<Api.GameSettings>({
+  // TODO: Create separate state for pending changes so changes during PATCH aren't replaced
+
+  // Set initial UI state
+  const { settings, change, changes, update, clear } = useLobbySettingsState({
     mode: 0,
     height: 16,
     width: 16,
@@ -108,34 +111,53 @@ export function GameConfigure() {
     shareBoards: false
   })
 
+  // Update API when settings are changed
   useEffect(() => {
     if (!lobby) return
 
-    const timer = setTimeout(() => api.lobbyPatch(settings), 500)
+    const timer = setTimeout(() => {
+      if (Object.keys(changes).length > 0) {
+        api.lobbyPatch(changes)
+        clear()
+      }
+    }, 500)
+
     return () => clearTimeout(timer)
-  }, [settings])
+  }, [changes])
 
-  const changeSetting = useCallback(
-    (
-      e: ChangeEvent<HTMLInputElement>,
-      key: keyof Api.GameSettings,
-      callback: (value: ChangeEvent<HTMLInputElement>) => any
-    ) => setSettings(prev => ({ ...prev, [key]: callback(e) })),
-    []
-  )
-
-  const [difficulty, setDifficulty] = useState<Difficulty>("normal")
-
+  // Update locally when lobby settings change
   useEffect(() => {
-    const ratio: Record<Difficulty, number> = {
-      easy: 0.078125,
-      normal: 0.15625,
-      hard: 0.234375,
-      hell: 0.3125
-    }
+    if (!lobby) return
 
-    setSettings(prev => ({ ...prev, mines: Math.floor(prev.height * prev.width * ratio[difficulty]) }))
-  }, [difficulty, settings.height, settings.width])
+    update(lobby.settings)
+  }, [lobby])
+
+  // const ratios: Record<Difficulty, number> = {
+  //   easy: 0.078125,
+  //   normal: 0.15625,
+  //   hard: 0.234375,
+  //   hell: 0.3125
+  // }
+
+  // function calculateMines(height: number, width: number, difficulty: Difficulty) {
+  //   return Math.floor(height * width * ratios[difficulty])
+  // }
+
+  // function calculateDifficulty(height: number, width: number, mines: number) {
+  //   const easy = calculateMines(height, width, "easy")
+  //   const normal = calculateMines(height, width, "normal")
+  //   const hard = calculateMines(height, width, "hard")
+  //   const hell = calculateMines(height, width, "hell")
+
+  //   if (mines === easy) return "easy"
+  //   if (mines === normal) return "normal"
+  //   if (mines === hard) return "hard"
+  //   if (mines === hell) return "hell"
+
+  //   console.log(height, width, mines)
+
+  //   throw new Error("Mine count did not match any difficulty")
+  // }
 
   const [votePending, setVotePending] = useState(false)
 
@@ -187,13 +209,13 @@ export function GameConfigure() {
               id="mode-0"
               value="0"
               checked={settings.mode === 0}
-              onChange={e => changeSetting(e, "mode", Number)}
+              onChange={() => change({ mode: 0 })}
             />
             <label htmlFor="mode-0">Classic</label>
           </div>
         </fieldset>
 
-        <fieldset>
+        {/* <fieldset>
           <legend>Difficulty</legend>
 
           <div>
@@ -202,8 +224,8 @@ export function GameConfigure() {
               name="difficulty"
               id="difficulty-easy"
               value="easy"
-              checked={difficulty === "easy"}
-              onChange={e => setDifficulty(e.target.value as Difficulty)}
+              checked={settings.mines === calculateMines(settings.height, settings.width, "easy")}
+              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "easy") })}
             />
             <label htmlFor="mode-easy">Easy</label>
           </div>
@@ -214,8 +236,8 @@ export function GameConfigure() {
               name="difficulty"
               id="difficulty-normal"
               value="normal"
-              checked={difficulty === "normal"}
-              onChange={e => setDifficulty(e.target.value as Difficulty)}
+              checked={settings.mines === calculateMines(settings.height, settings.width, "normal")}
+              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "normal") })}
             />
             <label htmlFor="mode-normal">Normal</label>
           </div>
@@ -226,8 +248,8 @@ export function GameConfigure() {
               name="difficulty"
               id="difficulty-hard"
               value="hard"
-              checked={difficulty === "hard"}
-              onChange={e => setDifficulty(e.target.value as Difficulty)}
+              checked={settings.mines === calculateMines(settings.height, settings.width, "hard")}
+              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "hard") })}
             />
             <label htmlFor="mode-hard">Hard</label>
           </div>
@@ -238,12 +260,12 @@ export function GameConfigure() {
               name="difficulty"
               id="difficulty-hell"
               value="hell"
-              checked={difficulty === "hell"}
-              onChange={e => setDifficulty(e.target.value as Difficulty)}
+              checked={settings.mines === calculateMines(settings.height, settings.width, "hell")}
+              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "hell") })}
             />
             <label htmlFor="mode-hell">Hell</label>
           </div>
-        </fieldset>
+        </fieldset> */}
 
         <fieldset>
           <legend>Height</legend>
@@ -254,7 +276,17 @@ export function GameConfigure() {
             min={9}
             max={100}
             value={settings.height}
-            onChange={e => setSettings(prev => ({ ...prev, height: e }))}
+            onChange={e =>
+              change({
+                height: e,
+                // mines: calculateMines(
+                //   e,
+                //   settings.width,
+                //   calculateDifficulty(settings.height, settings.width, settings.mines)
+                // )
+                mines: Math.floor(e * settings.width * 0.15625)
+              })
+            }
           />
         </fieldset>
 
@@ -267,7 +299,17 @@ export function GameConfigure() {
             min={9}
             max={100}
             value={settings.width}
-            onChange={e => setSettings(prev => ({ ...prev, width: e }))}
+            onChange={e =>
+              change({
+                width: e,
+                // mines: calculateMines(
+                //   settings.height,
+                //   e,
+                //   calculateDifficulty(settings.height, settings.width, settings.mines)
+                // )
+                mines: Math.floor(settings.height * e * 0.15625)
+              })
+            }
           />
         </fieldset>
 
@@ -280,7 +322,7 @@ export function GameConfigure() {
             min={0}
             max={10}
             value={settings.lives}
-            onChange={e => setSettings(prev => ({ ...prev, lives: e }))}
+            onChange={e => change({ lives: e })}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
         </fieldset>
@@ -295,7 +337,7 @@ export function GameConfigure() {
             max={600}
             step={10}
             value={settings.timeLimit}
-            onChange={e => setSettings(prev => ({ ...prev, timeLimit: e }))}
+            onChange={e => change({ timeLimit: e })}
             display={v => (v !== 0 ? `${v}s` : "Unlimited")}
           />
         </fieldset>
@@ -309,7 +351,7 @@ export function GameConfigure() {
             min={0}
             max={25}
             value={settings.boardCount}
-            onChange={e => setSettings(prev => ({ ...prev, boardCount: e }))}
+            onChange={e => change({ boardCount: e })}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
         </fieldset>
@@ -323,7 +365,7 @@ export function GameConfigure() {
               name="shareBoards"
               id="shareBoards"
               checked={settings.shareBoards}
-              onChange={e => changeSetting(e, "shareBoards", e => e.target.checked)}
+              onChange={e => change({ shareBoards: e.target.checked })}
             />
             <label htmlFor="shareBoards">Share Boards</label>
           </div>
