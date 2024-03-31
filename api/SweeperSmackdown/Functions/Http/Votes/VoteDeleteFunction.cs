@@ -82,7 +82,12 @@ public static class VoteDeleteFunction
         }
 
         if (forced)
+        {
             vote.Forced = false;
+
+            foreach (var key in vote.Votes.Keys)
+                vote.Votes[key] = Array.Empty<string>();
+        }
 
         // Update database and notify users of vote state change
         await voteDb.AddAsync(vote);
