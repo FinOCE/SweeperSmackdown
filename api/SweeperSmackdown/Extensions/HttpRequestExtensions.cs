@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using SweeperSmackdown.Utils;
 using System.Linq;
 
 namespace SweeperSmackdown.Extensions;
@@ -7,8 +8,6 @@ public static class HttpRequestExtensions
 {
     public static string? GetUserId(this HttpRequest req)
     {
-        // TODO: Properly validate to get user ID
-
         if (!req.Headers.ContainsKey("Authorization"))
             return null;
 
@@ -19,19 +18,13 @@ public static class HttpRequestExtensions
 
         var token = header[7..];
 
-        if (token.Split('.').Length == 3)
-        {
-            // Discord token
-            return token;
-            
-            // TODO: Properly parse Discord token into user ID
-        }
-        else
-        {
-            // Non-Discord token
-            return token;
+        var parts = token.Split(":");
+        var id = parts[0];
+        var hash = parts[1];
 
-            // TODO: Properly parse non-Discord token into user ID
-        }
+        if (Hash.Compute(id) != hash)
+            return null;
+
+        return id;
     }
 }

@@ -64,7 +64,11 @@ export namespace Api {
     }
 
     export type Token = {
-      access_token: string
+      accessToken: string
+    }
+
+    export type Login = {
+      bearerToken: string
     }
 
     export type UserGet = User

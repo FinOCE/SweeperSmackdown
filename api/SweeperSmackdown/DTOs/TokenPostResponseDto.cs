@@ -5,8 +5,8 @@ namespace SweeperSmackdown.DTOs;
 
 public class TokenPostResponseDto
 {
-    [JsonProperty("access_token")]
-    [JsonPropertyName("access_token")]
+    [JsonProperty("accessToken")]
+    [JsonPropertyName("accessToken")]
     public string AccessToken { get; set; }
 
     public TokenPostResponseDto(string accessToken)

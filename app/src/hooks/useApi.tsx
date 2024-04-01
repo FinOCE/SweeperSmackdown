@@ -65,7 +65,7 @@ function getApi(baseUrl: string, token: string | null) {
         .then((res: Api.Response.Negotiate) => res),
 
     token: async (code: string, mocked: boolean) =>
-      fetch("/api/token", {
+      fetch(baseUrl + "/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, mocked })
@@ -73,6 +73,16 @@ function getApi(baseUrl: string, token: string | null) {
         .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.Token) => res),
+
+    login: async (accessToken: string, mocked: boolean) =>
+      fetch(baseUrl + "/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, mocked })
+      })
+        .then(accept(200))
+        .then(res => res.json())
+        .then((res: Api.Response.Login) => res),
 
     userDelete: (lobbyId: string, userId: string) =>
       fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {

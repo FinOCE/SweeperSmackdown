@@ -21,10 +21,35 @@ export function EmbeddedAppSdkProvider(props: { iframeId: string | null; childre
       sdk = new DiscordSDK(process.env.PUBLIC_ENV__DISCORD_CLIENT_ID)
       setMocked(false)
     } else {
-      sdk = new DiscordSDKMock(process.env.PUBLIC_ENV__DISCORD_CLIENT_ID, null, null)
+      const mock = new DiscordSDKMock(process.env.PUBLIC_ENV__DISCORD_CLIENT_ID, null, null)
 
-      // TODO: Mock implementation where necessary (https://github.com/discord/embedded-app-sdk/blob/main/examples/react-colyseus/packages/client/src/discordSdk.tsx)
+      mock._updateCommandMocks({
+        async authorize() {
+          return {
+            code: ""
+          }
+        },
+        async authenticate(args) {
+          return {
+            access_token: args.access_token ?? "",
+            application: {
+              description: "",
+              id: "",
+              name: ""
+            },
+            expires: "",
+            scopes: ["identify"],
+            user: {
+              discriminator: "",
+              id: args.access_token ?? "",
+              public_flags: 0,
+              username: ""
+            }
+          }
+        }
+      })
 
+      sdk = mock
       setMocked(true)
     }
 
