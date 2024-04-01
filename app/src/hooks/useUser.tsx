@@ -14,7 +14,7 @@ const UserContext = createContext<User | null>(null)
 export const useUser = () => useContext(UserContext)
 
 export function UserProvider(props: { children: ReactNode }) {
-  const { setToken } = useApi()
+  const { api, setToken } = useApi()
   const { sdk, mocked } = useEmbeddedAppSdk()
 
   const [user, setUser] = useState<User | null>(null)
@@ -28,17 +28,10 @@ export function UserProvider(props: { children: ReactNode }) {
         response_type: "code",
         scope: ["identify"]
       })
-      .then(({ code }) =>
-        fetch("/api/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, mocked })
-        })
-      )
-      .then(res => res.json())
+      .then(({ code }) => api.token(code, mocked))
       .then(({ access_token }) => sdk.commands.authenticate({ access_token }))
       .then(auth => {
-        setToken(auth.access_token) // TODO: Figure out how to handle tokens
+        setToken(auth.access_token)
         setUser({
           id: auth.user.id,
           username: auth.user.username,

@@ -63,6 +63,10 @@ export namespace Api {
       accessToken: string
     }
 
+    export type Token = {
+      access_token: string
+    }
+
     export type UserGet = User
 
     export type UserPut = User

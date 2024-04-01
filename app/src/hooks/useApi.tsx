@@ -64,6 +64,16 @@ function getApi(baseUrl: string, token: string | null) {
         .then(res => res.json())
         .then((res: Api.Response.Negotiate) => res),
 
+    token: async (code: string, mocked: boolean) =>
+      fetch("/api/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, mocked })
+      })
+        .then(accept(200))
+        .then(res => res.json())
+        .then((res: Api.Response.Token) => res),
+
     userDelete: (lobbyId: string, userId: string) =>
       fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
         method: "DELETE",

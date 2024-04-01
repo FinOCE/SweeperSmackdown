@@ -16,7 +16,22 @@ public static class HttpRequestExtensions
 
         if (!header.StartsWith("Bearer "))
             return null;
-        
-        return header[7..];
+
+        var token = header[7..];
+
+        if (token.Split('.').Length == 3)
+        {
+            // Discord token
+            return token;
+            
+            // TODO: Properly parse Discord token into user ID
+        }
+        else
+        {
+            // Non-Discord token
+            return token;
+
+            // TODO: Properly parse non-Discord token into user ID
+        }
     }
 }

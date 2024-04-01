@@ -7,7 +7,7 @@ const EmbeddedAppSdkContext = createContext<{
 }>({ sdk: null, mocked: false })
 export const useEmbeddedAppSdk = () => useContext(EmbeddedAppSdkContext)
 
-export function EmbeddedAppSdkProvider(props: { children: ReactNode }) {
+export function EmbeddedAppSdkProvider(props: { iframeId: string | null; children: ReactNode }) {
   const [privateSdk, setPrivateSdk] = useState<IDiscordSDK | null>(null)
   const [mocked, setMocked] = useState(false)
   const [publicSdk, setPublicSdk] = useState<IDiscordSDK | null>(null)
@@ -16,8 +16,18 @@ export function EmbeddedAppSdkProvider(props: { children: ReactNode }) {
   useEffect(() => {
     if (!process.env.PUBLIC_ENV__DISCORD_CLIENT_ID) return
 
-    const sdk = new DiscordSDK(process.env.PUBLIC_ENV__DISCORD_CLIENT_ID)
-    setMocked(false) // TODO: Setup mocked SDK
+    let sdk: IDiscordSDK
+    if (props.iframeId) {
+      sdk = new DiscordSDK(process.env.PUBLIC_ENV__DISCORD_CLIENT_ID)
+      setMocked(false)
+    } else {
+      sdk = new DiscordSDKMock(process.env.PUBLIC_ENV__DISCORD_CLIENT_ID, null, null)
+
+      // TODO: Mock implementation where necessary (https://github.com/discord/embedded-app-sdk/blob/main/examples/react-colyseus/packages/client/src/discordSdk.tsx)
+
+      setMocked(true)
+    }
+
     setPrivateSdk(sdk)
 
     return () => setPrivateSdk(null)
