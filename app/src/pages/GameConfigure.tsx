@@ -1,53 +1,49 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react"
 import { useApi } from "../hooks/useApi"
-import { useGameInfo } from "../hooks/useGameInfo"
 import { useNavigation } from "../hooks/useNavigation"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { isEvent } from "../utils/isEvent"
 import { Api } from "../types/Api"
 import { SliderInput } from "../components/SliderInput"
-import { useLobbySettingsState } from "../hooks/useLobbySettingsState"
-
-type Difficulty = "easy" | "normal" | "hard" | "hell"
+import { useLobby } from "../hooks/useLobby"
+import { useUser } from "../hooks/useUser"
+import { Loading } from "../components/Loading"
 
 export function GameConfigure() {
-  const { navigate } = useNavigation()
-  const { lobby, lobbyId, setLobby, userId } = useGameInfo()
+  const { api } = useApi()
+  const user = useUser()
+  const { lobby, leave, settings, setSettings } = useLobby()
   const ws = useWebsocket()
-  const api = useApi()
+  const { navigate } = useNavigation()
 
   let [vote, setVote] = useState<Api.VoteGroup>()
-
-  function getInitialVote(attempts: number = 0) {
-    // Vote is created in orchestrator and may not exist instantly. This function
-    // loops every few moments trying to get the vote until it exists to try work
-    // around this. A proper solution on the backend would be ideal, but for now
-    // this is fine.
-
-    // TODO: Fix api so the vote is created on first load as well
-
-    if (attempts > 5) throw new Error("Vailed to get initial vote")
-
-    setTimeout(
-      () =>
-        api
-          .voteGetAll()
-          .then(setVote)
-          .catch(_ => getInitialVote(++attempts)),
-      500 * attempts
-    )
-  }
-
-  useEffect(() => {
-    if (!lobbyId || !userId) return
-
-    getInitialVote()
-  }, [lobbyId, userId])
-
   let [expiry, setExpiry] = useState<number | null>(null)
   let [countdown, setCountdown] = useState<number | null>(null)
 
+  // Fetch current vote on load
+  useEffect(() => {
+    if (!user || !lobby) return
+
+    const getInitialVote = (attempts: number = 0) => {
+      // TODO: Fix api so the vote is created on first load as well (this function is a workaround)
+
+      if (attempts > 5) throw new Error("Vailed to get initial vote")
+
+      setTimeout(
+        () =>
+          api
+            .voteGetAll(lobby.lobbyId)
+            .then(setVote)
+            .catch(_ => getInitialVote(++attempts)),
+        500 * attempts
+      )
+    }
+
+    getInitialVote()
+  }, [user, lobby?.lobbyId])
+
+  // Display countdown timer
   useEffect(() => {
     if (!expiry) setCountdown(null)
 
@@ -60,11 +56,65 @@ export function GameConfigure() {
     }
   }, [expiry])
 
-  useEffect(() => {
-    if (!countdown) return
+  // Create function to handle translatin between game settings and payloads
+  type LocalSettings = Required<Omit<Api.Request.LobbyPatch, "hostId">>
 
-    // TODO: Play ticking down sound here (this triggers each second)
-  }, [countdown])
+  function settingsToPayload(settings: Api.GameSettings | null): LocalSettings {
+    const base = {
+      mode: 0,
+      height: 16,
+      width: 16,
+      mines: 40,
+      lives: 0,
+      timeLimit: 0,
+      boardCount: 0,
+      shareBoards: false
+    }
+
+    return {
+      mode: settings?.mode ?? base.mode,
+      height: settings?.height ?? base.height,
+      width: settings?.width ?? base.width,
+      mines: settings?.mines ?? base.mines,
+      lives: settings?.lives ?? base.lives,
+      timeLimit: settings?.timeLimit ?? base.timeLimit,
+      boardCount: settings?.boardCount ?? base.boardCount,
+      shareBoards: settings?.seed ? settings.seed !== 0 : base.shareBoards
+    }
+  }
+
+  function change(changes: { [K in keyof LocalSettings]?: LocalSettings[K] }) {
+    setChanges(prev => ({ ...prev, ...changes }))
+    setLocalSettings(prev => ({ ...prev, ...changes }))
+  }
+
+  // Setup local state
+  const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(settings))
+  const [changes, setChanges] = useState<Api.Request.LobbyPatch>({})
+
+  // Update local state whenever server state changes
+  useEffect(() => {
+    if (!settings) return
+
+    setLocalSettings(settingsToPayload(settings))
+  }, [settings])
+
+  // Update server state whenever local state changes
+  useEffect(() => {
+    if (!lobby) return
+
+    const timer = setTimeout(() => {
+      if (Object.keys(changes).length > 0) {
+        api.lobbyPatch(lobby.lobbyId, changes)
+        setChanges({})
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [changes])
+
+  // Show loading if not ready
+  if (!user || !ws || !ws.connected || !lobby || !settings || !vote) return <Loading />
 
   // Register websocket events
   ws.clear()
@@ -80,7 +130,7 @@ export function GameConfigure() {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
 
-    setLobby(data.data)
+    setSettings(data.data.settings)
   })
 
   ws.register("group-message", e => {
@@ -97,99 +147,41 @@ export function GameConfigure() {
     setExpiry(null)
   })
 
-  // TODO: Create separate state for pending changes so changes during PATCH aren't replaced
-
-  // Set initial UI state
-  const { settings, change, changes, update, clear } = useLobbySettingsState({
-    mode: 0,
-    height: 16,
-    width: 16,
-    mines: 40,
-    lives: 0,
-    timeLimit: 0,
-    boardCount: 0,
-    shareBoards: false
-  })
-
-  // Update API when settings are changed
-  useEffect(() => {
-    if (!lobby) return
-
-    const timer = setTimeout(() => {
-      if (Object.keys(changes).length > 0) {
-        api.lobbyPatch(changes)
-        clear()
-      }
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [changes])
-
-  // Update locally when lobby settings change
-  useEffect(() => {
-    if (!lobby) return
-
-    update(lobby.settings)
-  }, [lobby])
-
-  // const ratios: Record<Difficulty, number> = {
-  //   easy: 0.078125,
-  //   normal: 0.15625,
-  //   hard: 0.234375,
-  //   hell: 0.3125
-  // }
-
-  // function calculateMines(height: number, width: number, difficulty: Difficulty) {
-  //   return Math.floor(height * width * ratios[difficulty])
-  // }
-
-  // function calculateDifficulty(height: number, width: number, mines: number) {
-  //   const easy = calculateMines(height, width, "easy")
-  //   const normal = calculateMines(height, width, "normal")
-  //   const hard = calculateMines(height, width, "hard")
-  //   const hell = calculateMines(height, width, "hell")
-
-  //   if (mines === easy) return "easy"
-  //   if (mines === normal) return "normal"
-  //   if (mines === hard) return "hard"
-  //   if (mines === hell) return "hell"
-
-  //   console.log(height, width, mines)
-
-  //   throw new Error("Mine count did not match any difficulty")
-  // }
-
   const [votePending, setVotePending] = useState(false)
 
-  const isReady = vote?.votes?.READY?.includes(userId!) ?? false
+  const isReady = vote?.votes?.READY?.includes(user.id) ?? false
 
   // Setup UI functions
   async function voteStart() {
+    if (!lobby || !user) return
+
     setVotePending(true)
-    await api.votePut("READY")
+    await api.votePut(lobby.lobbyId, user.id, "READY")
     setVotePending(false)
   }
 
   async function voteCancel() {
+    if (!lobby || !user) return
+
     setVotePending(true)
-    await api.voteDelete(lobby?.hostId === userId)
+    await api.voteDelete(lobby.lobbyId, user.id, lobby?.hostId === user.id)
     setVotePending(false)
   }
 
   async function voteForce() {
+    if (!lobby || !user) return
+
     setVotePending(true)
-    await api.votePut("READY", true)
+    await api.votePut(lobby.lobbyId, user.id, "READY", true)
     setVotePending(false)
   }
 
   async function leaveLobby() {
-    await api.userDelete()
-    setLobby(null)
+    if (!lobby || !user) return
+
+    await leave()
     navigate("MainMenu")
   }
-
-  // Prevent rendering until TODO
-  if (!lobby || !vote) return <div>Loading...</div>
 
   // Render page
   return (
@@ -208,64 +200,12 @@ export function GameConfigure() {
               name="mode"
               id="mode-0"
               value="0"
-              checked={settings.mode === 0}
+              checked={localSettings.mode === 0}
               onChange={() => change({ mode: 0 })}
             />
             <label htmlFor="mode-0">Classic</label>
           </div>
         </fieldset>
-
-        {/* <fieldset>
-          <legend>Difficulty</legend>
-
-          <div>
-            <input
-              type="radio"
-              name="difficulty"
-              id="difficulty-easy"
-              value="easy"
-              checked={settings.mines === calculateMines(settings.height, settings.width, "easy")}
-              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "easy") })}
-            />
-            <label htmlFor="mode-easy">Easy</label>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              name="difficulty"
-              id="difficulty-normal"
-              value="normal"
-              checked={settings.mines === calculateMines(settings.height, settings.width, "normal")}
-              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "normal") })}
-            />
-            <label htmlFor="mode-normal">Normal</label>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              name="difficulty"
-              id="difficulty-hard"
-              value="hard"
-              checked={settings.mines === calculateMines(settings.height, settings.width, "hard")}
-              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "hard") })}
-            />
-            <label htmlFor="mode-hard">Hard</label>
-          </div>
-
-          <div>
-            <input
-              type="radio"
-              name="difficulty"
-              id="difficulty-hell"
-              value="hell"
-              checked={settings.mines === calculateMines(settings.height, settings.width, "hell")}
-              onChange={() => change({ mines: calculateMines(settings.height, settings.width, "hell") })}
-            />
-            <label htmlFor="mode-hell">Hell</label>
-          </div>
-        </fieldset> */}
 
         <fieldset>
           <legend>Height</legend>
@@ -275,16 +215,11 @@ export function GameConfigure() {
             id="height"
             min={9}
             max={100}
-            value={settings.height}
+            value={localSettings.height}
             onChange={e =>
               change({
                 height: e,
-                // mines: calculateMines(
-                //   e,
-                //   settings.width,
-                //   calculateDifficulty(settings.height, settings.width, settings.mines)
-                // )
-                mines: Math.floor(e * settings.width * 0.15625)
+                mines: Math.floor(e * localSettings.width * 0.15625)
               })
             }
           />
@@ -298,16 +233,11 @@ export function GameConfigure() {
             id="width"
             min={9}
             max={100}
-            value={settings.width}
+            value={localSettings.width}
             onChange={e =>
               change({
                 width: e,
-                // mines: calculateMines(
-                //   settings.height,
-                //   e,
-                //   calculateDifficulty(settings.height, settings.width, settings.mines)
-                // )
-                mines: Math.floor(settings.height * e * 0.15625)
+                mines: Math.floor(localSettings.height * e * 0.15625)
               })
             }
           />
@@ -321,7 +251,7 @@ export function GameConfigure() {
             id="lives"
             min={0}
             max={10}
-            value={settings.lives}
+            value={localSettings.lives}
             onChange={e => change({ lives: e })}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
@@ -336,7 +266,7 @@ export function GameConfigure() {
             min={0}
             max={600}
             step={10}
-            value={settings.timeLimit}
+            value={localSettings.timeLimit}
             onChange={e => change({ timeLimit: e })}
             display={v => (v !== 0 ? `${v}s` : "Unlimited")}
           />
@@ -350,7 +280,7 @@ export function GameConfigure() {
             id="boardCount"
             min={0}
             max={25}
-            value={settings.boardCount}
+            value={localSettings.boardCount}
             onChange={e => change({ boardCount: e })}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
@@ -364,7 +294,7 @@ export function GameConfigure() {
               type="checkbox"
               name="shareBoards"
               id="shareBoards"
-              checked={settings.shareBoards}
+              checked={localSettings.shareBoards}
               onChange={e => change({ shareBoards: e.target.checked })}
             />
             <label htmlFor="shareBoards">Share Boards</label>
@@ -385,7 +315,7 @@ export function GameConfigure() {
         disabled={votePending}
       />
       {isReady && (
-        <input type="button" onClick={voteForce} value="Force Countdown" disabled={userId !== lobby.hostId} />
+        <input type="button" onClick={voteForce} value="Force Countdown" disabled={user.id !== lobby.hostId} />
       )}
       <input type="button" onClick={leaveLobby} value="Leave Lobby" />
     </div>

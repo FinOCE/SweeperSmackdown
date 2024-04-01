@@ -1,52 +1,32 @@
-import {
-  OnConnectedArgs,
-  OnDisconnectedArgs,
-  OnGroupDataMessageArgs,
-  OnRejoinGroupFailedArgs,
-  OnServerDataMessageArgs,
-  OnStoppedArgs,
-  WebPubSubClient
-} from "@azure/web-pubsub-client"
-import React, { createContext, JSX, useContext, useEffect, useMemo, useState } from "react"
+import { WebPubSubClient } from "@azure/web-pubsub-client"
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react"
 import { useApi } from "./useApi"
 import { EventManager, IEventManager } from "../managers/EventManager"
-import { useGameInfo } from "./useGameInfo"
+import { useUser } from "./useUser"
 
-const WebsocketContext = createContext<IEventManager>({
-  clear() {},
-  connected: false,
-  register() {},
-  setClient() {},
-  sendToLobby() {}
-})
+const WebsocketContext = createContext<IEventManager | null>(null)
+export const useWebsocket = () => useContext(WebsocketContext)
 
-export function useWebsocket() {
-  const manager = useContext(WebsocketContext)
-
-  useEffect(() => () => manager.clear(), [])
-
-  return manager
-}
-
-type WebsocketProviderProps = {
-  children?: JSX.Element | JSX.Element[]
-}
-
-export function WebsocketProvider({ children }: WebsocketProviderProps) {
-  const { userId } = useGameInfo()
-  const api = useApi()
+export function WebsocketProvider(props: { children: ReactNode }) {
+  const { api } = useApi()
+  const user = useUser()
 
   const [ready, setReady] = useState(false)
 
-  const client = useMemo(
-    () =>
-      !userId
-        ? null
-        : new WebPubSubClient({
-            getClientAccessUrl: () => api.negotiate(userId).then(res => res.url)
-          }),
-    [userId]
-  )
+  const [client, setClient] = useState<WebPubSubClient | null>(null)
+  const [manager, setManager] = useState<EventManager | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+
+    setClient(
+      new WebPubSubClient({
+        getClientAccessUrl: () => api.negotiate(user.id).then(res => res.url)
+      })
+    )
+
+    return () => setClient(null)
+  }, [user])
 
   useEffect(() => {
     if (!client) return
@@ -55,36 +35,22 @@ export function WebsocketProvider({ children }: WebsocketProviderProps) {
     return () => client.stop()
   }, [client])
 
-  const manager = new EventManager()
-
   useEffect(() => {
     if (!client) return
 
-    manager.setClient(client)
+    const manager = new EventManager(client)
 
-    const onConnected = (e: OnConnectedArgs) => manager.emit("connected", e)
-    const onDisconnected = (e: OnDisconnectedArgs) => manager.emit("disconnected", e)
-    const onStopped = (e: OnStoppedArgs) => manager.emit("stopped", e)
-    const onRejoinGroupFailed = (e: OnRejoinGroupFailedArgs) => manager.emit("rejoin-group-failed", e)
-    const onGroupMessage = (e: OnGroupDataMessageArgs) => manager.emit("group-message", e)
-    const onServerMessage = (e: OnServerDataMessageArgs) => manager.emit("server-message", e)
+    client.on("connected", e => manager.emit("connected", e))
+    client.on("disconnected", e => manager.emit("disconnected", e))
+    client.on("stopped", e => manager.emit("stopped", e))
+    client.on("rejoin-group-failed", e => manager.emit("rejoin-group-failed", e))
+    client.on("group-message", e => manager.emit("group-message", e))
+    client.on("server-message", e => manager.emit("server-message", e))
 
-    client.on("connected", onConnected)
-    client.on("disconnected", onDisconnected)
-    client.on("stopped", onStopped)
-    client.on("rejoin-group-failed", onRejoinGroupFailed)
-    client.on("group-message", onGroupMessage)
-    client.on("server-message", onServerMessage)
+    setManager(manager)
 
-    return () => {
-      client.off("connected", onConnected)
-      client.off("disconnected", onDisconnected)
-      client.off("stopped", onStopped)
-      client.off("rejoin-group-failed", onRejoinGroupFailed)
-      client.off("group-message", onGroupMessage)
-      client.off("server-message", onServerMessage)
-    }
-  }, [ready, client, manager])
+    return () => setManager(null)
+  }, [ready, client])
 
-  return <WebsocketContext.Provider value={manager}>{children}</WebsocketContext.Provider>
+  return <WebsocketContext.Provider value={manager}>{props.children}</WebsocketContext.Provider>
 }

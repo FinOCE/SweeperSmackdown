@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react"
-import { useGameInfo } from "../hooks/useGameInfo"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { State } from "../utils/State"
 import { useApi } from "../hooks/useApi"
 import { isEvent } from "../utils/isEvent"
+import { useLobby } from "../hooks/useLobby"
+import { useUser } from "../hooks/useUser"
+import { Loading } from "../components/Loading"
 
 export function GameActive() {
-  const { lobby, lobbyId, userId } = useGameInfo()
+  const { api } = useApi()
+  const user = useUser()
+  const { lobby, settings } = useLobby()
   const ws = useWebsocket()
-  const api = useApi()
 
   const [localInitialState, setLocalInitialState] = useState<Uint8Array>()
   const [localGameState, setLocalGameState] = useState<Uint8Array>()
@@ -22,13 +25,15 @@ export function GameActive() {
     if (State.isCompleted(localGameState)) setWon(true)
   }, [localGameState])
 
+  if (!ws || !user || !lobby || !settings) return <Loading />
+
   ws.clear()
 
   ws.register("group-message", e => {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
 
-    if (data.userId !== userId) return // TODO: Handle other users to see their progress
+    if (data.userId !== user.id) return // TODO: Handle other users to see their progress
 
     const gameState = new TextEncoder().encode(data.data)
     setLocalInitialState(gameState)
@@ -39,7 +44,7 @@ export function GameActive() {
 
   if (!lobby || !localGameState) return <div>Loading...</div>
 
-  const i = (x: number, y: number) => y * lobby.settings.width + x
+  const i = (x: number, y: number) => y * settings.width + x
 
   function render(state: number) {
     if (State.isFlagged(state)) return "F"
@@ -50,7 +55,7 @@ export function GameActive() {
   }
 
   function makeMove(i: number, flagging: boolean) {
-    if (!localGameState || !lobby || lost) return
+    if (!localGameState || !ws || !lobby || !settings || !user || lost) return
 
     const state = localGameState[i]
 
@@ -65,9 +70,9 @@ export function GameActive() {
       setLocalGameState(prev => prev!.map((state, j) => (i === j ? newState : state)))
 
       // Notify other users of move
-      ws.sendToLobby<Websocket.Response.MoveAdd>(lobbyId!, {
+      ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
         eventName: "MOVE_ADD",
-        userId: userId!,
+        userId: user.id,
         data: isFlagged ? { flagRemove: i } : { flagAdd: i }
       })
     } else {
@@ -91,8 +96,8 @@ export function GameActive() {
           reveals.push(index)
 
           if (State.isEmpty(localGameState[index])) {
-            const width = lobby.settings.width
-            const height = lobby.settings.height
+            const width = settings.width
+            const height = settings.height
 
             if (index % width !== 0) spread(index - 1)
             if (index % width !== width - 1) spread(index + 1)
@@ -111,36 +116,42 @@ export function GameActive() {
       setLocalGameState(prev => prev!.map((state, j) => (reveals.includes(j) ? State.reveal(state) : state)))
 
       // Notify other users of move
-      ws.sendToLobby<Websocket.Response.MoveAdd>(lobbyId!, {
+      ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
         eventName: "MOVE_ADD",
-        userId: userId!,
+        userId: user.id,
         data: { reveals }
       })
     }
   }
 
   async function reset() {
-    await api.boardReset()
+    if (!lobby || !user) return
+
+    await api.boardReset(lobby.lobbyId, user.id)
     setLocalGameState(localInitialState)
     setLost(false)
   }
 
   async function skip() {
-    await api.boardSkip()
+    if (!lobby || !user) return
+
+    await api.boardSkip(lobby.lobbyId, user.id)
     setLost(false)
   }
 
   async function solve() {
-    await api.boardSolution(localGameState!)
+    if (!lobby || !user) return
+
+    await api.boardSolution(lobby.lobbyId, user.id, localGameState!)
   }
 
   return (
     <div>
       <table>
         <tbody>
-          {Array.from({ length: lobby.settings.height }).map((_, y) => (
+          {Array.from({ length: settings.height }).map((_, y) => (
             <tr key={`y${y}`}>
-              {Array.from({ length: lobby.settings.width })
+              {Array.from({ length: settings.width })
                 .map((_, x) => localGameState[i(x, y)])
                 .map((state, x) => (
                   <td key={i(x, y)}>

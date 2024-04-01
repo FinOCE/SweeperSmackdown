@@ -1,62 +1,41 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useNavigation } from "../hooks/useNavigation"
 import { useWebsocket } from "../hooks/useWebsocket"
-import { useGameInfo } from "../hooks/useGameInfo"
-import { Websocket } from "../types/Websocket"
-import { useApi } from "../hooks/useApi"
+import { useLobby } from "../hooks/useLobby"
+import { useUser } from "../hooks/useUser"
+import { Loading } from "../components/Loading"
 
 export function MainMenu() {
-  const { navigate } = useNavigation()
-  const { userId, setLobby } = useGameInfo()
+  const user = useUser()
+  const { lobby, create, join } = useLobby()
   const ws = useWebsocket()
-  const api = useApi()
+  const { navigate } = useNavigation()
 
-  ws.clear()
-
-  // Load until websocket is connected
-  const [loading, setLoading] = useState(ws.connected)
-  ws.register("connected", () => setLoading(false))
-
-  if (loading) return <div>Loading...</div>
-
-  // Choose lobby and handle navigation after joining
-  const [localLobbyId, setLocalLobbyId] = useState("")
+  const [lobbyId, setLobbyId] = useState("")
   const [error, setError] = useState<string>()
 
-  async function joinLobby() {
-    const user = await api.userPut(localLobbyId).catch(() => setError("Failed to join lobby"))
-    if (!user) return
+  // Go to lobby if already in one
+  useEffect(() => {
+    if (lobby) navigate("GameConfigure")
+  }, [lobby])
 
-    const lobby = await api.lobbyGet(localLobbyId).catch(() => setError("Could not find lobby"))
-    if (!lobby) return
-
-    setLobby(lobby)
-  }
-
-  async function createLobby() {
-    const existingLlobby = await api.lobbyGet(localLobbyId).catch(() => {})
-    if (existingLlobby) return setError("Lobby already exists")
-
-    const lobby = await api.lobbyPut(localLobbyId).catch(() => setError("Failed to create lobby"))
-    if (!lobby) return
-
-    const user = await api.userPut(lobby.lobbyId).catch(() => setError("Created lobby but failed to join"))
-    if (!user) return
-
-    setLobby(lobby)
-  }
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Response.UserJoin
-    if (data.userId === userId) navigate("GameConfigure")
-  })
+  // Show loading if not ready
+  if (!user || !ws || !ws.connected) return <Loading />
 
   // Render screen
   return (
     <div>
-      <input type="text" value={localLobbyId} onChange={e => setLocalLobbyId(e.currentTarget.value)} />
-      <input type="button" onClick={joinLobby} value="Join Lobby" />
-      <input type="button" onClick={createLobby} value="Create Lobby" />
+      <input type="text" value={lobbyId} onChange={e => setLobbyId(e.currentTarget.value)} />
+      <input
+        type="button"
+        onClick={() => create(lobbyId).catch(() => setError("Could not create lobby"))}
+        value="Create Lobby"
+      />
+      <input
+        type="button"
+        onClick={() => join(lobbyId).catch(() => setError("Could not join lobby"))}
+        value="Join Lobby"
+      />
       {error && <p>{error}</p>}
     </div>
   )

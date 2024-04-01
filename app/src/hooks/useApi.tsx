@@ -1,140 +1,155 @@
+import React, { createContext, ReactNode, useContext, useState } from "react"
 import { Api } from "../types/Api"
-import { useGameInfo } from "./useGameInfo"
 
-export function useApi() {
-  const gameInfo = useGameInfo()
-  const baseUrl = process.env.PUBLIC_ENV__API_BASE_URL
+const baseUrl = process.env.PUBLIC_ENV__API_BASE_URL
 
-  const headers = {
-    Authorization: `Bearer ${gameInfo.userId}` // TODO: Use real bearer token
-  }
+const ApiContext = createContext<{
+  setToken: (token: string) => void
+  api: ReturnType<typeof getApi>
+}>({
+  setToken: () => {},
+  api: getApi(baseUrl, null)
+})
+export const useApi = () => useContext(ApiContext)
 
-  const jsonHeader = {
-    "Content-Type": "application/json"
-  }
+export function ApiProvider(props: { children?: ReactNode }) {
+  const [token, setToken] = useState<string | null>(null)
 
-  function ok(res: Response): Response {
-    if (res.status < 200 || res.status >= 300) throw new Error("Invalid status code")
+  return <ApiContext.Provider value={{ setToken, api: getApi(baseUrl, token) }}>{props.children}</ApiContext.Provider>
+}
+
+function accept(...statusCodes: number[]) {
+  return (res: Response) => {
+    if (!statusCodes.includes(res.status)) throw new Error("Invalid status code")
     return res
   }
+}
 
-  function okOrNotFound(res: Response): Response {
-    if (res.status !== 404 && (res.status < 200 || res.status >= 300)) throw new Error("Invalid status code")
-    return res
-  }
-
+function getApi(baseUrl: string, token: string | null) {
   return {
-    lobbyGet: (lobbyId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}`, { method: "GET", headers })
-        .then(ok)
+    lobbyGet: (lobbyId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.LobbyGet) => res),
 
-    lobbyPatch: (settings: Api.Request.LobbyPatch, lobbyId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}`, {
+    lobbyPatch: (lobbyId: string, settings: Api.Request.LobbyPatch) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}`, {
         method: "PATCH",
         body: JSON.stringify(settings),
-        headers: { ...headers, ...jsonHeader }
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
       })
-        .then(ok)
+        .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.LobbyPatch) => res),
 
-    lobbyPut: (lobbyId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}`, { method: "PUT", headers })
-        .then(ok)
+    lobbyPut: (lobbyId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(accept(200, 201))
         .then(res => res.json())
         .then((res: Api.Response.LobbyPut) => res),
 
-    negotiate: async (userId?: string) =>
-      await fetch(baseUrl + `/negotiate?userId=${userId ?? gameInfo.userId}`, { method: "POST", headers })
-        .then(ok)
+    negotiate: async (userId: string) =>
+      await fetch(baseUrl + `/negotiate?userId=${userId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.Negotiate) => res),
 
-    userDelete: (lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/users/${userId ?? gameInfo.userId}`, {
+    userDelete: (lobbyId: string, userId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
         method: "DELETE",
-        headers
+        headers: { Authorization: `Bearer ${token}` }
       })
-        .then(okOrNotFound)
+        .then(accept(204, 404))
         .then(() => {}),
 
-    userGet: (lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/users/${userId ?? gameInfo.userId}`, {
+    userGet: (lobbyId: string, userId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
         method: "PUT",
-        headers
+        headers: { Authorization: `Bearer ${token}` }
       })
-        .then(ok)
+        .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.UserGet) => res),
 
-    userPut: (lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/users/${userId ?? gameInfo.userId}`, {
+    userPut: (lobbyId: string, userId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
         method: "PUT",
-        headers
+        headers: { Authorization: `Bearer ${token}` }
       })
-        .then(ok)
+        .then(accept(200, 201))
         .then(res => res.json())
         .then((res: Api.Response.UserPut) => res),
 
-    voteDelete: (force?: boolean, lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/votes/${userId ?? gameInfo.userId}`, {
+    voteDelete: (lobbyId: string, userId: string, force?: boolean) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
         method: "DELETE",
         body: JSON.stringify({ force }),
-        headers: { ...headers, ...jsonHeader }
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
       })
-        .then(okOrNotFound)
+        .then(accept(204, 404))
         .then(() => {}),
 
-    voteGetAll: (lobbyId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/votes`, { method: "GET", headers })
-        .then(ok)
+    voteGetAll: (lobbyId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/votes`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.VoteGetAll) => res),
 
-    voteGet: (lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/votes/${userId ?? gameInfo.userId}`, {
+    voteGet: (lobbyId: string, userId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
         method: "GET",
-        headers
+        headers: { Authorization: `Bearer ${token}` }
       })
-        .then(ok)
+        .then(accept(200))
         .then(res => res.json())
         .then((res: Api.Response.VoteGet) => res),
 
-    votePut: (choice: string, force?: boolean, lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/votes/${userId ?? gameInfo.userId}`, {
+    votePut: (lobbyId: string, userId: string, choice: string, force?: boolean) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
         method: "PUT",
         body: JSON.stringify({ choice, force }),
-        headers: { ...headers, ...jsonHeader }
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
       })
-        .then(ok)
+        .then(accept(200, 201))
         .then(res => res.json())
         .then((res: Api.Response.VotePut) => res),
 
-    boardReset: (lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/boards/${userId ?? gameInfo.userId}/reset`, {
+    boardReset: (lobbyId: string, userId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/reset`, {
         method: "POST",
-        headers
+        headers: { Authorization: `Bearer ${token}` }
       })
-        .then(ok)
+        .then(accept(204))
         .then(() => {}),
 
-    boardSkip: (lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/boards/${userId ?? gameInfo.userId}/skip`, {
+    boardSkip: (lobbyId: string, userId: string) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/skip`, {
         method: "POST",
-        headers
+        headers: { Authorization: `Bearer ${token}` }
       })
-        .then(ok)
+        .then(accept(204))
         .then(() => {}),
 
-    boardSolution: (gameState: Uint8Array, lobbyId?: string, userId?: string) =>
-      fetch(baseUrl + `/lobbies/${lobbyId ?? gameInfo.lobbyId}/boards/${userId ?? gameInfo.userId}/solution`, {
+    boardSolution: (lobbyId: string, userId: string, gameState: Uint8Array) =>
+      fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/solution`, {
         method: "POST",
         body: JSON.stringify({ gameState: new TextDecoder("utf-8").decode(gameState) }),
-        headers: { ...headers, ...jsonHeader }
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
       })
-        .then(ok)
+        .then(accept(204))
         .then(() => {})
   }
 }

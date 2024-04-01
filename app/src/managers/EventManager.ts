@@ -9,7 +9,6 @@ import {
 } from "@azure/web-pubsub-client"
 import EventEmitter from "events"
 import { Websocket } from "../types/Websocket"
-import { Buffer } from "node:buffer"
 
 type EventHandler<T> = (e: T) => void
 
@@ -41,12 +40,6 @@ export interface IEventManager {
   connected: boolean
 
   /**
-   * Set the web pubsub client to be used to send messages.
-   * @param client The web pubsub client
-   */
-  setClient(client: WebPubSubClient): void
-
-  /**
    * Send a message to all members in a lobby.
    * @param lobbyId The lobby to send the message to
    * @param data The message to send
@@ -64,14 +57,15 @@ export class EventManager extends EventEmitter implements IEventManager {
     "server-message": []
   }
 
-  private _client?: WebPubSubClient
+  private _client: WebPubSubClient
   public connected: boolean = false
+  private onConnected = () => (this.connected = true)
+  private onDisconnected = () => (this.connected = false)
 
-  public constructor() {
+  public constructor(client: WebPubSubClient) {
     super()
 
-    this.on("connected", () => (this.connected = true))
-    this.on("disconnected", () => (this.connected = false))
+    this._client = client
 
     this.on("connected", (e: OnConnectedArgs) => this.handlers.connected.forEach(handler => handler(e)))
     this.on("disconnected", (e: OnDisconnectedArgs) => this.handlers.disconnected.forEach(handler => handler(e)))
@@ -85,6 +79,8 @@ export class EventManager extends EventEmitter implements IEventManager {
     this.on("server-message", (e: OnServerDataMessageArgs) =>
       this.handlers["server-message"].forEach(handler => handler(e))
     )
+
+    this.clear()
   }
 
   public register<T extends keyof Event>(event: T, callback: Event[T]) {
@@ -92,21 +88,15 @@ export class EventManager extends EventEmitter implements IEventManager {
   }
 
   public clear() {
-    this.handlers.connected = []
-    this.handlers.disconnected = []
+    this.handlers.connected = [this.onConnected]
+    this.handlers.disconnected = [this.onDisconnected]
     this.handlers.stopped = []
     this.handlers["rejoin-group-failed"] = []
     this.handlers["group-message"] = []
     this.handlers["server-message"] = []
   }
 
-  public setClient(client: WebPubSubClient) {
-    this._client = client
-  }
-
   public sendToLobby<T extends Websocket.Message>(lobbyId: string, data: T) {
-    if (!this._client) throw new Error("Client not set")
-
     this._client.sendToGroup(lobbyId, data, "json", { fireAndForget: true })
   }
 }

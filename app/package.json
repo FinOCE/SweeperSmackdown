@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@azure/web-pubsub-client": "^1.0.0",
+    "@discord/embedded-app-sdk": "^1.1.0",
     "events": "^3.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
