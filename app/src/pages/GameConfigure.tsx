@@ -9,11 +9,12 @@ import { SliderInput } from "../components/SliderInput"
 import { useLobby } from "../hooks/useLobby"
 import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
+import { LobbyWithoutSettings } from "../types/Lobby"
 
 export function GameConfigure() {
   const { api } = useApi()
   const user = useUser()
-  const { lobby, leave, settings, setSettings } = useLobby()
+  const { lobby, setLobby, leave, settings, setSettings } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
 
@@ -131,6 +132,7 @@ export function GameConfigure() {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
 
+    setLobby({ ...data.data, settings: undefined } as LobbyWithoutSettings)
     setSettings(data.data.settings)
   })
 

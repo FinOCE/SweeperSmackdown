@@ -2,11 +2,11 @@ import React, { createContext, ReactNode, useContext, useState } from "react"
 import { Api } from "../types/Api"
 import { useUser } from "./useUser"
 import { useApi } from "./useApi"
-
-type LobbyWithoutSettings = Omit<Api.Lobby, "settings">
+import { LobbyWithoutSettings } from "../types/Lobby"
 
 type TLobbyContext = {
   lobby: LobbyWithoutSettings | null
+  setLobby: (lobby: LobbyWithoutSettings) => void
   create(lobbyId: string): Promise<void>
   join(lobbyId: string): Promise<void>
   leave(): Promise<void>
@@ -16,6 +16,7 @@ type TLobbyContext = {
 
 const LobbyContext = createContext<TLobbyContext>({
   lobby: null,
+  setLobby: () => {},
   create: async () => {},
   join: async () => {},
   leave: async () => {},
@@ -40,9 +41,7 @@ export function LobbyProvider(props: { children?: ReactNode }) {
     const lobby = await api.lobbyPut(lobbyId)
     await api.userPut(lobbyId, user.id)
 
-    const lobbyWithoutSettings = { ...lobby, settings: undefined } as LobbyWithoutSettings
-
-    setLobby(lobbyWithoutSettings)
+    setLobby({ ...lobby, settings: undefined } as LobbyWithoutSettings)
     setSettings(lobby.settings)
   }
 
@@ -69,7 +68,7 @@ export function LobbyProvider(props: { children?: ReactNode }) {
   }
 
   return (
-    <LobbyContext.Provider value={{ lobby, create, join, leave, settings, setSettings }}>
+    <LobbyContext.Provider value={{ lobby, setLobby, create, join, leave, settings, setSettings }}>
       {props.children}
     </LobbyContext.Provider>
   )
