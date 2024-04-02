@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useApi } from "../hooks/useApi"
 import { useNavigation } from "../hooks/useNavigation"
 import { useWebsocket } from "../hooks/useWebsocket"
@@ -35,7 +35,7 @@ export function GameConfigure() {
         () =>
           api
             .voteGetAll(lobby.lobbyId)
-            .then(setVote)
+            .then(([votes]) => setVote(votes))
             .catch(_ => getInitialVote(++attempts)),
         500 * attempts
       )

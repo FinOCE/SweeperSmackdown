@@ -23,7 +23,7 @@ export function WebsocketProvider(props: { children: ReactNode }) {
 
     api
       .negotiate(user.id)
-      .then(res =>
+      .then(([res]) =>
         origin === "browser"
           ? res.url
           : `wss://${process.env.PUBLIC_ENV__DISCORD_CLIENT_ID}.discordsays.com/ws/client/hubs/Game?access_token=${res.accessToken}`

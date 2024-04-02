@@ -34,12 +34,17 @@ export function ApiProvider(props: { children?: ReactNode }) {
   )
 }
 
-function accept(...statusCodes: number[]) {
-  return (res: Response) => {
-    if (!statusCodes.includes(res.status)) throw new Error("Invalid status code")
+const accept =
+  (...statusCodes: number[]) =>
+  (res: Response) => {
+    if (!statusCodes.includes(res.status)) throw new Error(res.status.toString())
     return res
   }
-}
+
+const result =
+  (json: boolean = false) =>
+  async <T extends object>(res: Response) =>
+    [(json ? await res.json() : {}) as T, res.status] as const
 
 function getApi(baseUrl: string | null, token: string | null) {
   return {
@@ -51,8 +56,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.LobbyGet) => res),
+          .then(res => result(true)<Api.Response.LobbyGet>(res)),
 
       lobbyPatch: (lobbyId: string, settings: Api.Request.LobbyPatch) =>
         fetch(baseUrl + `/lobbies/${lobbyId}`, {
@@ -61,8 +65,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.LobbyPatch) => res),
+          .then(res => result(true)<Api.Response.LobbyPatch>(res)),
 
       lobbyPut: (lobbyId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}`, {
@@ -70,8 +73,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200, 201))
-          .then(res => res.json())
-          .then((res: Api.Response.LobbyPut) => res),
+          .then(res => result(true)<Api.Response.LobbyPut>(res)),
 
       negotiate: async (userId: string) =>
         await fetch(baseUrl + `/negotiate?userId=${userId}`, {
@@ -79,8 +81,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.Negotiate) => res),
+          .then(res => result(true)<Api.Response.Negotiate>(res)),
 
       token: async (code: string, mocked: boolean) =>
         fetch(baseUrl + "/token", {
@@ -89,8 +90,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           body: JSON.stringify({ code, mocked })
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.Token) => res),
+          .then(res => result(true)<Api.Response.Token>(res)),
 
       login: async (accessToken: string, mocked: boolean) =>
         fetch(baseUrl + "/login", {
@@ -99,8 +99,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           body: JSON.stringify({ accessToken, mocked })
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.Login) => res),
+          .then(res => result(true)<Api.Response.Login>(res)),
 
       userDelete: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
@@ -108,7 +107,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(204, 404))
-          .then(() => {}),
+          .then(result()),
 
       userGet: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
@@ -116,8 +115,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.UserGet) => res),
+          .then(res => result(true)<Api.Response.UserGet>(res)),
 
       userPut: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
@@ -125,8 +123,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200, 201))
-          .then(res => res.json())
-          .then((res: Api.Response.UserPut) => res),
+          .then(res => result(true)<Api.Response.UserPut>(res)),
 
       voteDelete: (lobbyId: string, userId: string, force?: boolean) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
@@ -135,7 +132,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
           .then(accept(204, 404))
-          .then(() => {}),
+          .then(result()),
 
       voteGetAll: (lobbyId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/votes`, {
@@ -143,8 +140,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.VoteGetAll) => res),
+          .then(res => result(true)<Api.Response.VoteGetAll>(res)),
 
       voteGet: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
@@ -152,8 +148,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => res.json())
-          .then((res: Api.Response.VoteGet) => res),
+          .then(res => result(true)<Api.Response.VoteGet>(res)),
 
       votePut: (lobbyId: string, userId: string, choice: string, force?: boolean) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
@@ -162,8 +157,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
           .then(accept(200, 201))
-          .then(res => res.json())
-          .then((res: Api.Response.VotePut) => res),
+          .then(res => result(true)<Api.Response.VotePut>(res)),
 
       boardReset: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/reset`, {
@@ -171,7 +165,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(204))
-          .then(() => {}),
+          .then(result()),
 
       boardSkip: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/skip`, {
@@ -179,7 +173,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(204))
-          .then(() => {}),
+          .then(result()),
 
       boardSolution: (lobbyId: string, userId: string, gameState: Uint8Array) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/solution`, {
@@ -188,7 +182,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
           .then(accept(204))
-          .then(() => {})
+          .then(result())
     }
   }
 }

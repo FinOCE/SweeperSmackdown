@@ -32,10 +32,10 @@ export function UserProvider(props: { children: ReactNode }) {
     })
 
     // Exchange code for access token
-    const { accessToken } = await api.token(code, mocked)
+    const [{ accessToken }] = await api.token(code, mocked)
 
     // Exchange access token for bearer token for API
-    const { bearerToken } = await api.login(accessToken, mocked)
+    const [{ bearerToken }] = await api.login(accessToken, mocked)
 
     // Get user info from sdk using access token
     const auth = await sdk.commands.authenticate({ access_token: accessToken })
