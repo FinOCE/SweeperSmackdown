@@ -157,7 +157,7 @@ export function GameConfigure() {
     if (!lobby || !user) return
 
     setVotePending(true)
-    await api.votePut(lobby.lobbyId, user.id, "READY")
+    await api.votePut(lobby.lobbyId, user.id, "READY").catch(() => {})
     setVotePending(false)
   }
 
@@ -165,7 +165,7 @@ export function GameConfigure() {
     if (!lobby || !user) return
 
     setVotePending(true)
-    await api.voteDelete(lobby.lobbyId, user.id, lobby?.hostId === user.id)
+    await api.voteDelete(lobby.lobbyId, user.id, lobby?.hostId === user.id).catch(() => {})
     setVotePending(false)
   }
 
@@ -173,7 +173,7 @@ export function GameConfigure() {
     if (!lobby || !user) return
 
     setVotePending(true)
-    await api.votePut(lobby.lobbyId, user.id, "READY", true)
+    await api.votePut(lobby.lobbyId, user.id, "READY", true).catch(() => {})
     setVotePending(false)
   }
 
@@ -189,7 +189,6 @@ export function GameConfigure() {
     <div>
       <p>Welcome to lobby {lobby.lobbyId}</p>
       <p>Members: {lobby.userIds.join(", ")}</p>
-      {countdown && <p>Starting in {countdown}</p>}
 
       <section id="controls">
         <fieldset>
@@ -318,6 +317,8 @@ export function GameConfigure() {
       {isReady && (
         <input type="button" onClick={voteForce} value="Force Countdown" disabled={user.id !== lobby.hostId} />
       )}
+      {countdown && <span>Starting in {countdown}</span>}
+      <br />
       <input type="button" onClick={leaveLobby} value="Leave Lobby" />
     </div>
   )
