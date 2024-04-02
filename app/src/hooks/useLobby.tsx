@@ -34,13 +34,14 @@ export function LobbyProvider(props: { children?: ReactNode }) {
   async function create(lobbyId: string) {
     if (!user) throw new Error("Cannot create lobby because user is not set")
 
-    const existingLobby = await api.lobbyGet(lobbyId)
+    const existingLobby = await api.lobbyGet(lobbyId).catch(() => {})
     if (existingLobby != null) throw new Error("Lobby already exists")
 
     const lobby = await api.lobbyPut(lobbyId)
     await api.userPut(lobbyId, user.id)
 
     const lobbyWithoutSettings = { ...lobby, settings: undefined } as LobbyWithoutSettings
+
     setLobby(lobbyWithoutSettings)
     setSettings(lobby.settings)
   }
@@ -48,10 +49,12 @@ export function LobbyProvider(props: { children?: ReactNode }) {
   async function join(lobbyId: string) {
     if (!user) throw new Error("Cannot join lobby because user is not set")
 
-    const lobby = await api.lobbyGet(lobbyId)
-    await api.userPut(lobbyId, user.id)
+    const addedUser = await api.userPut(lobbyId, user.id).catch(() => {})
+    if (!addedUser) throw new Error("Failed to join lobby")
 
+    const lobby = await api.lobbyGet(lobbyId)
     const lobbyWithoutSettings = { ...lobby, settings: undefined } as LobbyWithoutSettings
+
     setLobby(lobbyWithoutSettings)
     setSettings(lobby.settings)
   }

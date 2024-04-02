@@ -20,7 +20,7 @@ export function MainMenu() {
   }, [lobby])
 
   // Show loading if not ready
-  if (!user || !ws || !ws.connected) return <Loading />
+  if (!user || !ws) return <Loading />
 
   // Render screen
   return (

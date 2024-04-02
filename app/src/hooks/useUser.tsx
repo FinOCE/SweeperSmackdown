@@ -3,25 +3,31 @@ import { useEmbeddedAppSdk } from "./useEmbeddAppSdk"
 import { useApi } from "./useApi"
 import { IDiscordSDK } from "@discord/embedded-app-sdk"
 import { User } from "../types/User"
+import { useOrigin } from "./useOrigin"
 
 const UserContext = createContext<User | null>(null)
 export const useUser = () => useContext(UserContext)
 
 export function UserProvider(props: { children: ReactNode }) {
+  const { origin } = useOrigin()
+  const sdk = useEmbeddedAppSdk()
   const { api, setToken } = useApi()
-  const { sdk, mocked } = useEmbeddedAppSdk()
 
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    if (sdk) login(sdk, mocked)
-  }, [sdk])
+    if (!sdk) return
+
+    login(sdk, origin === "browser")
+  }, [origin, sdk])
 
   async function login(sdk: IDiscordSDK, mocked: boolean) {
     // Get oauth code from sdk
     const { code } = await sdk.commands.authorize({
       client_id: process.env.PUBLIC_ENV__DISCORD_CLIENT_ID,
       response_type: "code",
+      state: "",
+      prompt: "none",
       scope: ["identify"]
     })
 

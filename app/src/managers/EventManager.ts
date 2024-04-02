@@ -35,11 +35,6 @@ export interface IEventManager {
   clear(): void
 
   /**
-   * Whether or not the event manager is currently connected to Web PubSub.
-   */
-  connected: boolean
-
-  /**
    * Send a message to all members in a lobby.
    * @param lobbyId The lobby to send the message to
    * @param data The message to send
@@ -58,9 +53,6 @@ export class EventManager extends EventEmitter implements IEventManager {
   }
 
   private _client: WebPubSubClient
-  public connected: boolean = false
-  private onConnected = () => (this.connected = true)
-  private onDisconnected = () => (this.connected = false)
 
   public constructor(client: WebPubSubClient) {
     super()
@@ -88,8 +80,8 @@ export class EventManager extends EventEmitter implements IEventManager {
   }
 
   public clear() {
-    this.handlers.connected = [this.onConnected]
-    this.handlers.disconnected = [this.onDisconnected]
+    this.handlers.connected = []
+    this.handlers.disconnected = []
     this.handlers.stopped = []
     this.handlers["rejoin-group-failed"] = []
     this.handlers["group-message"] = []

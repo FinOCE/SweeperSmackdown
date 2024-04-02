@@ -8,5 +8,5 @@ public class LoginPostRequestDto
     public string AccessToken { get; set; } = null!;
 
     [JsonProperty("mocked")]
-    public bool Mocked { get; set; } = null!;
+    public bool Mocked { get; set; }
 }

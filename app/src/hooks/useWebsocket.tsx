@@ -3,12 +3,14 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 import { useApi } from "./useApi"
 import { EventManager, IEventManager } from "../managers/EventManager"
 import { useUser } from "./useUser"
+import { useOrigin } from "./useOrigin"
 
 const WebsocketContext = createContext<IEventManager | null>(null)
 export const useWebsocket = () => useContext(WebsocketContext)
 
 export function WebsocketProvider(props: { children: ReactNode }) {
-  const { api } = useApi()
+  const { origin } = useOrigin()
+  const { api, hasToken } = useApi()
   const user = useUser()
 
   const [ready, setReady] = useState(false)
@@ -17,16 +19,21 @@ export function WebsocketProvider(props: { children: ReactNode }) {
   const [manager, setManager] = useState<EventManager | null>(null)
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !hasToken) return
 
-    setClient(
-      new WebPubSubClient({
-        getClientAccessUrl: () => api.negotiate(user.id).then(res => res.url)
+    api
+      .negotiate(user.id)
+      .then(res =>
+        origin === "browser"
+          ? res.url
+          : `wss://${process.env.PUBLIC_ENV__DISCORD_CLIENT_ID}.discordsays.com/ws/client/hubs/Game?access_token=${res.accessToken}`
+      )
+      .then(url => {
+        setClient(new WebPubSubClient({ getClientAccessUrl: url }))
       })
-    )
 
     return () => setClient(null)
-  }, [user])
+  }, [user, origin, hasToken])
 
   useEffect(() => {
     if (!client) return

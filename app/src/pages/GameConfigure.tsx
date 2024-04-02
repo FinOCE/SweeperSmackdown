@@ -91,6 +91,7 @@ export function GameConfigure() {
   // Setup local state
   const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(settings))
   const [changes, setChanges] = useState<Api.Request.LobbyPatch>({})
+  const [votePending, setVotePending] = useState(false)
 
   // Update local state whenever server state changes
   useEffect(() => {
@@ -114,7 +115,7 @@ export function GameConfigure() {
   }, [changes])
 
   // Show loading if not ready
-  if (!user || !ws || !ws.connected || !lobby || !settings || !vote) return <Loading />
+  if (!user || !ws || !lobby || !settings || !vote) return <Loading />
 
   // Register websocket events
   ws.clear()
@@ -146,8 +147,6 @@ export function GameConfigure() {
 
     setExpiry(null)
   })
-
-  const [votePending, setVotePending] = useState(false)
 
   const isReady = vote?.votes?.READY?.includes(user.id) ?? false
 
