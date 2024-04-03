@@ -1,0 +1,28 @@
+#game-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+  min-width: 600px;
+
+  & table {
+    border-collapse: collapse;
+
+    & input[type="button"] {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #19212e;
+      background: #e4ebfb;
+
+      &:hover {
+        background: #889dbc;
+        cursor: pointer;
+      }
+
+      &:disabled {
+        background: #889dbc;
+        color: #e4ebfb;
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react"
+import "./GameActive.scss"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Websocket } from "../types/Websocket"
 import { State } from "../utils/State"
@@ -7,12 +8,19 @@ import { isEvent } from "../utils/isEvent"
 import { useLobby } from "../hooks/useLobby"
 import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
+import { Page } from "../components/ui/Page"
+import { RollingBackground } from "../components/ui/RollingBackground"
+import { ButtonList } from "../components/ui/ButtonList"
+import { Box } from "../components/ui/Box"
+import { Text } from "../components/ui/Text"
+import { useNavigation } from "../hooks/useNavigation"
 
 export function GameActive() {
   const { api } = useApi()
   const user = useUser()
-  const { lobby, settings } = useLobby()
+  const { lobby, settings, leave } = useLobby()
   const ws = useWebsocket()
+  const { navigate } = useNavigation()
 
   const [localInitialState, setLocalInitialState] = useState<Uint8Array>()
   const [localGameState, setLocalGameState] = useState<Uint8Array>()
@@ -24,6 +32,12 @@ export function GameActive() {
 
     if (State.isCompleted(localGameState)) setWon(true)
   }, [localGameState])
+
+  useEffect(() => {
+    if (!won || !lobby || !user) return
+
+    api.boardSolution(lobby.lobbyId, user.id, localGameState!)
+  }, [won, lobby, user])
 
   if (!ws || !user || !lobby || !settings) return <Loading />
 
@@ -41,8 +55,6 @@ export function GameActive() {
     setLost(false)
     setWon(false)
   })
-
-  if (!lobby || !localGameState) return <div>Loading...</div>
 
   const i = (x: number, y: number) => y * settings.width + x
 
@@ -139,41 +151,54 @@ export function GameActive() {
     setLost(false)
   }
 
-  async function solve() {
-    if (!lobby || !user) return
-
-    await api.boardSolution(lobby.lobbyId, user.id, localGameState!)
+  async function leaveParty() {
+    await leave()
+    navigate("MainMenu")
   }
 
-  return (
-    <div>
-      <table>
-        <tbody>
-          {Array.from({ length: settings.height }).map((_, y) => (
-            <tr key={`y${y}`}>
-              {Array.from({ length: settings.width })
-                .map((_, x) => localGameState[i(x, y)])
-                .map((state, x) => (
-                  <td key={i(x, y)}>
-                    <input
-                      type="button"
-                      value={render(state)}
-                      onClick={() => makeMove(i(x, y), false)}
-                      onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
-                      disabled={lost || State.isRevealed(state)}
-                    />
-                  </td>
-                ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  if (!localGameState) return <Loading />
 
-      <div>
-        <input type="button" value="Reset" onClick={reset} />
-        <input type="button" value="Skip" onClick={skip} />
-        <input type="button" value="Solve" onClick={solve} /> {/* disabled={!won} */}
-      </div>
-    </div>
+  return (
+    <RollingBackground fade>
+      <Page>
+        <div id="game-active">
+          <table cellPadding={0} cellSpacing={0}>
+            <tbody>
+              {Array.from({ length: settings.height }).map((_, y) => (
+                <tr key={`y${y}`}>
+                  {Array.from({ length: settings.width })
+                    .map((_, x) => localGameState[i(x, y)])
+                    .map((state, x) => (
+                      <td key={i(x, y)}>
+                        <input
+                          type="button"
+                          value={render(state)}
+                          onClick={() => makeMove(i(x, y), false)}
+                          onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
+                          disabled={lost || State.isRevealed(state)}
+                        />
+                      </td>
+                    ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <ButtonList>
+            <ButtonList horizontal>
+              <Box onClick={reset}>
+                <Text type="big">Reset</Text>
+              </Box>
+              <Box onClick={skip}>
+                <Text type="big">Skip</Text>
+              </Box>
+            </ButtonList>
+            <Box onClick={leaveParty}>
+              <Text type="big">Leave Party</Text>
+            </Box>
+          </ButtonList>
+        </div>
+      </Page>
+    </RollingBackground>
   )
 }

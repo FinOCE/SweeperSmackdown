@@ -195,12 +195,14 @@ export function GameConfigure() {
     <RollingBackground fade>
       <Page>
         <p>
-          <Text type="title">Lobby {lobby.lobbyId}</Text>
+          <Text type="normal">Party {lobby.lobbyId}</Text>
         </p>
         <br />
         <p>
           <Text>Current Players: {lobby.userIds.join(", ")}</Text>
         </p>
+
+        <br />
 
         <ButtonList>
           <fieldset>
@@ -332,6 +334,8 @@ export function GameConfigure() {
           </fieldset>
         </ButtonList>
 
+        <br />
+
         <ButtonList>
           {countdown && (
             <div className="game-configure-countdown-container">
@@ -352,7 +356,7 @@ export function GameConfigure() {
             </Box>
           )}
           <Box onClick={leaveLobby}>
-            <Text type="big">Leave Lobby</Text>
+            <Text type="big">Leave Party</Text>
           </Box>
         </ButtonList>
       </Page>

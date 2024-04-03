@@ -1,8 +1,22 @@
-.button-list {
+@mixin buttonlist() {
   display: flex;
-  flex-direction: column;
   gap: 20px;
-  padding: 20px;
   width: 100%;
   max-width: 600px;
+
+  & > * {
+    flex: 1 1 0;
+  }
+}
+
+.button-list-vertical {
+  @include buttonlist();
+
+  flex-direction: column;
+}
+
+.button-list-horizontal {
+  @include buttonlist();
+
+  flex-direction: row;
 }

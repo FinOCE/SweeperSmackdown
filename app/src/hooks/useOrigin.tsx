@@ -27,7 +27,7 @@ export function OriginProvider(props: { children?: ReactNode }) {
     setFrameId(frameId)
   }, [window?.location?.search])
 
-  if (!origin) return <Loading />
+  if (!origin) return <Loading hide />
 
   // Render provider and subsequent children
   return <OriginContext.Provider value={{ origin, frameId }}>{props.children}</OriginContext.Provider>

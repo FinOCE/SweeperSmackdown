@@ -8,7 +8,7 @@ export function RollingBackground(props: { children?: ReactNode; fade?: boolean 
     <div className={`rolling-background ${props.fade ? "rolling-background-fade" : ""}`}>
       <div className="rolling-background-bg-container">
         <div className="rolling-background-bg">
-          {Array.from({ length: 10 }).map((_, i) => (
+          {Array.from({ length: 15 }).map((_, i) => (
             <RollingBackgroundRow key={i} offset={i}>
               <Bomb color="off-bg" />
               <Flag color="off-bg" />
