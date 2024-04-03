@@ -11,3 +11,19 @@ html {
   font-family: "Titan One";
   color: #19212e;
 }
+
+input[type="text"] {
+  border-radius: 20px;
+  background: darken(#191e32, 3%);
+  border: 2px solid lighten(#191e32, 10%);
+  padding: 15px;
+  font-size: 20px;
+  font-family: "Titan One";
+  color: #e4ebfb;
+  text-align: center;
+
+  &::placeholder {
+    color: #e4ebfb;
+    font-style: italic;
+  }
+}

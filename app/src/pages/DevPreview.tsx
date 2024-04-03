@@ -4,10 +4,11 @@ import { Box } from "../components/ui/Box"
 import { Text } from "../components/ui/Text"
 import { RollingBackground } from "../components/ui/RollingBackground"
 import { Bomb } from "../components/ui/icons/Bomb"
+import { Page } from "../components/ui/Page"
 
 export function DevPreview() {
   return (
-    <div id="dev-preview">
+    <Page>
       <RollingBackground>
         <div className="dev-preview-content">
           <div className="dev-preview-title">
@@ -32,6 +33,6 @@ export function DevPreview() {
           </div>
         </div>
       </RollingBackground>
-    </div>
+    </Page>
   )
 }

@@ -14,6 +14,7 @@ export function Box(props: BoxProps) {
       className={`box-outer ${props.important ? "box-important" : ""} ${props.onClick ? "box-button" : ""} ${
         props.disabled ? "box-disabled" : ""
       }`}
+      onClick={props.onClick}
     >
       <div className="box-border-highlight-container">
         <div className="box-border-highlight" />

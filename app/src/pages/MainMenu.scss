@@ -1,0 +1,13 @@
+.main-menu-join-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+
+  & > * {
+    flex: 1 1 0;
+  }
+
+  & > input {
+    max-width: calc(50% - 46px);
+  }
+}
