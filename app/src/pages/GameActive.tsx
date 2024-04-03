@@ -256,6 +256,7 @@ export function GameActive() {
               {Object.entries(competitionState ?? {}).map(([userId, state]) => (
                 <div key={userId}>
                   <Text type="small">{userId}</Text>
+                  <br />
                   <div className="game-active-competitor-board-container">
                     <table cellPadding={0} cellSpacing={0}>
                       <tbody>
