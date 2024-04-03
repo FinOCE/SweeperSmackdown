@@ -2,6 +2,7 @@
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.DTOs.Websocket;
 using SweeperSmackdown.Extensions;
 using System;
 using System.Text;
@@ -56,5 +57,11 @@ public static class ActionFactory
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
             MessageFactory.Create(PubSubEvents.BOARD_CREATE, userId, Encoding.UTF8.GetString(gameState)),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction MakeMove(string userId, string lobbyId, OnMoveData move) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.MOVE_ADD, userId, move),
             WebPubSubDataType.Json);
 }

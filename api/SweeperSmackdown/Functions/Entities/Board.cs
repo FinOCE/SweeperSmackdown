@@ -65,11 +65,6 @@ public class Board : IBoard
         }
         else if (data.Reveals != null)
         {
-            // Ensure if multiple tiles are removed that all are empty
-            var states = GameState.Where((_, i) => data.Reveals.Contains(i));
-            if (!states.All(State.IsEmpty))
-                throw new ArgumentException("All tiles revealed in one move must be empty if there is multiple");
-
             // Reveal tiles in state
             GameState = GameState
                 .Select((state, i) => data.Reveals.Contains(i) ? State.Reveal(state) : state)

@@ -3,15 +3,12 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.DTOs.Discord;
-using SweeperSmackdown.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace SweeperSmackdown.Functions.Http;
 

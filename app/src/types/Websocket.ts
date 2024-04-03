@@ -66,7 +66,7 @@ export namespace Websocket {
       userId: string
 
       /** The indices of tiles that were revealed by the move */
-      data: { reveals: number[] } | { flagAdd: number } | { flagRemove: number }
+      data: { lobbyId: string } & ({ reveals: number[] } | { flagAdd: number } | { flagRemove: number })
     }
   }
 }

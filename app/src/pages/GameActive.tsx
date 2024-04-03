@@ -22,23 +22,51 @@ export function GameActive() {
   const ws = useWebsocket()
   const { navigate } = useNavigation()
 
-  const [localInitialState, setLocalInitialState] = useState<Uint8Array>()
   const [localGameState, setLocalGameState] = useState<Uint8Array>()
   const [lost, setLost] = useState(false)
   const [won, setWon] = useState(false)
 
+  const [pendingCompetitionMoves, setPendingCompetitionMoves] = useState<
+    Record<string, { reveals?: number[]; flagAdd?: number[]; flagRemove?: number[] }>
+  >({})
+  const [competitionState, setCompetitionState] = useState<Record<string, Uint8Array>>()
+
+  // Determine if game has been won
   useEffect(() => {
     if (!localGameState) return
 
     if (State.isCompleted(localGameState)) setWon(true)
   }, [localGameState])
 
+  // Send solution to server if game has been won
   useEffect(() => {
     if (!won || !lobby || !user) return
 
     api.boardSolution(lobby.lobbyId, user.id, localGameState!)
   }, [won, lobby, user])
 
+  // Apply pending competitor moves
+  useEffect(() => {
+    if (!pendingCompetitionMoves || !competitionState) return
+    if (Object.keys(pendingCompetitionMoves).length === 0) return
+
+    for (const userId in pendingCompetitionMoves) {
+      if (!competitionState[userId]) continue
+
+      const state = competitionState[userId]
+      const { reveals, flagAdd, flagRemove } = pendingCompetitionMoves[userId]
+
+      if (reveals) for (const i of reveals) state[i] = State.reveal(state[i])
+      if (flagAdd) for (const i of flagAdd) state[i] = State.flag(state[i])
+      if (flagRemove) for (const i of flagRemove) state[i] = State.removeFlag(state[i])
+
+      setCompetitionState(prev => ({ ...prev, [userId]: state }))
+    }
+
+    setPendingCompetitionMoves({})
+  }, [pendingCompetitionMoves])
+
+  // Only render once all dependencies are loaded
   if (!ws || !user || !lobby || !settings) return <Loading />
 
   ws.clear()
@@ -47,13 +75,54 @@ export function GameActive() {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
 
-    if (data.userId !== user.id) return // TODO: Handle other users to see their progress
+    if (data.userId === user.id) {
+      const gameState = new TextEncoder().encode(data.data)
+      setLocalGameState(gameState)
+      setLost(false)
+      setWon(false)
+    } else {
+      setCompetitionState(prev => ({ ...prev, [data.userId]: new TextEncoder().encode(data.data) }))
+    }
+  })
 
-    const gameState = new TextEncoder().encode(data.data)
-    setLocalInitialState(gameState)
-    setLocalGameState(gameState)
-    setLost(false)
-    setWon(false)
+  function isReveals(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; reveals: number[] } {
+    return "reveals" in data && data.reveals !== null
+  }
+
+  function isFlagAdd(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; flagAdd: number } {
+    return "flagAdd" in data && data.flagAdd !== null
+  }
+
+  function isFlagRemove(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; flagRemove: number } {
+    return "flagRemove" in data && data.flagRemove !== null
+  }
+
+  // Queue competitior moves into pending moves to be updated
+  ws.register("group-message", e => {
+    const data = e.message.data as Websocket.Message
+    if (!isEvent<Websocket.Response.MoveAdd>("MOVE_ADD", data)) return
+
+    if (data.userId === user.id) return
+
+    if (isReveals(data.data)) {
+      const { reveals } = data.data
+      setPendingCompetitionMoves(prev => ({
+        ...prev,
+        [data.userId]: { ...prev[data.userId], reveals: [...(prev[data.userId]?.reveals ?? []), ...reveals] }
+      }))
+    } else if (isFlagAdd(data.data)) {
+      const { flagAdd } = data.data
+      setPendingCompetitionMoves(prev => ({
+        ...prev,
+        [data.userId]: { ...prev[data.userId], flagAdd: [...(prev[data.userId]?.flagAdd ?? []), flagAdd] }
+      }))
+    } else if (isFlagRemove(data.data)) {
+      const { flagRemove } = data.data
+      setPendingCompetitionMoves(prev => ({
+        ...prev,
+        [data.userId]: { ...prev[data.userId], flagRemove: [...(prev[data.userId]?.flagRemove ?? []), flagRemove] }
+      }))
+    }
   })
 
   const i = (x: number, y: number) => y * settings.width + x
@@ -85,7 +154,7 @@ export function GameActive() {
       ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
         eventName: "MOVE_ADD",
         userId: user.id,
-        data: isFlagged ? { flagRemove: i } : { flagAdd: i }
+        data: isFlagged ? { lobbyId: lobby.lobbyId, flagRemove: i } : { lobbyId: lobby.lobbyId, flagAdd: i }
       })
     } else {
       // Prevent clicking on a flagged or revealed tile
@@ -131,7 +200,7 @@ export function GameActive() {
       ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
         eventName: "MOVE_ADD",
         userId: user.id,
-        data: { reveals }
+        data: { lobbyId: lobby.lobbyId, reveals }
       })
     }
   }
@@ -140,15 +209,12 @@ export function GameActive() {
     if (!lobby || !user) return
 
     await api.boardReset(lobby.lobbyId, user.id)
-    setLocalGameState(localInitialState)
-    setLost(false)
   }
 
   async function skip() {
     if (!lobby || !user) return
 
     await api.boardSkip(lobby.lobbyId, user.id)
-    setLost(false)
   }
 
   async function leaveParty() {
@@ -162,34 +228,77 @@ export function GameActive() {
     <RollingBackground fade>
       <Page>
         <div id="game-active">
-          <table cellPadding={0} cellSpacing={0}>
-            <tbody>
-              {Array.from({ length: settings.height }).map((_, y) => (
-                <tr key={`y${y}`}>
-                  {Array.from({ length: settings.width })
-                    .map((_, x) => localGameState[i(x, y)])
-                    .map((state, x) => (
-                      <td key={i(x, y)}>
-                        <input
-                          type="button"
-                          value={render(state)}
-                          onClick={() => makeMove(i(x, y), false)}
-                          onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
-                          disabled={lost || State.isRevealed(state)}
-                        />
-                      </td>
-                    ))}
-                </tr>
+          <div id="game-active-boards-container">
+            <div id="game-active-current-board-container">
+              <table cellPadding={0} cellSpacing={0}>
+                <tbody>
+                  {Array.from({ length: settings.height }).map((_, y) => (
+                    <tr key={`y${y}`}>
+                      {Array.from({ length: settings.width })
+                        .map((_, x) => localGameState[i(x, y)])
+                        .map((state, x) => (
+                          <td key={i(x, y)}>
+                            <input
+                              type="button"
+                              value={render(state)}
+                              onClick={() => makeMove(i(x, y), false)}
+                              onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
+                              disabled={lost || State.isRevealed(state)}
+                            />
+                          </td>
+                        ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div id="game-active-competitors">
+              {Object.entries(competitionState ?? {}).map(([userId, state]) => (
+                <div key={userId}>
+                  <Text type="small">{userId}</Text>
+                  <div className="game-active-competitor-board-container">
+                    <table cellPadding={0} cellSpacing={0}>
+                      <tbody>
+                        {Array.from({ length: 7 }).map((_, y) => (
+                          <tr key={`${userId}y${y}`}>
+                            {Array.from({ length: 7 }).map((_, x) => {
+                              const tileIndexHeight = settings.height / 7
+                              const tileIndexWidth = settings.width / 7
+
+                              const indices: number[] = []
+
+                              for (let k = y * tileIndexHeight; k < (y + 1) * tileIndexHeight; k++)
+                                for (let j = x * tileIndexWidth; j < (x + 1) * tileIndexWidth; j++)
+                                  indices.push(i(Math.floor(j), Math.floor(k)))
+
+                              const isRevealed =
+                                indices.filter(i => State.isRevealed(state[i]) || State.isFlagged(state[i])).length >
+                                indices.length / 2
+
+                              return (
+                                <td key={userId + i(x, y)}>
+                                  <div
+                                    className={`game-active-competitor-tile-${isRevealed ? "revealed" : "hidden"}`}
+                                  />
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
 
           <ButtonList>
             <ButtonList horizontal>
               <Box onClick={reset}>
                 <Text type="big">Reset</Text>
               </Box>
-              <Box onClick={skip}>
+              <Box onClick={skip} disabled={settings.seed !== 0}>
                 <Text type="big">Skip</Text>
               </Box>
             </ButtonList>

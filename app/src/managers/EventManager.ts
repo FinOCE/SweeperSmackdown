@@ -89,6 +89,7 @@ export class EventManager extends EventEmitter implements IEventManager {
   }
 
   public sendToLobby<T extends Websocket.Message>(lobbyId: string, data: T) {
-    this._client.sendToGroup(lobbyId, data, "json", { fireAndForget: true })
+    this._client.sendEvent("MOVE_ADD", data, "json", { fireAndForget: true })
+    // this._client.sendToGroup(lobbyId, data, "json", { fireAndForget: true })
   }
 }

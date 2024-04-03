@@ -4,6 +4,9 @@ namespace SweeperSmackdown.DTOs.Websocket;
 
 public class OnMoveData
 {
+    [JsonPropertyName("lobbyId")]
+    public string LobbyId { get; set; } = null!;
+    
     [JsonPropertyName("reveals")]
     public int[]? Reveals { get; set; }
 

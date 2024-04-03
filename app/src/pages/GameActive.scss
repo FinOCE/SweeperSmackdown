@@ -4,6 +4,11 @@
   align-items: center;
   gap: 50px;
   min-width: 600px;
+}
+
+#game-active-current-board-container {
+  border-radius: 10px;
+  overflow: hidden;
 
   & table {
     border-collapse: collapse;
@@ -25,4 +30,38 @@
       }
     }
   }
+}
+
+#game-active-boards-container {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  justify-content: center;
+  gap: 20px;
+}
+
+#game-active-competitors {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  gap: 20px;
+}
+
+.game-active-competitor-board-container {
+  border-radius: 10px;
+  overflow: hidden;
+  padding: -1px;
+}
+
+.game-active-competitor-tile-revealed {
+  background: #889dbc;
+  width: 20px;
+  height: 20px;
+}
+
+.game-active-competitor-tile-hidden {
+  background: #e4ebfb;
+  width: 20px;
+  height: 20px;
 }

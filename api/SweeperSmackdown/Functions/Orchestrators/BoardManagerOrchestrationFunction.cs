@@ -43,8 +43,6 @@ public static class BoardManagerOrchestrationFunction
             ? props.Settings.Seed + iteration
             : ctx.NewGuid().GetHashCode();
 
-        Console.WriteLine(lobbyId + " " + userId + " " + seed);
-
         // Generate boards
         var gameState = GameStateFactory.Create(seed, props.Settings);
 
