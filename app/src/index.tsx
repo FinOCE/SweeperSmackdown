@@ -1,4 +1,5 @@
 import React from "react"
+import "./index.scss"
 import { createRoot } from "react-dom/client"
 import { ApiProvider } from "./hooks/useApi"
 import { EmbeddedAppSdkProvider } from "./hooks/useEmbeddAppSdk"
