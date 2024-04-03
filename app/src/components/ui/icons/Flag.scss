@@ -1,0 +1,37 @@
+$pole-width: 10px;
+$pole-height: 100%;
+
+$flag-width: 100%;
+$flag-height: 66%;
+
+.flag {
+  height: 50px;
+  aspect-ratio: 1;
+  position: relative;
+
+  .flag-pole {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: $pole-width;
+    height: $pole-height;
+  }
+
+  .flag-cloth {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: $flag-width;
+    height: $flag-height;
+  }
+
+  &.flag-off-bg {
+    .flag-pole {
+      background: darken(#191e32, 3%);
+    }
+
+    .flag-cloth {
+      background: darken(#191e32, 3%);
+    }
+  }
+}

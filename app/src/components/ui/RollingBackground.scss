@@ -1,0 +1,51 @@
+.rolling-background {
+  position: relative;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.rolling-background-bg {
+  position: absolute;
+  top: 0;
+  right: -300%;
+  height: 100%;
+  width: 300%;
+  z-index: 0;
+  animation: push 15s linear infinite;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+@keyframes push {
+  0% {
+    right: -200%;
+  }
+
+  100% {
+    right: -100%;
+  }
+}
+
+.rolling-background-row {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+
+.rolling-background-row-half {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.rolling-background-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}

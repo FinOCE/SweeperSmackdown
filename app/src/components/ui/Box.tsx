@@ -5,11 +5,16 @@ type BoxProps = {
   children?: ReactNode
   onClick?: () => void
   disabled?: boolean
+  important?: boolean
 }
 
 export function Box(props: BoxProps) {
   return (
-    <div className={`box-outer ${props.onClick ? "box-button" : ""} ${props.disabled ? "box-disabled" : ""}`}>
+    <div
+      className={`box-outer ${props.important ? "box-important" : ""} ${props.onClick ? "box-button" : ""} ${
+        props.disabled ? "box-disabled" : ""
+      }`}
+    >
       <div className="box-border-highlight-container">
         <div className="box-border-highlight" />
       </div>

@@ -68,3 +68,18 @@ $padding: 15px;
   color: #e4ebfb;
   text-decoration: line-through 5px;
 }
+
+.box-important {
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: $border-radius;
+    filter: blur(20px);
+    background: #fbc74d;
+    z-index: -1;
+  }
+}
