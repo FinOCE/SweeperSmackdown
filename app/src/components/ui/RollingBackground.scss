@@ -1,8 +1,33 @@
 .rolling-background {
   position: relative;
-  overflow: hidden;
   height: 100vh;
   width: 100vw;
+  overflow-x: hidden;
+}
+
+.rolling-background-fade {
+  animation: fade 0.5s ease;
+  opacity: 1;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.rolling-background-bg-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+  overflow: hidden;
 }
 
 .rolling-background-bg {
@@ -11,7 +36,6 @@
   right: -300%;
   height: 100%;
   width: 300%;
-  z-index: 0;
   animation: push 30s linear infinite;
   display: flex;
   flex-direction: column;
@@ -42,9 +66,7 @@
 }
 
 .rolling-background-content {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   height: 100%;
   width: 100%;
   z-index: 1;

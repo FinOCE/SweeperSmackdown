@@ -3,18 +3,20 @@ import "./RollingBackground.scss"
 import { Bomb } from "./icons/Bomb"
 import { Flag } from "./icons/Flag"
 
-export function RollingBackground(props: { children?: ReactNode }) {
+export function RollingBackground(props: { children?: ReactNode; fade?: boolean }) {
   return (
-    <div className="rolling-background">
-      <div className="rolling-background-bg">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <RollingBackgroundRow key={i} offset={i}>
-            <Bomb color="off-bg" />
-            <Flag color="off-bg" />
-            <Bomb color="off-bg" />
-            <Flag color="off-bg" />
-          </RollingBackgroundRow>
-        ))}
+    <div className={`rolling-background ${props.fade ? "rolling-background-fade" : ""}`}>
+      <div className="rolling-background-bg-container">
+        <div className="rolling-background-bg">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <RollingBackgroundRow key={i} offset={i}>
+              <Bomb color="off-bg" />
+              <Flag color="off-bg" />
+              <Bomb color="off-bg" />
+              <Flag color="off-bg" />
+            </RollingBackgroundRow>
+          ))}
+        </div>
       </div>
       <div className="rolling-background-content">{props.children}</div>
     </div>

@@ -12,6 +12,7 @@ import { Bomb } from "../components/ui/icons/Bomb"
 import { Box } from "../components/ui/Box"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { useOrigin } from "../hooks/useOrigin"
+import { ButtonList } from "../components/ui/ButtonList"
 
 export function MainMenu() {
   const { origin } = useOrigin()
@@ -34,10 +35,10 @@ export function MainMenu() {
 
   // Render screen
   return (
-    <Page fade>
-      <RollingBackground>
-        <div className="dev-preview-content">
-          <div className="dev-preview-title">
+    <RollingBackground fade>
+      <Page>
+        <div className="main-menu-content">
+          <div className="main-menu-title">
             <Bomb color="yellow" />
             <div>
               <Text type="title">Sweeper</Text>
@@ -46,7 +47,7 @@ export function MainMenu() {
             </div>
           </div>
 
-          <div className="dev-preview-menu">
+          <ButtonList>
             {origin === "discord" && (
               <>
                 <Box
@@ -82,9 +83,9 @@ export function MainMenu() {
               </Box>
             </div>
             {error && <p>{error}</p>}
-          </div>
+          </ButtonList>
         </div>
-      </RollingBackground>
-    </Page>
+      </Page>
+    </RollingBackground>
   )
 }

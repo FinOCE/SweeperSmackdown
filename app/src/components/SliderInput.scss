@@ -1,0 +1,16 @@
+.slider-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+
+  & > .box-outer {
+    transform: scale(0.5);
+    aspect-ratio: 1.5;
+  }
+}
+
+.slider-input-button-content-container {
+  position: relative;
+  top: -12px;
+}

@@ -1,4 +1,7 @@
 import React, { ChangeEvent, useCallback } from "react"
+import "./SliderInput.scss"
+import { Box } from "./ui/Box"
+import { Text } from "./ui/Text"
 
 type SliderInputProps = {
   id: string
@@ -24,8 +27,12 @@ export function SliderInput(props: SliderInputProps) {
   }
 
   return (
-    <div>
-      <input type="button" value="-" onClick={decrement} disabled={props.disabled || props.value <= props.min} />
+    <div className="slider-input">
+      <Box onClick={decrement} disabled={props.disabled || props.value <= props.min}>
+        <div className="slider-input-button-content-container">
+          <Text type="unset-color">-</Text>
+        </div>
+      </Box>
       <input
         type="range"
         name={props.name}
@@ -37,8 +44,15 @@ export function SliderInput(props: SliderInputProps) {
         onChange={set}
         disabled={props.disabled}
       />
-      <input type="button" value="+" onClick={increment} disabled={props.disabled || props.value >= props.max} />
-      <output htmlFor={props.id}>{props.display ? props.display(props.value) : props.value}</output>
+      <Box onClick={increment} disabled={props.disabled || props.value >= props.max}>
+        <div className="slider-input-button-content-container">
+          <Text type="unset-color">+</Text>
+        </div>
+      </Box>
+      <br />
+      <output htmlFor={props.id}>
+        <Text>{props.display ? props.display(props.value) : props.value}</Text>
+      </output>
     </div>
   )
 }

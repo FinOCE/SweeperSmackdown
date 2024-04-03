@@ -1,0 +1,10 @@
+.game-configure-selector-label-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.game-configure-countdown-container {
+  display: grid;
+  place-items: center;
+}
