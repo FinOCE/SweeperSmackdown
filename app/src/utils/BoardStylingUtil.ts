@@ -22,9 +22,9 @@ export class BoardStylingUtil {
   }
 
   public static getType(state: number) {
-    if (State.isFlagged(state)) return "FLAG"
-    else if (!State.isRevealed) return "UNREVEALED"
-    else return "REVEALED"
+    if (State.isFlagged(state)) return "flag"
+    else if (!State.isRevealed(state)) return "unrevealed"
+    else return "revealed"
   }
 
   public static isRoundedTopLeftCorner(origin: number, top: number, left: number, topLeft: number) {

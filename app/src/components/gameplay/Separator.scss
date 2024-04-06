@@ -1,54 +1,67 @@
 $size-long: 40px;
 $size-short: 2px;
+$color: #fff;
 
 .separator-horizontal {
-  height: $size-short;
+  height: 0;
   width: $size-long;
-  background: #000;
   position: relative;
 
   .separator-horizontal-line {
     position: absolute;
     top: -$size-short;
-    left: $size-short;
-    height: calc($size-short * 3);
-    width: calc($size-long - $size-short * 2);
-    background: #000;
-    z-index: 1;
+    left: 0;
+    height: calc($size-short * 2);
+    width: calc($size-long);
+    z-index: 4;
+    background: $color;
   }
 }
 
 .separator-vertical {
   height: $size-long;
-  width: $size-short;
-  background: #000;
+  width: 0;
   position: relative;
 
   .separator-vertical-line {
     position: absolute;
-    top: $size-short;
+    top: 0;
     left: -$size-short;
-    height: calc($size-long - $size-short * 2);
-    width: calc($size-short * 3);
-    background: #000;
-    z-index: 1;
+    height: calc($size-long);
+    width: calc($size-short * 2);
+    z-index: 4;
+    background: $color;
   }
 }
 
 .separator-intersection {
-  height: $size-short;
-  width: $size-short;
-  background: #000;
+  height: 0;
+  width: 0;
   position: relative;
 
   .separator-intersection-circle {
     position: absolute;
     top: -$size-short;
     left: -$size-short;
-    height: calc($size-short * 3);
-    width: calc($size-short * 3);
-    background: #000;
-    z-index: 1;
+    height: calc($size-short * 2);
+    width: calc($size-short * 2);
+    z-index: 4;
     border-radius: 100%;
+    background: $color;
   }
+}
+
+.separator-line-flag {
+  background: #f00 !important;
+  z-index: 3 !important;
+}
+
+.separator-line-unrevealed {
+  background: #00f !important;
+  z-index: 3 !important;
+}
+
+.separator-line-revealed {
+  background: #0f0 !important;
+  z-index: 3 !important;
 }

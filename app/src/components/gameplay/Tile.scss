@@ -8,7 +8,11 @@ $size: 40px;
   place-items: center;
   border: none;
   position: relative;
-  border-radius: $gap;
+
+  tile > * {
+    position: relative;
+    z-index: 2;
+  }
 }
 
 .tile-flagged {

@@ -107,17 +107,19 @@ export function Board(props: BoardProps) {
   // }
 
   return (
-    <table cellPadding={0} cellSpacing={0} className="board">
+    <table cellPadding={0} cellSpacing={0} className="board" onContextMenu={e => e.preventDefault()}>
       <tbody>
-        {Array.from({ length: props.height * 2 + 1 })
+        {Array.from({ length: props.height * 2 })
           .map((_, y) => Math.floor(y / 2))
           .map((y, yi) => (
             <tr key={`y${yi}`}>
-              {Array.from({ length: props.width * 2 + 1 })
+              {Array.from({ length: props.width * 2 })
                 .map((_, x) => Math.floor(x / 2))
                 .map((x, xi) => (
                   <td key={`y${yi}x${xi}`}>
-                    {yi % 2 === 0 || xi % 2 === 0 ? (
+                    {yi === 0 || xi === 0 ? (
+                      <></>
+                    ) : yi % 2 === 0 || xi % 2 === 0 ? (
                       (() => {
                         const topLeft = getIndex(x - 1, y - 1)
                         const topRight = getIndex(x, y - 1)

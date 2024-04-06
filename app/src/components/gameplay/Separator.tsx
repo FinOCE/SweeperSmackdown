@@ -38,51 +38,63 @@ export function Separator(props: SeparatorProps) {
   }
 
   if (isIntersection(props)) {
-    let clipPath = "polygon("
+    // let clipPath = "polygon("
 
-    if (BoardStylingUtil.isRoundedTopLeftCorner(props.bottomRight, props.topRight, props.bottomLeft, props.topLeft))
-      clipPath += "100% 50%, 50% 50%, 50% 100%"
-    else clipPath += "100% 50%, 100% 100%, 50% 100%"
+    // if (BoardStylingUtil.isRoundedTopLeftCorner(props.bottomRight, props.topRight, props.bottomLeft, props.topLeft))
+    //   clipPath += "100% 50%, 50% 50%, 50% 100%"
+    // else clipPath += "100% 50%, 100% 100%, 50% 100%"
 
-    clipPath += ", "
+    // clipPath += ", "
 
-    if (BoardStylingUtil.isRoundedTopRightCorner(props.bottomLeft, props.topLeft, props.bottomRight, props.topRight))
-      clipPath += "50% 100%, 50% 50%, 0% 50%"
-    else clipPath += "50% 100%, 0% 100%, 0% 50%"
+    // if (BoardStylingUtil.isRoundedTopRightCorner(props.bottomLeft, props.topLeft, props.bottomRight, props.topRight))
+    //   clipPath += "50% 100%, 50% 50%, 0% 50%"
+    // else clipPath += "50% 100%, 0% 100%, 0% 50%"
 
-    clipPath += ", "
+    // clipPath += ", "
 
-    if (BoardStylingUtil.isRoundedBottomRightCorner(props.topLeft, props.bottomLeft, props.topRight, props.bottomRight))
-      clipPath += "0% 50%, 50% 50%, 50% 0%"
-    else clipPath += "0% 50%, 0% 0%, 50% 0%"
+    // if (BoardStylingUtil.isRoundedBottomRightCorner(props.topLeft, props.bottomLeft, props.topRight, props.bottomRight))
+    //   clipPath += "0% 50%, 50% 50%, 50% 0%"
+    // else clipPath += "0% 50%, 0% 0%, 50% 0%"
 
-    clipPath += ", "
+    // clipPath += ", "
 
-    if (BoardStylingUtil.isRoundedBottomLeftCorner(props.topRight, props.bottomRight, props.topLeft, props.bottomLeft))
-      clipPath += "50% 0%, 50% 50%, 100% 50%"
-    else clipPath += "50% 0%, 100% 0%, 100% 50%"
+    // if (BoardStylingUtil.isRoundedBottomLeftCorner(props.topRight, props.bottomRight, props.topLeft, props.bottomLeft))
+    //   clipPath += "50% 0%, 50% 50%, 100% 50%"
+    // else clipPath += "50% 0%, 100% 0%, 100% 50%"
 
-    clipPath += ")"
+    // clipPath += ")"
+
+    const hide =
+      [
+        BoardStylingUtil.getType(props.topLeft),
+        BoardStylingUtil.getType(props.topRight),
+        BoardStylingUtil.getType(props.bottomLeft),
+        BoardStylingUtil.getType(props.bottomRight)
+      ].reduce((pre, cur) => (pre === cur ? pre : "invalid")) !== "invalid"
+        ? true
+        : false
 
     return (
       <div className="separator-intersection">
-        <div className="separator-intersection-circle" style={{ clipPath }} />
+        <div className="separator-intersection-circle" style={{ display: hide ? "none" : "block" }} />
       </div>
     )
   } else if (isHorizontal(props)) {
     const isBridging = BoardStylingUtil.isConnectedHorizontally(props.top, props.bottom)
+    const type = BoardStylingUtil.getType(props.top)
 
     return (
       <div className="separator-horizontal">
-        <div className="separator-horizontal-line" style={{ display: isBridging ? "block" : "none" }} />
+        <div className={`separator-horizontal-line separator-line-${isBridging ? type : "different"}`} />
       </div>
     )
   } else if (isVertical(props)) {
     const isBridging = BoardStylingUtil.isConnectedVertically(props.left, props.right)
+    const type = BoardStylingUtil.getType(props.left)
 
     return (
       <div className="separator-vertical">
-        <div className="separator-vertical-line" style={{ display: isBridging ? "block" : "none" }} />
+        <div className={`separator-vertical-line separator-line-${isBridging ? type : "different"}`} />
       </div>
     )
   } else throw new Error("Invalid separator orientation provided")
