@@ -1,6 +1,8 @@
 import React from "react"
 import "./Tile.scss"
 import { State } from "../../utils/State"
+import { Flag } from "../ui/icons/Flag"
+import { Bomb } from "../ui/icons/Bomb"
 
 type TileProps = {
   index: number
@@ -25,11 +27,11 @@ export function Tile(props: TileProps) {
 
   const content = (() => {
     if (State.isFlagged(props.state)) {
-      return "F"
+      return <Flag color="off-bg" size={20} />
     } else if (!State.isRevealed(props.state)) {
       return null
     } else if (State.isBomb(props.state)) {
-      return "B"
+      return <Bomb color="off-bg" size={20} />
     } else if (State.isEmpty(props.state)) {
       return null
     } else {

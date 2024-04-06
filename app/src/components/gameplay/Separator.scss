@@ -86,6 +86,11 @@ $line-short-ratio: 1.5;
   z-index: 3 !important;
 }
 
+.separator-line-bomb {
+  background: $tile-bomb-color !important;
+  z-index: 3 !important;
+}
+
 .separator-line-unrevealed {
   background: $tile-unrevealed-color !important;
   z-index: 3 !important;

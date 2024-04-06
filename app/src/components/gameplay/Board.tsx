@@ -17,6 +17,8 @@ export function Board(props: BoardProps) {
   const [lost, setLost] = useState(props.lost)
 
   function onLeftClick(i: number) {
+    if (lost) return
+
     // Prevent clicking on a flagged or revealed tile
     if (State.isFlagged(localState[i])) return
     if (State.isRevealed(localState[i])) return
@@ -65,6 +67,8 @@ export function Board(props: BoardProps) {
   }
 
   function onRightClick(i: number) {
+    if (lost) return
+
     // Prevent flagging a revealed tile
     if (State.isRevealed(localState[i])) return
 

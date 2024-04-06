@@ -24,6 +24,7 @@ export class BoardStylingUtil {
   public static getType(state: number) {
     if (State.isFlagged(state)) return "flag"
     else if (!State.isRevealed(state)) return "unrevealed"
+    else if (State.isBomb(state)) return "bomb"
     else return "revealed"
   }
 

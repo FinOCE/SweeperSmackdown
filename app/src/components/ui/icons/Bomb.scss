@@ -1,5 +1,5 @@
-$spike-size: 10px;
-$spike-length: 7px;
+$spike-size: 20%;
+$spike-length: 14%;
 
 .bomb-off-bg,
 .bomb-off-bg > * {
@@ -28,7 +28,6 @@ $spike-length: 7px;
 }
 
 .bomb {
-  height: 50px;
   aspect-ratio: 1;
   border-radius: 100%;
   position: relative;

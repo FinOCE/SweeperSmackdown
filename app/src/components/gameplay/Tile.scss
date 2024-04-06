@@ -23,6 +23,10 @@ $size: 40px;
   background: $tile-flagged-color;
 }
 
+.tile-bomb {
+  background: $tile-bomb-color;
+}
+
 .tile-unrevealed {
   background: $tile-unrevealed-color;
 }
