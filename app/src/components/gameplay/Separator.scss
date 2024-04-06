@@ -1,0 +1,54 @@
+$size-long: 40px;
+$size-short: 2px;
+
+.separator-horizontal {
+  height: $size-short;
+  width: $size-long;
+  background: #000;
+  position: relative;
+
+  .separator-horizontal-line {
+    position: absolute;
+    top: -$size-short;
+    left: $size-short;
+    height: calc($size-short * 3);
+    width: calc($size-long - $size-short * 2);
+    background: #000;
+    z-index: 1;
+  }
+}
+
+.separator-vertical {
+  height: $size-long;
+  width: $size-short;
+  background: #000;
+  position: relative;
+
+  .separator-vertical-line {
+    position: absolute;
+    top: $size-short;
+    left: -$size-short;
+    height: calc($size-long - $size-short * 2);
+    width: calc($size-short * 3);
+    background: #000;
+    z-index: 1;
+  }
+}
+
+.separator-intersection {
+  height: $size-short;
+  width: $size-short;
+  background: #000;
+  position: relative;
+
+  .separator-intersection-circle {
+    position: absolute;
+    top: -$size-short;
+    left: -$size-short;
+    height: calc($size-short * 3);
+    width: calc($size-short * 3);
+    background: #000;
+    z-index: 1;
+    border-radius: 100%;
+  }
+}

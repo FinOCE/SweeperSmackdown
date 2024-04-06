@@ -1,0 +1,24 @@
+$gap: 2px;
+$size: 40px;
+
+.tile {
+  height: $size;
+  width: $size;
+  display: grid;
+  place-items: center;
+  border: none;
+  position: relative;
+  border-radius: $gap;
+}
+
+.tile-flagged {
+  background: #f00;
+}
+
+.tile-unrevealed {
+  background: #00f;
+}
+
+.tile-revealed {
+  background: #0f0;
+}

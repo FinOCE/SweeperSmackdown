@@ -1,38 +1,20 @@
 import React from "react"
 import "./DevPreview.scss"
-import { Box } from "../components/ui/Box"
-import { Text } from "../components/ui/Text"
-import { RollingBackground } from "../components/ui/RollingBackground"
-import { Bomb } from "../components/ui/icons/Bomb"
-import { Page } from "../components/ui/Page"
+import { Board } from "../components/gameplay/Board"
 
 export function DevPreview() {
-  return (
-    <Page>
-      <RollingBackground>
-        <div className="dev-preview-content">
-          <div className="dev-preview-title">
-            <Bomb color="yellow" />
-            <div>
-              <Text type="title">Sweeper</Text>
-              <br />
-              <Text type="title">Smackdown</Text>
-            </div>
-          </div>
+  const height = 5
+  const width = 5
+  const lost = false
+  const state = encodedState
 
-          <div className="dev-preview-menu">
-            <Box onClick={() => {}} important>
-              <Text type="big">Play In Discord Call</Text>
-            </Box>
-            <Box onClick={() => {}}>
-              <Text type="big">Join Party</Text>
-            </Box>
-            <Box onClick={() => {}}>
-              <Text type="big">Create Party</Text>
-            </Box>
-          </div>
-        </div>
-      </RollingBackground>
-    </Page>
-  )
+  return <Board {...{ height, width, lost, state }} />
 }
+
+const encodedState = new Uint8Array("4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4".split(" ").map(p => Number(p)))
+
+// const encodedState = new Uint8Array(
+//   "8 36 36 8 36 4 0 4 4 4 4 8 8 4 0 0 36 16 12 12 4 4 0 4 36 4 4 36 36 4 0 0 4 8 36 8 4 0 4 8 12 8 8 8 8 4 0 0 4 8 16 36 8 0 4 36 8 36 4 4 4 4 0 0 12 36 16 36 12 4 4 4 8 4 4 4 36 4 0 0 36 36 12 8 36 4 0 0 4 4 4 4 4 4 0 0 8 8 4 4 4 4 0 0 4 36 4 0 4 4 4 0 0 0 0 0 0 0 0 0 4 4 4 0 4 36 8 4 0 0 0 4 4 4 0 0 0 0 0 4 8 12 12 36 0 0 0 4 36 8 8 8 4 0 4 8 36 8 36 8 0 0 0 4 4 8 36 36 12 8 8 36 8 8 4 4 0 0 0 0 0 4 16 36 36 12 36 8 4 0 4 4 4 4 8 4 8 4 16 36 24 36 8 4 0 0 4 36 8 36 12 36 8 36 12 36 36 8 4 0 0 4 8 8 8 36 16 8 12 4 8 8 8 4 0 0 0 4 36 4 4 4 8 36 4 0 0 0 0 0 0 0 0 4 4 4"
+//     .split(" ")
+//     .map(p => Number(p))
+// )

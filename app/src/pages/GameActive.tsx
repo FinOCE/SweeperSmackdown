@@ -14,6 +14,8 @@ import { ButtonList } from "../components/ui/ButtonList"
 import { Box } from "../components/ui/Box"
 import { Text } from "../components/ui/Text"
 import { useNavigation } from "../hooks/useNavigation"
+import { Board } from "../components/gameplay/Board"
+import { BoardPreview } from "../components/gameplay/BoardPreview"
 
 export function GameActive() {
   const { api } = useApi()
@@ -125,86 +127,6 @@ export function GameActive() {
     }
   })
 
-  const i = (x: number, y: number) => y * settings.width + x
-
-  function render(state: number) {
-    if (State.isFlagged(state)) return "F"
-    else if (!State.isRevealed(state)) return "  "
-    else if (State.isBomb(state)) return "B"
-    else if (State.getAdjacentBombCount(state) > 0) return String(State.getAdjacentBombCount(state))
-    else return "  "
-  }
-
-  function makeMove(i: number, flagging: boolean) {
-    if (!localGameState || !ws || !lobby || !settings || !user || lost) return
-
-    const state = localGameState[i]
-
-    if (flagging) {
-      // Prevent flagging a revealed tile
-      if (State.isRevealed(state)) return
-
-      // Determine if flag is to be added or removed
-      const isFlagged = State.isFlagged(state)
-      const newState = isFlagged ? State.removeFlag(state) : State.flag(state)
-
-      setLocalGameState(prev => prev!.map((state, j) => (i === j ? newState : state)))
-
-      // Notify other users of move
-      ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
-        eventName: "MOVE_ADD",
-        userId: user.id,
-        data: isFlagged ? { lobbyId: lobby.lobbyId, flagRemove: i } : { lobbyId: lobby.lobbyId, flagAdd: i }
-      })
-    } else {
-      // Prevent clicking on a flagged or revealed tile
-      if (State.isFlagged(state)) return
-      if (State.isRevealed(state)) return
-
-      // Lose game if bomb
-      if (State.isBomb(state)) setLost(true)
-
-      // Calculate tiles to reveal
-      const reveals = [i]
-
-      if (State.isEmpty(state)) {
-        const travelled: number[] = []
-
-        const spread = (index: number) => {
-          if (travelled.includes(index)) return
-
-          travelled.push(index)
-          reveals.push(index)
-
-          if (State.isEmpty(localGameState[index])) {
-            const width = settings.width
-            const height = settings.height
-
-            if (index % width !== 0) spread(index - 1)
-            if (index % width !== width - 1) spread(index + 1)
-            if (index >= width) spread(index - width)
-            if (index < width * (height - 1)) spread(index + width)
-            if (index % width !== 0 && index >= width) spread(index - width - 1)
-            if (index % width !== width - 1 && index >= width) spread(index - width + 1)
-            if (index % width !== 0 && index < width * (height - 1)) spread(index + width - 1)
-            if (index % width !== width - 1 && index < width * (height - 1)) spread(index + width + 1)
-          }
-        }
-
-        spread(i)
-      }
-
-      setLocalGameState(prev => prev!.map((state, j) => (reveals.includes(j) ? State.reveal(state) : state)))
-
-      // Notify other users of move
-      ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
-        eventName: "MOVE_ADD",
-        userId: user.id,
-        data: { lobbyId: lobby.lobbyId, reveals }
-      })
-    }
-  }
-
   async function reset() {
     if (!lobby || !user) return
 
@@ -230,64 +152,15 @@ export function GameActive() {
         <div id="game-active">
           <div id="game-active-boards-container">
             <div id="game-active-current-board-container">
-              <table cellPadding={0} cellSpacing={0}>
-                <tbody>
-                  {Array.from({ length: settings.height }).map((_, y) => (
-                    <tr key={`y${y}`}>
-                      {Array.from({ length: settings.width })
-                        .map((_, x) => localGameState[i(x, y)])
-                        .map((state, x) => (
-                          <td key={i(x, y)}>
-                            <input
-                              type="button"
-                              value={render(state)}
-                              onClick={() => makeMove(i(x, y), false)}
-                              onContextMenu={e => (e.preventDefault(), makeMove(i(x, y), true))}
-                              disabled={lost || State.isRevealed(state)}
-                            />
-                          </td>
-                        ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <Board height={settings.height} width={settings.width} state={localGameState} lost={lost} />
             </div>
             <div id="game-active-competitors">
-              {Object.entries(competitionState ?? {}).map(([userId, state]) => (
+              {Object.entries(competitionState ?? {}).map(([userId]) => (
                 <div key={userId}>
                   <Text type="small">{userId}</Text>
                   <br />
                   <div className="game-active-competitor-board-container">
-                    <table cellPadding={0} cellSpacing={0}>
-                      <tbody>
-                        {Array.from({ length: 7 }).map((_, y) => (
-                          <tr key={`${userId}y${y}`}>
-                            {Array.from({ length: 7 }).map((_, x) => {
-                              const tileIndexHeight = settings.height / 7
-                              const tileIndexWidth = settings.width / 7
-
-                              const indices: number[] = []
-
-                              for (let k = y * tileIndexHeight; k < (y + 1) * tileIndexHeight; k++)
-                                for (let j = x * tileIndexWidth; j < (x + 1) * tileIndexWidth; j++)
-                                  indices.push(i(Math.floor(j), Math.floor(k)))
-
-                              const isRevealed =
-                                indices.filter(i => State.isRevealed(state[i]) || State.isFlagged(state[i])).length >
-                                indices.length / 2
-
-                              return (
-                                <td key={userId + i(x, y)}>
-                                  <div
-                                    className={`game-active-competitor-tile-${isRevealed ? "revealed" : "hidden"}`}
-                                  />
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <BoardPreview />
                   </div>
                 </div>
               ))}
