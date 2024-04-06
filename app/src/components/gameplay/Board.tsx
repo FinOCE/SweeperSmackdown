@@ -1,35 +1,36 @@
-import React, { useState } from "react"
+import React, { Dispatch, SetStateAction } from "react"
 import { Tile } from "./Tile"
 import "./Board.scss"
 import { State } from "../../utils/State"
 import { Separator } from "./Separator"
 import { BoardStylingUtil } from "../../utils/BoardStylingUtil"
+import { Websocket } from "../../types/Websocket"
 
 type BoardProps = {
   height: number
   width: number
-  state: Uint8Array
+  localState: Uint8Array
+  setLocalState: Dispatch<SetStateAction<Uint8Array | undefined>>
   lost: boolean
+  setLost: Dispatch<SetStateAction<boolean>>
+  notifyMoveAdd: (data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) => void
 }
 
 export function Board(props: BoardProps) {
-  const [localState, setLocalState] = useState(props.state)
-  const [lost, setLost] = useState(props.lost)
-
   function onLeftClick(i: number) {
-    if (lost) return
+    if (props.lost) return
 
     // Prevent clicking on a flagged or revealed tile
-    if (State.isFlagged(localState[i])) return
-    if (State.isRevealed(localState[i])) return
+    if (State.isFlagged(props.localState[i])) return
+    if (State.isRevealed(props.localState[i])) return
 
     // Lose game if bomb
-    if (State.isBomb(localState[i])) setLost(true)
+    if (State.isBomb(props.localState[i])) props.setLost(true)
 
     // Calculate tiles to reveal
     const reveals = [i]
 
-    if (State.isEmpty(localState[i])) {
+    if (State.isEmpty(props.localState[i])) {
       const travelled: number[] = []
 
       const spread = (index: number) => {
@@ -38,7 +39,7 @@ export function Board(props: BoardProps) {
         travelled.push(index)
         reveals.push(index)
 
-        if (State.isEmpty(localState[index])) {
+        if (State.isEmpty(props.localState[index])) {
           const width = props.width
           const height = props.height
 
@@ -56,34 +57,26 @@ export function Board(props: BoardProps) {
       spread(i)
     }
 
-    setLocalState(prev => prev.map((state, j) => (reveals.includes(j) ? State.reveal(state) : state)))
+    props.setLocalState(prev => prev!.map((state, j) => (reveals.includes(j) ? State.reveal(state) : state)))
 
     // // Notify other users of move
-    // ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
-    //   eventName: "MOVE_ADD",
-    //   userId: user.id,
-    //   data: { lobbyId: lobby.lobbyId, reveals }
-    // })
+    props.notifyMoveAdd({ reveals })
   }
 
   function onRightClick(i: number) {
-    if (lost) return
+    if (props.lost) return
 
     // Prevent flagging a revealed tile
-    if (State.isRevealed(localState[i])) return
+    if (State.isRevealed(props.localState[i])) return
 
     // Determine if flag is to be added or removed
-    const isFlagged = State.isFlagged(localState[i])
-    const newState = isFlagged ? State.removeFlag(localState[i]) : State.flag(localState[i])
+    const isFlagged = State.isFlagged(props.localState[i])
+    const newState = isFlagged ? State.removeFlag(props.localState[i]) : State.flag(props.localState[i])
 
-    setLocalState(prev => prev.map((state, j) => (j === i ? newState : state)))
+    props.setLocalState(prev => prev!.map((state, j) => (j === i ? newState : state)))
 
     // Notify other users of move
-    // ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
-    //   eventName: "MOVE_ADD",
-    //   userId: user.id,
-    //   data: isFlagged ? { lobbyId: lobby.lobbyId, flagRemove: i } : { lobbyId: lobby.lobbyId, flagAdd: i }
-    // })
+    props.notifyMoveAdd(isFlagged ? { flagRemove: i } : { flagAdd: i })
   }
 
   function getIndex(x: number, y: number) {
@@ -109,22 +102,22 @@ export function Board(props: BoardProps) {
                         const topRight = getIndex(x, y - 1)
                         const bottomLeft = getIndex(x - 1, y)
                         const bottomRight = getIndex(x, y)
-                        const props = BoardStylingUtil.getProps(
+                        const boardProps = BoardStylingUtil.getProps(
                           xi,
                           yi,
-                          localState[topLeft],
-                          localState[topRight],
-                          localState[bottomLeft],
-                          localState[bottomRight]
+                          props.localState[topLeft],
+                          props.localState[topRight],
+                          props.localState[bottomLeft],
+                          props.localState[bottomRight]
                         )
 
-                        return <Separator {...props} />
+                        return <Separator {...boardProps} />
                       })()
                     ) : (
                       <Tile
                         index={getIndex(x, y)}
-                        state={localState[getIndex(x, y)]}
-                        lost={lost}
+                        state={props.localState[getIndex(x, y)]}
+                        lost={props.lost}
                         onLeftClick={onLeftClick}
                         onRightClick={onRightClick}
                       />

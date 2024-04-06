@@ -13,24 +13,25 @@ $size: 40px;
   color: $tile-text-color;
   font-family: $font-name;
   font-size: 20px;
+  transition: background $gameplay-transition-duration ease;
 
   &:not(:disabled) {
     cursor: pointer;
   }
-}
 
-.tile-flagged {
-  background: $tile-flagged-color;
-}
+  &.tile-flagged {
+    background: $tile-flagged-color;
+  }
 
-.tile-bomb {
-  background: $tile-bomb-color;
-}
+  &.tile-bomb {
+    background: $tile-bomb-color;
+  }
 
-.tile-unrevealed {
-  background: $tile-unrevealed-color;
-}
+  &.tile-unrevealed {
+    background: $tile-unrevealed-color;
+  }
 
-.tile-revealed {
-  background: $tile-revealed-color;
+  &.tile-revealed {
+    background: $tile-revealed-color;
+  }
 }

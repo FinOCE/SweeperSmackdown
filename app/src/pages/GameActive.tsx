@@ -127,6 +127,16 @@ export function GameActive() {
     }
   })
 
+  function notifyMoveAdd(data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) {
+    if (!ws || !user || !lobby) return
+
+    ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
+      eventName: "MOVE_ADD",
+      userId: user.id,
+      data: { ...data, lobbyId: lobby.lobbyId } as Websocket.Response.MoveAdd["data"]
+    })
+  }
+
   async function reset() {
     if (!lobby || !user) return
 
@@ -152,7 +162,15 @@ export function GameActive() {
         <div id="game-active">
           <div id="game-active-boards-container">
             <div id="game-active-current-board-container">
-              <Board height={settings.height} width={settings.width} state={localGameState} lost={lost} />
+              <Board
+                height={settings.height}
+                width={settings.width}
+                localState={localGameState}
+                setLocalState={setLocalGameState}
+                lost={lost}
+                setLost={setLost}
+                notifyMoveAdd={notifyMoveAdd}
+              />
             </div>
             <div id="game-active-competitors">
               {Object.entries(competitionState ?? {}).map(([userId]) => (

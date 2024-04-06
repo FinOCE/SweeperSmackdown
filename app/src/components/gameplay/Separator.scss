@@ -6,6 +6,13 @@ $size-short: 2px;
 $line-long-ratio: 6;
 $line-short-ratio: 1.5;
 
+@mixin separatorLine() {
+  position: absolute;
+  z-index: 4;
+  background: $tile-separator-line-color;
+  transition: background $gameplay-transition-duration ease;
+}
+
 @mixin lineInner() {
   content: "";
   position: absolute;
@@ -20,13 +27,12 @@ $line-short-ratio: 1.5;
   position: relative;
 
   .separator-horizontal-line {
-    position: absolute;
+    @include separatorLine();
+
     top: -$size-short;
     left: 0;
     height: calc($size-short * 2);
     width: calc($size-long);
-    z-index: 4;
-    background: $tile-separator-line-color;
 
     &:not(.separator-line-flag):not(.separator-line-unrevealed)::before {
       @include lineInner();
@@ -45,13 +51,12 @@ $line-short-ratio: 1.5;
   position: relative;
 
   .separator-vertical-line {
-    position: absolute;
+    @include separatorLine();
+
     top: 0;
     left: -$size-short;
     height: calc($size-long);
     width: calc($size-short * 2);
-    z-index: 4;
-    background: $tile-separator-line-color;
 
     &:not(.separator-line-flag):not(.separator-line-unrevealed)::before {
       @include lineInner();
