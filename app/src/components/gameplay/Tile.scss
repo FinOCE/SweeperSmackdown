@@ -1,3 +1,5 @@
+@import "../../theme";
+
 $gap: 2px;
 $size: 40px;
 
@@ -8,11 +10,9 @@ $size: 40px;
   place-items: center;
   border: none;
   position: relative;
-
-  tile > * {
-    position: relative;
-    z-index: 2;
-  }
+  color: $tile-text-color;
+  font-family: $font-name;
+  font-size: 20px;
 
   &:not(:disabled) {
     cursor: pointer;
@@ -20,13 +20,13 @@ $size: 40px;
 }
 
 .tile-flagged {
-  background: #f00;
+  background: $tile-flagged-color;
 }
 
 .tile-unrevealed {
-  background: #00f;
+  background: $tile-unrevealed-color;
 }
 
 .tile-revealed {
-  background: #0f0;
+  background: $tile-revealed-color;
 }

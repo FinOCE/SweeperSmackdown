@@ -1,8 +1,8 @@
+@import "../../theme";
+
 $size-long: 40px;
 $size-short: 2px;
-$color: #000;
 
-$line-color: #fff;
 $line-long-ratio: 6;
 $line-short-ratio: 1.5;
 
@@ -10,7 +10,7 @@ $line-short-ratio: 1.5;
   content: "";
   position: absolute;
   z-index: 5;
-  background: $line-color;
+  background: $tile-separator-line-inner-color;
   border-radius: $size-short;
 }
 
@@ -26,7 +26,7 @@ $line-short-ratio: 1.5;
     height: calc($size-short * 2);
     width: calc($size-long);
     z-index: 4;
-    background: $color;
+    background: $tile-separator-line-color;
 
     &:not(.separator-line-flag):not(.separator-line-unrevealed)::before {
       @include lineInner();
@@ -51,7 +51,7 @@ $line-short-ratio: 1.5;
     height: calc($size-long);
     width: calc($size-short * 2);
     z-index: 4;
-    background: $color;
+    background: $tile-separator-line-color;
 
     &:not(.separator-line-flag):not(.separator-line-unrevealed)::before {
       @include lineInner();
@@ -77,21 +77,21 @@ $line-short-ratio: 1.5;
     width: calc($size-short * 2);
     z-index: 4;
     border-radius: 100%;
-    background: $color;
+    background: $tile-separator-line-color;
   }
 }
 
 .separator-line-flag {
-  background: #f00 !important;
+  background: $tile-flagged-color !important;
   z-index: 3 !important;
 }
 
 .separator-line-unrevealed {
-  background: #00f !important;
+  background: $tile-unrevealed-color !important;
   z-index: 3 !important;
 }
 
 .separator-line-revealed {
-  background: #0f0 !important;
+  background: $tile-revealed-color !important;
   z-index: 3 !important;
 }
