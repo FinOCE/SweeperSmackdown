@@ -172,17 +172,19 @@ export function GameActive() {
                 notifyMoveAdd={notifyMoveAdd}
               />
             </div>
-            <div id="game-active-competitors">
-              {Object.entries(competitionState ?? {}).map(([userId]) => (
-                <div key={userId}>
-                  <Text type="small">{userId}</Text>
-                  <br />
-                  <div className="game-active-competitor-board-container">
-                    <BoardPreview />
+            {Object.keys(competitionState ?? {}).length > 0 && (
+              <div id="game-active-competitors">
+                {Object.entries(competitionState ?? {}).map(([userId]) => (
+                  <div key={userId}>
+                    <Text type="small">{userId}</Text>
+                    <br />
+                    <div className="game-active-competitor-board-container">
+                      <BoardPreview />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <ButtonList>

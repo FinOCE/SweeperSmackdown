@@ -1,7 +1,7 @@
 @import "../../theme";
 
-$size-long: 40px;
-$size-short: 2px;
+$size-long: $tile-separator-line-height;
+$size-short: $tile-separator-line-width;
 
 $line-long-ratio: 6;
 $line-short-ratio: 1.5;
@@ -25,6 +25,7 @@ $line-short-ratio: 1.5;
   height: 0;
   width: $size-long;
   position: relative;
+  pointer-events: none;
 
   .separator-horizontal-line {
     @include separatorLine();
@@ -49,6 +50,7 @@ $line-short-ratio: 1.5;
   height: $size-long;
   width: 0;
   position: relative;
+  pointer-events: none;
 
   .separator-vertical-line {
     @include separatorLine();
@@ -73,6 +75,7 @@ $line-short-ratio: 1.5;
   height: 0;
   width: 0;
   position: relative;
+  pointer-events: none;
 
   .separator-intersection-circle {
     position: absolute;

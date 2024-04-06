@@ -15,12 +15,16 @@ $size: 40px;
   font-size: 20px;
   transition: background $gameplay-transition-duration ease;
 
-  &:not(:disabled) {
+  &:not(:disabled):hover {
     cursor: pointer;
   }
 
   &.tile-flagged {
     background: $tile-flagged-color;
+
+    &:not(:disabled):hover {
+      background: lighten($tile-flagged-color, 15%);
+    }
   }
 
   &.tile-bomb {
@@ -29,6 +33,10 @@ $size: 40px;
 
   &.tile-unrevealed {
     background: $tile-unrevealed-color;
+
+    &:not(:disabled):hover {
+      background: lighten($tile-unrevealed-color, 10%);
+    }
   }
 
   &.tile-revealed {

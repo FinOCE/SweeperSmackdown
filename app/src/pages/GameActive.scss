@@ -1,3 +1,5 @@
+@import "../theme";
+
 #game-active {
   display: flex;
   flex-direction: column;
@@ -7,8 +9,9 @@
 }
 
 #game-active-current-board-container {
-  border-radius: 10px;
+  border-radius: $tile-separator-line-width;
   overflow: hidden;
+  border: calc($tile-separator-line-width * 2) solid $tile-separator-line-color;
 
   & table {
     border-collapse: collapse;
