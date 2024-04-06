@@ -1,6 +1,18 @@
 $size-long: 40px;
 $size-short: 2px;
-$color: #fff;
+$color: #000;
+
+$line-color: #fff;
+$line-long-ratio: 6;
+$line-short-ratio: 1.5;
+
+@mixin lineInner() {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  background: $line-color;
+  border-radius: $size-short;
+}
 
 .separator-horizontal {
   height: 0;
@@ -15,6 +27,15 @@ $color: #fff;
     width: calc($size-long);
     z-index: 4;
     background: $color;
+
+    &:not(.separator-line-flag):not(.separator-line-unrevealed)::before {
+      @include lineInner();
+
+      top: calc($size-short / $line-short-ratio);
+      left: calc($size-short * ($line-long-ratio / 2));
+      height: calc(100% - $size-short * $line-short-ratio);
+      width: calc(100% - $size-short * $line-long-ratio);
+    }
   }
 }
 
@@ -31,6 +52,15 @@ $color: #fff;
     width: calc($size-short * 2);
     z-index: 4;
     background: $color;
+
+    &:not(.separator-line-flag):not(.separator-line-unrevealed)::before {
+      @include lineInner();
+
+      top: calc($size-short * ($line-long-ratio / 2));
+      left: calc($size-short / $line-short-ratio);
+      height: calc(100% - $size-short * $line-long-ratio);
+      width: calc(100% - $size-short * $line-short-ratio);
+    }
   }
 }
 

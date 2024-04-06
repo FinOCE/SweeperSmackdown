@@ -38,32 +38,6 @@ export function Separator(props: SeparatorProps) {
   }
 
   if (isIntersection(props)) {
-    // let clipPath = "polygon("
-
-    // if (BoardStylingUtil.isRoundedTopLeftCorner(props.bottomRight, props.topRight, props.bottomLeft, props.topLeft))
-    //   clipPath += "100% 50%, 50% 50%, 50% 100%"
-    // else clipPath += "100% 50%, 100% 100%, 50% 100%"
-
-    // clipPath += ", "
-
-    // if (BoardStylingUtil.isRoundedTopRightCorner(props.bottomLeft, props.topLeft, props.bottomRight, props.topRight))
-    //   clipPath += "50% 100%, 50% 50%, 0% 50%"
-    // else clipPath += "50% 100%, 0% 100%, 0% 50%"
-
-    // clipPath += ", "
-
-    // if (BoardStylingUtil.isRoundedBottomRightCorner(props.topLeft, props.bottomLeft, props.topRight, props.bottomRight))
-    //   clipPath += "0% 50%, 50% 50%, 50% 0%"
-    // else clipPath += "0% 50%, 0% 0%, 50% 0%"
-
-    // clipPath += ", "
-
-    // if (BoardStylingUtil.isRoundedBottomLeftCorner(props.topRight, props.bottomRight, props.topLeft, props.bottomLeft))
-    //   clipPath += "50% 0%, 50% 50%, 100% 50%"
-    // else clipPath += "50% 0%, 100% 0%, 100% 50%"
-
-    // clipPath += ")"
-
     const hide =
       [
         BoardStylingUtil.getType(props.topLeft),

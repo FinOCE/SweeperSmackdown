@@ -13,6 +13,10 @@ $size: 40px;
     position: relative;
     z-index: 2;
   }
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 .tile-flagged {

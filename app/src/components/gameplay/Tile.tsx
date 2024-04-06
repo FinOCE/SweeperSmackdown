@@ -44,7 +44,7 @@ export function Tile(props: TileProps) {
       onClick={() => props.onLeftClick(props.index)}
       onContextMenu={e => (e.preventDefault(), props.onRightClick(props.index))}
     >
-      {/* {content} */}
+      {content}
     </button>
   )
 }

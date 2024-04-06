@@ -86,26 +86,6 @@ export function Board(props: BoardProps) {
     return y * props.width + x
   }
 
-  // function getNeighbours(x: number, y: number) {
-  //   const i = getIndex(x, y)
-  //   const width = props.width
-  //   const height = props.height
-
-  //   const neighbours: number[] = []
-
-  //   neighbours.push(i % width !== 0 ? i - 1 : -1)
-  //   neighbours.push(i % width !== width - 1 ? i + 1 : -1)
-  //   neighbours.push(i >= width ? i - width : -1)
-  //   neighbours.push(i >= width ? i - width : -1)
-  //   neighbours.push(i < width * (height - 1) ? i + width : -1)
-  //   neighbours.push(i % width !== 0 && i >= width ? i - width - 1 : -1)
-  //   neighbours.push(i % width !== width - 1 && i >= width ? i - width + 1 : -1)
-  //   neighbours.push(i % width !== 0 && i < width * (height - 1) ? i + width - 1 : -1)
-  //   neighbours.push(i % width !== width - 1 && i < width * (height - 1) ? i + width + 1 : -1)
-
-  //   return neighbours as Gameplay.TileNeighbours
-  // }
-
   return (
     <table cellPadding={0} cellSpacing={0} className="board" onContextMenu={e => e.preventDefault()}>
       <tbody>
@@ -140,7 +120,6 @@ export function Board(props: BoardProps) {
                       <Tile
                         index={getIndex(x, y)}
                         state={localState[getIndex(x, y)]}
-                        // neighbours={getNeighbours(x, y)}
                         lost={lost}
                         onLeftClick={onLeftClick}
                         onRightClick={onRightClick}
