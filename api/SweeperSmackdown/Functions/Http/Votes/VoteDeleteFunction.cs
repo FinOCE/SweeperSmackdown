@@ -89,10 +89,6 @@ public static class VoteDeleteFunction
                 vote.Votes[key] = Array.Empty<string>();
         }
 
-        // Update database and notify users of vote state change
-        await voteDb.AddAsync(vote);
-        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
-
         // Notify orchestration
         if (choice != null && vote.Votes[choice].Length == vote.RequiredVotes - 1 || forced)
         {
@@ -102,6 +98,10 @@ public static class VoteDeleteFunction
 
             await ws.AddAsync(ActionFactory.ResetTimer(lobbyId));
         }
+
+        // Update database and notify users of vote state change
+        await voteDb.AddAsync(vote);
+        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
 
         // Respond to request
         return new NoContentResult();

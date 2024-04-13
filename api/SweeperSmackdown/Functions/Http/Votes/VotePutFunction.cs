@@ -91,10 +91,6 @@ public static class VotePutFunction
         if (existingChoice != null || existingChoice != payload.Choice)
             vote.Votes[payload.Choice] = vote.Votes[payload.Choice].Append(userId).ToArray();
 
-        // Update database and notify users of vote state change
-        await voteDb.AddAsync(vote);
-        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
-
         // Notify orchestration
         if (vote.Votes[payload.Choice].Length == vote.RequiredVotes || forced)
         {
@@ -107,6 +103,10 @@ public static class VotePutFunction
             
             await ws.AddAsync(ActionFactory.StartTimer(lobbyId, expiry));
         }
+
+        // Update database and notify users of vote state change
+        await voteDb.AddAsync(vote);
+        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
 
         // Respond to request
         return existingChoice != null && existingChoice == payload.Choice
