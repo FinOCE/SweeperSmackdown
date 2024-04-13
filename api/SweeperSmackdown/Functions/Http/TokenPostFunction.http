@@ -1,9 +1,0 @@
-@code = ""
-
-# code is the authorization code given by Discord
-
-###
-
-POST http://localhost:7071/token?code={{code}}
-
-###

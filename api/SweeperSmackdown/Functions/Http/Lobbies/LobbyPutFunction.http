@@ -1,8 +1,0 @@
-@lobbyId = "lobbyId"
-
-###
-
-PUT http://localhost:7071/lobbies/{{lobbyId}}
-
-###
-

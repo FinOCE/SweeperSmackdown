@@ -1,8 +1,0 @@
-@lobbyId = "lobbyId"
-@userId = "userId"
-
-###
-
-POST http://localhost:7071/lobbies/{{lobbyId}}/boards/{{userId}}/skip
-
-###

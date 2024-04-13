@@ -1,8 +1,0 @@
-@lobbyId = "lobbyId"
-@userId = "userId"
-
-###
-
-GET http://localhost:7071/lobbies/{{lobbyId}}/votes/{{userId}}
-
-###
