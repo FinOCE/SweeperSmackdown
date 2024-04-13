@@ -14,6 +14,9 @@ public class Lobby
     [JsonProperty("userIds")]
     public string[] UserIds { get; set; }
 
+    [JsonProperty("scores")]
+    public IDictionary<string, int> Scores { get; set; }
+
     [JsonProperty("wins")]
     public IDictionary<string, int> Wins { get; set; }
 
@@ -24,12 +27,14 @@ public class Lobby
         string id,
         string hostId,
         string[] userIds,
+        IDictionary<string, int> scores,
         IDictionary<string, int> wins,
         GameSettings settings)
     {
         Id = id;
         HostId = hostId;
         UserIds = userIds;
+        Scores = scores;
         Wins = wins;
         Settings = settings;
     }

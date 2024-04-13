@@ -63,7 +63,7 @@ public static class BoardResetPostFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
-        // Verify board
+        // Reset board
         await entityClient.SignalEntityAsync<IBoard>(
             Id.For<Board>(userId),
             board => board.Reset());

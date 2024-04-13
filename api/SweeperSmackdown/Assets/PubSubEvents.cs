@@ -19,4 +19,6 @@ public static class PubSubEvents
     public const string BOARD_CREATE = "BOARD_CREATE";
 
     public const string MOVE_ADD = "MOVE_ADD";
+
+    public const string GAME_WON = "GAME_WON";
 }

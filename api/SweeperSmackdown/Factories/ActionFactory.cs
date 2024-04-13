@@ -64,4 +64,10 @@ public static class ActionFactory
             lobbyId,
             MessageFactory.Create(PubSubEvents.MOVE_ADD, userId, move),
             WebPubSubDataType.Json);
+
+    public static WebPubSubAction GameWon(string userId, string lobbyId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.GAME_WON, userId, ""),
+            WebPubSubDataType.Json);
 }

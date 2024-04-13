@@ -29,7 +29,7 @@ public class BoardManagerOrchestrationFunctionProps
 public static class BoardManagerOrchestrationFunction
 {
     [FunctionName(nameof(BoardManagerOrchestrationFunction))]
-    public static async Task<string> Run(
+    public static async Task Run(
         [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var lobbyId = Id.FromInstance(ctx.InstanceId);
@@ -63,16 +63,27 @@ public static class BoardManagerOrchestrationFunction
         var winner = await Task.WhenAny(skippedTask, completedTask);
         var decrement = winner == completedTask ? 1 : 0;
 
-        // Start new board if boards still remaining
+        // Add score if completed
+        if (winner == completedTask)
+            await ctx.CallActivityAsync(
+                nameof(ScoreAddActivityFunction),
+                new ScoreAddActivityFunctionProps(lobbyId, userId));
+
+        // Start new board if boards still remaining or notify orchestrator of completion
         props.Remaining = Math.Max(props.Remaining - decrement, -1);
-        
+
         if (props.Remaining > 0 || props.Remaining == -1)
+        {
             ctx.ContinueAsNew(
                 new BoardManagerOrchestrationFunctionProps(
                     props.Settings,
                     props.Remaining));
-
-        // Return user ID as winner if completed before any other task
-        return userId;
+        }
+        else
+        {
+            await ctx.CallActivityAsync(
+                nameof(GameWonActivityFunction),
+                new GameWonActivityFunctionProps(lobbyId, userId));
+        }
     }
 }
