@@ -22,7 +22,7 @@ public static class GameConfigureFunction
             new LobbyFetchActivityFunctionProps(lobbyId));
 
         // Create vote
-        var vote = await ctx.CallActivityAsync<Vote>(
+        await ctx.CallActivityAsync(
             nameof(VoteCreateActivityFunction),
             new VoteCreateActivityFunctionProps(lobby));
 

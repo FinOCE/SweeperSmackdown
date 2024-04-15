@@ -32,6 +32,11 @@ export namespace Websocket {
       data: string
     }
 
+    export type LobbyStart = {
+      eventName: "LOBBY_START"
+      userId: "SYSTEM"
+    }
+
     export type VoteStateUpdate = {
       eventName: "VOTE_STATE_UPDATE"
       userId: string
@@ -67,6 +72,11 @@ export namespace Websocket {
 
       /** The indices of tiles that were revealed by the move */
       data: { lobbyId: string } & ({ reveals: number[] } | { flagAdd: number } | { flagRemove: number })
+    }
+
+    export type GameWon = {
+      eventName: "GAME_WON"
+      userId: string
     }
   }
 }

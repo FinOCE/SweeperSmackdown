@@ -116,8 +116,6 @@ export function GameActive() {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
 
-    console.log("LOBBY UPDATED", data.data)
-
     setScores(data.data.scores)
     setWins(data.data.wins)
   })
@@ -148,6 +146,16 @@ export function GameActive() {
         [data.userId]: { ...prev[data.userId], flagRemove: [...(prev[data.userId]?.flagRemove ?? []), flagRemove] }
       }))
     }
+  })
+
+  // Handle game winner
+  ws.register("group-message", e => {
+    const data = e.message.data as Websocket.Message
+    if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
+
+    navigate("GameCelebration")
+
+    // TODO: Change to stop control and tell everyone the game is over on a countdown
   })
 
   function notifyMoveAdd(data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) {

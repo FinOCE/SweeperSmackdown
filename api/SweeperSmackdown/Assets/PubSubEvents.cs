@@ -10,6 +10,8 @@ public static class PubSubEvents
 
     public const string USER_LEAVE = "USER_LEAVE";
 
+    public const string LOBBY_START = "LOBBY_START";
+
     public const string VOTE_STATE_UPDATE = "VOTE_STATE_UPDATE";
 
     public const string TIMER_START = "TIMER_START";

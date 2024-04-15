@@ -35,6 +35,12 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.USER_LEAVE, userId, ""),
             WebPubSubDataType.Json);
 
+    public static WebPubSubAction StartLobby(string lobbyId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.LOBBY_START, "SYSTEM", ""),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction UpdateVoteState(string lobbyId, VoteGroupResponseDto vote) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,

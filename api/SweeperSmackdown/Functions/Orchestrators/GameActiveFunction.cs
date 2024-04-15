@@ -50,10 +50,10 @@ public static class GameActiveFunction
             new BoardEntityMapCreateActivityFunctionProps(lobbyId));
         
         foreach (var userId in lobby.UserIds)
-            _ = ctx.CallSubOrchestratorAsync(
+            _ = ctx.StartNewOrchestration(
                 nameof(BoardManagerOrchestrationFunction),
-                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
-                new BoardManagerOrchestrationFunctionProps(props.Settings));
+                new BoardManagerOrchestrationFunctionProps(props.Settings),
+                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId));
 
         // TODO: Ensure all players have a board created before starting
 

@@ -59,7 +59,7 @@ public static class BoardManagerOrchestrationFunction
         // Wait for new board to be completed
         var skippedTask = ctx.WaitForExternalEvent(DurableEvents.BOARD_SKIPPED);
         var completedTask = ctx.WaitForExternalEvent(DurableEvents.BOARD_COMPLETED);
-
+        
         var winner = await Task.WhenAny(skippedTask, completedTask);
         var decrement = winner == completedTask ? 1 : 0;
 
