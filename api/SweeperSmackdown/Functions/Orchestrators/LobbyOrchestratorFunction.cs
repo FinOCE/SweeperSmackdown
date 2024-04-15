@@ -2,7 +2,6 @@
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
-using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -30,8 +29,6 @@ public static class LobbyOrchestratorFunction
             nameof(GameActiveFunction),
             Id.ForInstance(nameof(GameActiveFunction), lobbyId),
             new GameActiveFunctionProps(settings));
-
-        Console.WriteLine($"Winner: {winnerId} (LobbyOrchestrator)");
 
         // Clean up after games
         ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Clean.ToString());
