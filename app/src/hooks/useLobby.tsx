@@ -2,16 +2,20 @@ import React, { createContext, ReactNode, useContext, useState } from "react"
 import { Api } from "../types/Api"
 import { useUser } from "./useUser"
 import { useApi } from "./useApi"
-import { LobbyWithoutSettings } from "../types/Lobby"
+import { LobbyWithoutNested } from "../types/Lobby"
 
 type TLobbyContext = {
-  lobby: LobbyWithoutSettings | null
-  setLobby: (lobby: LobbyWithoutSettings) => void
+  lobby: LobbyWithoutNested | null
+  setLobby: (lobby: LobbyWithoutNested) => void
   create(lobbyId: string): Promise<void>
   join(lobbyId: string): Promise<void>
   leave(): Promise<void>
   settings: Api.GameSettings | null
   setSettings: (settings: Api.GameSettings) => void
+  scores: Record<string, number>
+  setScores: (scores: Record<string, number>) => void
+  wins: Record<string, number>
+  setWins: (wins: Record<string, number>) => void
 }
 
 const LobbyContext = createContext<TLobbyContext>({
@@ -21,7 +25,11 @@ const LobbyContext = createContext<TLobbyContext>({
   join: async () => {},
   leave: async () => {},
   settings: null,
-  setSettings: () => {}
+  setSettings: () => {},
+  scores: {},
+  setScores: () => {},
+  wins: {},
+  setWins: () => {}
 })
 export const useLobby = () => useContext(LobbyContext)
 
@@ -29,8 +37,10 @@ export function LobbyProvider(props: { children?: ReactNode }) {
   const { api } = useApi()
   const user = useUser()
 
-  const [lobby, setLobby] = useState<LobbyWithoutSettings | null>(null)
+  const [lobby, setLobby] = useState<LobbyWithoutNested | null>(null)
   const [settings, setSettings] = useState<Api.GameSettings | null>(null)
+  const [scores, setScores] = useState<Record<string, number>>({})
+  const [wins, setWins] = useState<Record<string, number>>({})
 
   async function create(lobbyId: string) {
     if (!user) throw new Error("Cannot create lobby because user is not set")
@@ -43,8 +53,10 @@ export function LobbyProvider(props: { children?: ReactNode }) {
     const [lobby] = await api.lobbyPut(lobbyId)
     await api.userPut(lobbyId, user.id)
 
-    setLobby({ ...lobby, settings: undefined } as LobbyWithoutSettings)
+    setLobby({ ...lobby, settings: undefined, scores: undefined, wins: undefined } as LobbyWithoutNested)
     setSettings(lobby.settings)
+    setScores(lobby.scores)
+    setWins(lobby.wins)
   }
 
   async function join(lobbyId: string) {
@@ -54,10 +66,11 @@ export function LobbyProvider(props: { children?: ReactNode }) {
     if (!addedUser) throw new Error("Failed to join lobby")
 
     const [lobby] = await api.lobbyGet(lobbyId)
-    const lobbyWithoutSettings = { ...lobby, settings: undefined } as LobbyWithoutSettings
 
-    setLobby(lobbyWithoutSettings)
+    setLobby({ ...lobby, settings: undefined, scores: undefined, wins: undefined } as LobbyWithoutNested)
     setSettings(lobby.settings)
+    setScores(lobby.scores)
+    setWins(lobby.wins)
   }
 
   async function leave() {
@@ -70,7 +83,21 @@ export function LobbyProvider(props: { children?: ReactNode }) {
   }
 
   return (
-    <LobbyContext.Provider value={{ lobby, setLobby, create, join, leave, settings, setSettings }}>
+    <LobbyContext.Provider
+      value={{
+        lobby,
+        setLobby,
+        create,
+        join,
+        leave,
+        settings,
+        setSettings,
+        scores,
+        setScores,
+        wins,
+        setWins
+      }}
+    >
       {props.children}
     </LobbyContext.Provider>
   )

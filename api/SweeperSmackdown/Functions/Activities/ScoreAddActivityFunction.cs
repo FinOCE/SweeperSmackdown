@@ -38,12 +38,13 @@ public static class ScoreAddActivityFunction
             DatabaseConstants.LOBBY_CONTAINER_NAME);
 
         Lobby lobby = await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
-        var wins = lobby.Wins.ContainsKey(props.WinnerId) ? lobby.Wins[props.WinnerId] + 1 : 1;
+        var scores = lobby.Scores.ContainsKey(props.WinnerId) ? lobby.Scores[props.WinnerId] + 1 : 1;
 
         await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
         {
-            PatchOperation.Set($"/scores/{props.WinnerId}", wins)
+            PatchOperation.Set($"/scores/{props.WinnerId}", scores)
         });
+        lobby.Scores[props.WinnerId] = scores;
 
         await ws.AddAsync(ActionFactory.UpdateLobby(props.WinnerId, lobby.Id, LobbyResponseDto.FromModel(lobby)));
     }

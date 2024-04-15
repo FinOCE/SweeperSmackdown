@@ -10,12 +10,13 @@ import { SliderInput } from "../components/SliderInput"
 import { useLobby } from "../hooks/useLobby"
 import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
-import { LobbyWithoutSettings } from "../types/Lobby"
+import { LobbyWithoutNested } from "../types/Lobby"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
 import { ButtonList } from "../components/ui/ButtonList"
 import { Page } from "../components/ui/Page"
 import { RollingBackground } from "../components/ui/RollingBackground"
+import { useCountdown } from "../hooks/useCountdown"
 
 export function GameConfigure() {
   const { api } = useApi()
@@ -23,10 +24,9 @@ export function GameConfigure() {
   const { lobby, setLobby, leave, settings, setSettings } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
+  const { countdown, start, stop } = useCountdown(() => navigate("GameActive"))
 
   let [vote, setVote] = useState<Api.VoteGroup>()
-  let [expiry, setExpiry] = useState<number | null>(null)
-  let [countdown, setCountdown] = useState<number | null>(null)
 
   // Fetch current vote on load
   useEffect(() => {
@@ -49,19 +49,6 @@ export function GameConfigure() {
 
     getInitialVote()
   }, [user, lobby?.lobbyId])
-
-  // Display countdown timer
-  useEffect(() => {
-    if (!expiry) setCountdown(null)
-
-    const interval = expiry ? setInterval(() => setCountdown(Math.ceil((expiry - Date.now()) / 1000)), 100) : undefined
-    const timeout = expiry ? setTimeout(() => navigate("GameActive"), expiry - Date.now()) : undefined
-
-    return () => {
-      clearInterval(interval)
-      clearTimeout(timeout)
-    }
-  }, [expiry])
 
   // Create function to handle translatin between game settings and payloads
   type LocalSettings = Required<Omit<Api.Request.LobbyPatch, "hostId">>
@@ -138,7 +125,7 @@ export function GameConfigure() {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
 
-    setLobby({ ...data.data, settings: undefined } as LobbyWithoutSettings)
+    setLobby({ ...data.data, settings: undefined, scores: undefined, wins: undefined } as LobbyWithoutNested)
     setSettings(data.data.settings)
   })
 
@@ -146,14 +133,14 @@ export function GameConfigure() {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.TimerStart>("TIMER_START", data)) return
 
-    setExpiry(data.data.expiry)
+    start(data.data.expiry - Date.now())
   })
 
   ws.register("group-message", e => {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.TimerReset>("TIMER_RESET", data)) return
 
-    setExpiry(null)
+    stop()
   })
 
   const isReady = vote?.votes?.READY?.includes(user.id) ?? false

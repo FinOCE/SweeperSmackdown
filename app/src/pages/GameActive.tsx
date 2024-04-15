@@ -16,16 +16,18 @@ import { Text } from "../components/ui/Text"
 import { useNavigation } from "../hooks/useNavigation"
 import { Board } from "../components/gameplay/Board"
 import { BoardPreview } from "../components/gameplay/BoardPreview"
+import { useCountdown } from "../hooks/useCountdown"
 
 export function GameActive() {
   const { api } = useApi()
   const user = useUser()
-  const { lobby, settings, leave } = useLobby()
+  const { lobby, settings, leave, scores, setScores, wins, setWins } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
 
   const [localGameState, setLocalGameState] = useState<Uint8Array>()
   const [lost, setLost] = useState(false)
+  const { countdown, start, stop } = useCountdown(() => setLost(false))
   const [won, setWon] = useState(false)
 
   const [pendingCompetitionMoves, setPendingCompetitionMoves] = useState<
@@ -68,6 +70,14 @@ export function GameActive() {
     setPendingCompetitionMoves({})
   }, [pendingCompetitionMoves])
 
+  // Use timeout to allow moves again
+  useEffect(() => {
+    if (!lost) return
+
+    start(1000 * 3)
+    return stop
+  }, [lost])
+
   // Only render once all dependencies are loaded
   if (!ws || !user || !lobby || !settings) return <Loading />
 
@@ -100,6 +110,17 @@ export function GameActive() {
   function isFlagRemove(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; flagRemove: number } {
     return "flagRemove" in data && data.flagRemove !== null
   }
+
+  // Track score update
+  ws.register("group-message", e => {
+    const data = e.message.data as Websocket.Message
+    if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
+
+    console.log("LOBBY UPDATED", data.data)
+
+    setScores(data.data.scores)
+    setWins(data.data.wins)
+  })
 
   // Queue competitior moves into pending moves to be updated
   ws.register("group-message", e => {
@@ -179,7 +200,7 @@ export function GameActive() {
                 {Object.entries(competitionState ?? {}).map(([userId, state]) => (
                   <div key={userId}>
                     <Text type="small">
-                      {userId} - {lobby.scores[userId] ?? 0}
+                      {userId} - {scores[userId] ?? 0} ({wins[userId] ?? 0})
                     </Text>
                     <br />
                     <BoardPreview {...{ userId, settings, state }} />
@@ -188,6 +209,8 @@ export function GameActive() {
               </div>
             )}
           </div>
+
+          {countdown && <Text type="normal">Recover in {countdown}</Text>}
 
           <ButtonList>
             <ButtonList horizontal>
