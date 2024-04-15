@@ -14,6 +14,7 @@ export namespace Api {
     lobbyId: string
     hostId: string
     userIds: string[]
+    scores: Record<string, number>
     wins: Record<string, number>
     settings: Api.GameSettings
   }

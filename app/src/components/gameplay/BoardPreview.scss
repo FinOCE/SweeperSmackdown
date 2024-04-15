@@ -1,0 +1,21 @@
+@import "../../theme";
+
+.game-active-competitor-board-container {
+  display: inline-block;
+  border-radius: $tile-separator-line-width;
+  border: calc($tile-separator-line-width * 2) solid $tile-separator-line-color;
+  overflow: hidden;
+  padding: -1px;
+}
+
+.game-active-competitor-tile-revealed {
+  background: #889dbc;
+  width: 20px;
+  height: 20px;
+}
+
+.game-active-competitor-tile-hidden {
+  background: #e4ebfb;
+  width: 20px;
+  height: 20px;
+}

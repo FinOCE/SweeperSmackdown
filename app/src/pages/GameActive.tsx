@@ -73,6 +73,8 @@ export function GameActive() {
 
   ws.clear()
 
+  // TODO: Handle users joining and leaving with USER_JOIN and USER_LEAVE ws events
+
   ws.register("group-message", e => {
     const data = e.message.data as Websocket.Message
     if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
@@ -174,13 +176,13 @@ export function GameActive() {
             </div>
             {Object.keys(competitionState ?? {}).length > 0 && (
               <div id="game-active-competitors">
-                {Object.entries(competitionState ?? {}).map(([userId]) => (
+                {Object.entries(competitionState ?? {}).map(([userId, state]) => (
                   <div key={userId}>
-                    <Text type="small">{userId}</Text>
+                    <Text type="small">
+                      {userId} - {lobby.scores[userId] ?? 0}
+                    </Text>
                     <br />
-                    <div className="game-active-competitor-board-container">
-                      <BoardPreview />
-                    </div>
+                    <BoardPreview {...{ userId, settings, state }} />
                   </div>
                 ))}
               </div>

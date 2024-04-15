@@ -233,8 +233,8 @@ export function GameConfigure() {
             <SliderInput
               name="height"
               id="height"
-              min={9}
-              max={100}
+              min={7}
+              max={32}
               value={localSettings.height}
               onChange={e =>
                 change({
@@ -253,8 +253,8 @@ export function GameConfigure() {
             <SliderInput
               name="width"
               id="width"
-              min={9}
-              max={100}
+              min={7}
+              max={32}
               value={localSettings.width}
               onChange={e =>
                 change({

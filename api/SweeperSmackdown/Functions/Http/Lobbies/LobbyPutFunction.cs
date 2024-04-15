@@ -51,6 +51,7 @@ public static class LobbyPutFunction
             requesterId,
             new[] { requesterId },
             new Dictionary<string, int>(),
+            new Dictionary<string, int>(),
             new GameSettings());
 
         await db.AddAsync(lobby);
