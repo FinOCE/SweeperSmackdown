@@ -6,6 +6,7 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Activities;
@@ -42,9 +43,11 @@ public static class WinAddActivityFunction
 
         await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
         {
-            PatchOperation.Set($"/wins/{props.WinnerId}", wins)
+            PatchOperation.Set($"/wins/{props.WinnerId}", wins),
+            PatchOperation.Replace($"/scores", new Dictionary<string, int>())
         });
         lobby.Wins[props.WinnerId] = wins;
+        lobby.Scores = new Dictionary<string, int>();
 
         await ws.AddAsync(ActionFactory.UpdateLobby(props.WinnerId, lobby.Id, LobbyResponseDto.FromModel(lobby)));
     }
