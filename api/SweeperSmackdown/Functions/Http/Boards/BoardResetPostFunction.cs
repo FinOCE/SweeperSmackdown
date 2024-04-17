@@ -68,7 +68,7 @@ public static class BoardResetPostFunction
             Id.For<Board>(userId),
             board => board.Reset());
 
-        await ws.AddAsync(ActionFactory.CreateBoard(userId, lobby.Id, entity.EntityState.InitialState));
+        await ws.AddAsync(ActionFactory.CreateBoard(userId, lobby.Id, entity.EntityState.InitialState, true));
 
         // Respond to request
         return new NoContentResult();

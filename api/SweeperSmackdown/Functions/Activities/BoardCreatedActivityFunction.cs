@@ -37,7 +37,7 @@ public static class BoardCreatedActivityFunction
         var props = ctx.GetInput<BoardCreatedActivityFunctionProps>();
         
         // Notify user of created game state
-        await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState));
+        await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState, false));
 
         // Update board entity map
         var container = cosmosClient.GetContainer(

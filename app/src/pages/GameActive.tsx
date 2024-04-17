@@ -25,6 +25,7 @@ export function GameActive() {
   const ws = useWebsocket()
   const { navigate } = useNavigation()
 
+  const [initialGameState, setInitialGameState] = useState<Uint8Array>()
   const [localGameState, setLocalGameState] = useState<Uint8Array>()
   const [lost, setLost] = useState(false)
   const { countdown, start, stop } = useCountdown(() => setLost(false))
@@ -90,12 +91,15 @@ export function GameActive() {
     if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
 
     if (data.userId === user.id) {
-      const gameState = new TextEncoder().encode(data.data)
+      if (data.data.reset) return
+
+      const gameState = new TextEncoder().encode(data.data.gameState)
+      setInitialGameState(gameState)
       setLocalGameState(gameState)
       setLost(false)
       setWon(false)
     } else {
-      setCompetitionState(prev => ({ ...prev, [data.userId]: new TextEncoder().encode(data.data) }))
+      setCompetitionState(prev => ({ ...prev, [data.userId]: new TextEncoder().encode(data.data.gameState) }))
     }
   })
 
@@ -171,6 +175,7 @@ export function GameActive() {
   async function reset() {
     if (!lobby || !user) return
 
+    setLocalGameState(initialGameState)
     await api.boardReset(lobby.lobbyId, user.id)
   }
 

@@ -19,17 +19,11 @@ export namespace Websocket {
     export type UserJoin = {
       eventName: "USER_JOIN"
       userId: string
-
-      /** User joined message */
-      data: string
     }
 
     export type UserLeave = {
       eventName: "USER_LEAVE"
       userId: string
-
-      /** User left message */
-      data: string
     }
 
     export type LobbyStart = {
@@ -62,8 +56,8 @@ export namespace Websocket {
       eventName: "BOARD_CREATE"
       userId: string
 
-      /** Game state, serialized */
-      data: string
+      /** Serialized game state and whether or not it was a reset */
+      data: { gameState: string; reset: boolean }
     }
 
     export type MoveAdd = {

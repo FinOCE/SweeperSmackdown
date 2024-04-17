@@ -59,10 +59,10 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.TIMER_RESET, "SYSTEM", ""),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState) =>
+    public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState, bool reset) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.BOARD_CREATE, userId, Encoding.UTF8.GetString(gameState)),
+            MessageFactory.Create(PubSubEvents.BOARD_CREATE, userId, new { gameState = Encoding.UTF8.GetString(gameState), reset }),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction MakeMove(string userId, string lobbyId, OnMoveData move) =>
