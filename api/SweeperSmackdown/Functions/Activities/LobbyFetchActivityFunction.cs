@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
 using System.Threading.Tasks;
 
@@ -26,10 +26,8 @@ public static class LobbyFetchActivityFunction
     {
         var props = ctx.GetInput<LobbyFetchActivityFunctionProps>();
 
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.LOBBY_CONTAINER_NAME);
-
-        return await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
+        return await cosmosClient
+            .GetLobbyContainer()
+            .ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
     }
 }

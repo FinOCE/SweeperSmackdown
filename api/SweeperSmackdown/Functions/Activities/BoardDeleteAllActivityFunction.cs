@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
@@ -30,9 +30,7 @@ public static class BoardDeleteAllActivityFunction
     {
         var props = ctx.GetInput<BoardDeleteAllActivityFunctionProps>();
 
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.BOARD_CONTAINER_NAME);
+        var container = cosmosClient.GetBoardContainer();
         
         BoardEntityMap boardEntityMap = await container.ReadItemAsync<BoardEntityMap>(
             props.LobbyId,

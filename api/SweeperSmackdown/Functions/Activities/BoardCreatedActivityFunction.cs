@@ -3,6 +3,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
 using System.Linq;
@@ -40,9 +41,7 @@ public static class BoardCreatedActivityFunction
         await ws.AddAsync(ActionFactory.CreateBoard(props.UserId, props.LobbyId, props.GameState, false));
 
         // Update board entity map
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.BOARD_CONTAINER_NAME);
+        var container = cosmosClient.GetBoardContainer();
 
         BoardEntityMap boardEntityMap = await container.ReadItemAsync<BoardEntityMap>(
             props.LobbyId,

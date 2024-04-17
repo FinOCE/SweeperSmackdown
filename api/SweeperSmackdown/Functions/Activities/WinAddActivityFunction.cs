@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
 using System.Collections.Generic;
@@ -34,9 +35,7 @@ public static class WinAddActivityFunction
     {
         var props = ctx.GetInput<WinAddActivityFunctionProps>();
 
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.LOBBY_CONTAINER_NAME);
+        var container = cosmosClient.GetLobbyContainer();
         
         Lobby lobby = await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
         var wins = lobby.Wins.ContainsKey(props.WinnerId) ? lobby.Wins[props.WinnerId] + 1 : 1;

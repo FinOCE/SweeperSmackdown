@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
 using System.Threading.Tasks;
 
@@ -26,10 +26,8 @@ public static class VoteDeleteActivityFunction
     {
         var props = ctx.GetInput<VoteDeleteActivityFunctionProps>();
 
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.VOTE_CONTAINER_NAME);
-
-        await container.DeleteItemAsync<Vote>(props.LobbyId, new(props.LobbyId));
+        await cosmosClient
+            .GetVoteContainer()
+            .DeleteItemAsync<Vote>(props.LobbyId, new(props.LobbyId));
     }
 }

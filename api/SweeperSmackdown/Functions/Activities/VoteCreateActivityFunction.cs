@@ -3,6 +3,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
@@ -32,20 +33,18 @@ public static class VoteCreateActivityFunction
     {
         var props = ctx.GetInput<VoteCreateActivityFunctionProps>();
 
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.VOTE_CONTAINER_NAME);
-        
-        await container.UpsertItemAsync(
-            new Vote(
-                props.Lobby.Id,
-                new Dictionary<string, string[]>()
-                {
-                    { "READY", Array.Empty<string>() }
-                },
-                VoteUtils.CalculateRequiredVotes(props.Lobby.UserIds.Length),
-                new[] { "READY" }),
-            new(props.Lobby.Id));
+        await cosmosClient
+            .GetVoteContainer()
+            .UpsertItemAsync(
+                new Vote(
+                    props.Lobby.Id,
+                    new Dictionary<string, string[]>()
+                    {
+                        { "READY", Array.Empty<string>() }
+                    },
+                    VoteUtils.CalculateRequiredVotes(props.Lobby.UserIds.Length),
+                    new[] { "READY" }),
+                new(props.Lobby.Id));
 
         await ws.AddAsync(ActionFactory.StartLobby(props.Lobby.Id));
     }

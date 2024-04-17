@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using System;
 using System.Linq;
 using System.Threading;
@@ -22,7 +23,7 @@ public static class PurgeFunction
         [DurableClient] IDurableEntityClient entityClient,
         [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
-        var database = cosmosClient.GetDatabase(DatabaseConstants.DATABASE_NAME);
+        var database = cosmosClient.GetSmackdownDatabase();
 
         // Delete all orchestrations
         var orchestrationCts = new CancellationTokenSource();
@@ -64,7 +65,7 @@ public static class PurgeFunction
         Console.WriteLine("Up to 1000 entities cleared");
 
         // Delete all lobbies
-        var lobbyContainer = database.GetContainer(DatabaseConstants.LOBBY_CONTAINER_NAME);
+        var lobbyContainer = cosmosClient.GetLobbyContainer();
         await lobbyContainer.DeleteContainerAsync();
 
         await database.CreateContainerAsync(new()
@@ -76,7 +77,7 @@ public static class PurgeFunction
         Console.WriteLine("Lobby container deleted and recreated");
 
         // Delete all votes
-        var voteContainer = database.GetContainer(DatabaseConstants.VOTE_CONTAINER_NAME);
+        var voteContainer = cosmosClient.GetVoteContainer();
         await voteContainer.DeleteContainerAsync();
 
         await database.CreateContainerAsync(new()
@@ -88,7 +89,7 @@ public static class PurgeFunction
         Console.WriteLine("Vote container deleted and recreated");
 
         // Delete all board entity maps
-        var boardContainer = database.GetContainer(DatabaseConstants.BOARD_CONTAINER_NAME);
+        var boardContainer = cosmosClient.GetBoardContainer();
         await boardContainer.DeleteContainerAsync();
 
         await database.CreateContainerAsync(new()

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SweeperSmackdown.Assets;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
 using System;
 using System.Threading.Tasks;
@@ -27,9 +27,7 @@ public static class BoardEntityMapCreateActivityFunction
     {
         var props = ctx.GetInput<BoardEntityMapCreateActivityFunctionProps>();
 
-        var container = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.BOARD_CONTAINER_NAME);
+        var container = cosmosClient.GetBoardContainer();
 
         return await container.UpsertItemAsync(
             new BoardEntityMap(

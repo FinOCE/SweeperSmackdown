@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
+using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
@@ -29,9 +30,7 @@ public static class OnDisconnectFunction
     {
         var userId = req.ConnectionContext.UserId;
         
-        var lobbyContainer = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.LOBBY_CONTAINER_NAME);
+        var lobbyContainer = cosmosClient.GetLobbyContainer();
 
         // Get lobby user is in
         var lobby = lobbyContainer
@@ -53,9 +52,7 @@ public static class OnDisconnectFunction
         // Update votes required
         var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
 
-        var voteContainer = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.VOTE_CONTAINER_NAME);
+        var voteContainer = cosmosClient.GetVoteContainer();
 
         var vote = voteContainer
             .GetItemLinqQueryable<Vote>()
@@ -91,7 +88,7 @@ public static class OnDisconnectFunction
                 }
             }
             
-            await lobbyContainer.PatchItemAsync<Vote>(lobby.Id, new(lobby.Id), operations);
+            await voteContainer.PatchItemAsync<Vote>(lobby.Id, new(lobby.Id), operations);
             await ws.AddAsync(ActionFactory.UpdateVoteState(lobby.Id, VoteGroupResponseDto.FromModel(vote)));
         }
 
@@ -133,9 +130,7 @@ public static class OnDisconnectFunction
             catch (Exception) { }
 
         // Delete board entity map, entities, and board managers
-        var boardContainer = cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.BOARD_CONTAINER_NAME);
+        var boardContainer = cosmosClient.GetBoardContainer();
 
         try
         {
