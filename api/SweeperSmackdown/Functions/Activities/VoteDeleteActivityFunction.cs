@@ -30,6 +30,6 @@ public static class VoteDeleteActivityFunction
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.VOTE_CONTAINER_NAME);
 
-        await container.DeleteItemAsync<BoardEntityMap>(props.LobbyId, new(props.LobbyId));
+        await container.DeleteItemAsync<Vote>(props.LobbyId, new(props.LobbyId));
     }
 }
