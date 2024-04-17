@@ -35,8 +35,10 @@ export function Board(props: BoardProps) {
 
       const spread = (index: number) => {
         if (travelled.includes(index)) return
-
         travelled.push(index)
+
+        if (State.isFlagged(props.localState[i])) return
+
         reveals.push(index)
 
         if (State.isEmpty(props.localState[index])) {
