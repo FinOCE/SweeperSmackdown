@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
@@ -36,7 +34,6 @@ public static class LobbyPatchFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> db,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -112,9 +109,6 @@ public static class LobbyPatchFunction
         await db.AddAsync(lobby);
 
         // Respond to request
-        var dto = LobbyResponseDto.FromModel(lobby);
-
-        await ws.AddAsync(ActionFactory.UpdateLobby(requesterId, lobbyId, dto));
-        return new OkObjectResult(dto);
+        return new OkObjectResult(LobbyResponseDto.FromModel(lobby));
     }
 }

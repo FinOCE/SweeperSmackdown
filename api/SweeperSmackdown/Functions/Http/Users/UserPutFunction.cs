@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
@@ -35,19 +33,6 @@ public static class UserPutFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> lobbyDb,
-        [CosmosDB(
-            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Vote? vote,
-        [CosmosDB(
-            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString")]
-            IAsyncCollector<Vote> voteDb,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId,
         string userId)
     {
@@ -70,11 +55,6 @@ public static class UserPutFunction
         lobby.UserIds = lobby.UserIds.Append(userId).Distinct().ToArray();
         await lobbyDb.AddAsync(lobby);
 
-        // Add user to ws group and notify
-        await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
-        await ws.AddAsync(ActionFactory.UpdateLobby("SYSTEM", lobbyId, LobbyResponseDto.FromModel(lobby)));
-        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
-
         // Start new board manager if lobby in play
         var orchestrationStatus = await orchestrationClient.GetStatusAsync(
             Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
@@ -92,16 +72,6 @@ public static class UserPutFunction
                     nameof(BoardManagerOrchestrationFunction),
                     Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
                     new BoardManagerOrchestrationFunctionProps(lobby.Settings));
-        }
-
-        // Update votes required
-        var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
-
-        if (vote != null && vote.RequiredVotes != requiredVotes)
-        {
-            vote.RequiredVotes = requiredVotes;
-            await voteDb.AddAsync(vote);
-            await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
         }
 
         // Respond to request

@@ -1,16 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
-using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -41,8 +36,6 @@ public static class VotePutFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Vote> voteDb,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         HttpRequest req,
         string lobbyId,
         string userId)
@@ -91,22 +84,8 @@ public static class VotePutFunction
         if (existingChoice != null || existingChoice != payload.Choice)
             vote.Votes[payload.Choice] = vote.Votes[payload.Choice].Append(userId).ToArray();
 
-        // Notify orchestration
-        if (vote.Votes[payload.Choice].Length == vote.RequiredVotes || forced)
-        {
-            var expiry = DateTime.UtcNow.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
-
-            await orchestrationClient.RaiseEventAsync(
-                Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                DurableEvents.START_TIMER,
-                expiry);
-            
-            await ws.AddAsync(ActionFactory.StartTimer(lobbyId, expiry));
-        }
-
-        // Update database and notify users of vote state change
+        // Update database
         await voteDb.AddAsync(vote);
-        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
 
         // Respond to request
         return existingChoice != null && existingChoice == payload.Choice

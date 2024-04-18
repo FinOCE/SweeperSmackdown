@@ -1,16 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
-using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -41,8 +36,6 @@ public static class VoteDeleteFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Vote> voteDb,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         HttpRequest req,
         string lobbyId,
         string userId)
@@ -89,19 +82,8 @@ public static class VoteDeleteFunction
                 vote.Votes[key] = Array.Empty<string>();
         }
 
-        // Notify orchestration
-        if (choice != null && vote.Votes[choice].Length == vote.RequiredVotes - 1 || forced)
-        {
-            await orchestrationClient.RaiseEventAsync(
-                Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-                DurableEvents.RESET_TIMER);
-
-            await ws.AddAsync(ActionFactory.ResetTimer(lobbyId));
-        }
-
         // Update database and notify users of vote state change
         await voteDb.AddAsync(vote);
-        await ws.AddAsync(ActionFactory.UpdateVoteState(lobbyId, VoteGroupResponseDto.FromModel(vote)));
 
         // Respond to request
         return new NoContentResult();

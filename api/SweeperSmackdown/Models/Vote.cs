@@ -17,6 +17,9 @@ namespace SweeperSmackdown.Models
         [JsonProperty("choices")]
         public string[] Choices { get; set; }
 
+        [JsonProperty("triggered")]
+        public bool Triggered { get; set; }
+
         [JsonProperty("forced")]
         public bool Forced { get; set; }
 
@@ -26,6 +29,7 @@ namespace SweeperSmackdown.Models
             Votes = votes;
             RequiredVotes = requiredVotes;
             Choices = choices;
+            Triggered = false;
             Forced = false;
         }
     }

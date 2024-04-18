@@ -4,15 +4,12 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,8 +22,7 @@ public static class OnDisconnectFunction
         [WebPubSubTrigger(PubSubConstants.HUB_NAME, WebPubSubEventType.System, "disconnected")] DisconnectedEventRequest req,
         [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
+        [DurableClient] IDurableEntityClient entityClient)
     {
         var userId = req.ConnectionContext.UserId;
         
@@ -49,54 +45,6 @@ public static class OnDisconnectFunction
 
         lobby.UserIds = lobby.UserIds.Where(id => id != userId).ToArray();
 
-        // Update votes required
-        var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
-
-        var voteContainer = cosmosClient.GetVoteContainer();
-
-        var vote = voteContainer
-            .GetItemLinqQueryable<Vote>()
-            .Where(vote => vote.LobbyId == lobby.Id)
-            .FirstOrDefault();
-
-        if (vote != null)
-        {
-            var choice = vote.Votes
-                .Where(kvp => kvp.Value.Contains(userId))
-                .Select(kvp => kvp.Key)
-                .FirstOrDefault();
-
-            List<PatchOperation> operations = new()
-            {
-                PatchOperation.Set("/requiredVotes", requiredVotes)
-            };
-
-            vote.RequiredVotes = requiredVotes;
-
-            if (choice != null)
-            {
-                vote.Votes[choice] = vote.Votes[choice].Where(id => id != userId).ToArray();
-                operations.Add(PatchOperation.Set($"/votes/{choice}", vote.Votes[choice]));
-
-                if (vote.Votes[choice].Length == requiredVotes - 1)
-                {
-                    await orchestrationClient.RaiseEventAsync(
-                        Id.ForInstance(nameof(TimerOrchestratorFunction), lobby.Id),
-                        DurableEvents.RESET_TIMER);
-
-                    await ws.AddAsync(ActionFactory.ResetTimer(lobby.Id));
-                }
-            }
-            
-            await voteContainer.PatchItemAsync<Vote>(lobby.Id, new(lobby.Id), operations);
-            await ws.AddAsync(ActionFactory.UpdateVoteState(lobby.Id, VoteGroupResponseDto.FromModel(vote)));
-        }
-
-        // Notify others in lobby
-        await ws.AddAsync(ActionFactory.RemoveUserFromLobby(userId, lobby.Id));
-        await ws.AddAsync(ActionFactory.UpdateLobby("SYSTEM", lobby.Id, LobbyResponseDto.FromModel(lobby)));
-        await ws.AddAsync(ActionFactory.RemoveUser(userId, lobby.Id));
-
         // Don't delete everything if users still in lobby
         if ((lobby.UserIds.Length - 1) > 0)
             return;
@@ -107,7 +55,9 @@ public static class OnDisconnectFunction
         // Delete vote
         try
         {
-            await voteContainer.DeleteItemAsync<Vote>(lobby.Id, new(lobby.Id));
+            await cosmosClient
+                .GetVoteContainer()
+                .DeleteItemAsync<Vote>(lobby.Id, new(lobby.Id));
         }
         catch (CosmosException) { }
 
