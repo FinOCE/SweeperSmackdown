@@ -1,0 +1,68 @@
+name: Sweeper Smackdown Deployment
+
+on:
+  push:
+    branches:
+      - production
+      - main
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'dev' }}
+  REGION: useast
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: Test project
+        run: |
+          dotnet test --configuration Release
+
+      - name: Log into Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build infrastructure with Bicep
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          scope: "subscription"
+          template: .bicep/main.bicep
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }}"
+          failOnStdErr: false
+          region: useast
+
+      - name: Create zip and prepare for deployment
+        run: |
+          dotnet publish --configuration Release --output ./output --self-contained
+          cd ./output
+          zip -r ../deploy.zip .
+          cd ..
+
+      - name: Configure CORS
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.event.repository.name }}-${{ github.sha }}
+          path: ./deploy.zip
+
+      - name: Deploy zip through Azure CLI
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.functionAppName }} --src ./deploy.zip
+
+      - name: Log out of Azure
+        run: az logout
