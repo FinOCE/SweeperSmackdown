@@ -1,14 +1,10 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
-using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,9 +16,7 @@ public static class OnDisconnectFunction
     [FunctionName(nameof(OnDisconnectFunction))]
     public static async Task Run(
         [WebPubSubTrigger(PubSubConstants.HUB_NAME, WebPubSubEventType.System, "disconnected")] DisconnectedEventRequest req,
-        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var userId = req.ConnectionContext.UserId;
         
@@ -42,70 +36,5 @@ public static class OnDisconnectFunction
         {
             PatchOperation.Set($"/userIds", lobby.UserIds.Where(id => id != userId).ToArray())
         });
-
-        lobby.UserIds = lobby.UserIds.Where(id => id != userId).ToArray();
-
-        // Don't delete everything if users still in lobby
-        if ((lobby.UserIds.Length - 1) > 0)
-            return;
-        
-        // Delete lobby
-        await lobbyContainer.DeleteItemAsync<Lobby>(lobby.Id, new(lobby.Id));
-
-        // Delete vote
-        try
-        {
-            await cosmosClient
-                .GetVoteContainer()
-                .DeleteItemAsync<Vote>(lobby.Id, new(lobby.Id));
-        }
-        catch (CosmosException) { }
-
-        // Delete orchestrations except board managers
-        var orchestrationIds = new string[]
-        {
-            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobby.Id),
-            Id.ForInstance(nameof(GameActiveFunction), lobby.Id),
-            Id.ForInstance(nameof(GameCelebrationFunction), lobby.Id),
-            Id.ForInstance(nameof(GameCleanupFunction), lobby.Id),
-            Id.ForInstance(nameof(GameConfigureFunction), lobby.Id),
-            Id.ForInstance(nameof(TimerOrchestratorFunction), lobby.Id)
-        };
-
-        foreach (var id in orchestrationIds)
-            try
-            {
-                await orchestrationClient.TerminateAsync(id, "Lobby empty");
-            }
-            catch (Exception) { }
-
-        // Delete board entity map, entities, and board managers
-        var boardContainer = cosmosClient.GetBoardContainer();
-
-        try
-        {
-            BoardEntityMap boardEntityMap = await boardContainer.ReadItemAsync<BoardEntityMap>(
-                lobby.Id,
-                new(lobby.Id));
-
-            var tasks = boardEntityMap.BoardIds.Select(id =>
-                entityClient.SignalEntityAsync<IBoard>(
-                    Id.For<Board>(id),
-                    board => board.Delete()));
-
-            await Task.WhenAll(tasks);
-
-            foreach (var id in boardEntityMap.BoardIds)
-                try
-                {
-                    await orchestrationClient.TerminateAsync(
-                        Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
-                        "Lobby empty");
-                }
-                catch (Exception) { }
-
-            await boardContainer.DeleteItemAsync<BoardEntityMap>(lobby.Id, new(lobby.Id));
-        }
-        catch (CosmosException) { }
     }
 }

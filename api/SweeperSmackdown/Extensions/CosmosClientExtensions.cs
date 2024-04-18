@@ -3,7 +3,7 @@ using SweeperSmackdown.Assets;
 
 namespace SweeperSmackdown.Extensions;
 
-public static class DateTimeExtensions
+public static class CosmosClientExtensions
 {
     /// <summary>
     /// Get the database which holds all containers for core sweeper smackdown functionality.
