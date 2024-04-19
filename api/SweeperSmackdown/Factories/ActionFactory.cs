@@ -17,10 +17,10 @@ public static class ActionFactory
     public static WebPubSubAction RemoveUserFromLobby(string userId, string lobbyId) =>
         WebPubSubAction.CreateRemoveUserFromGroupAction(userId, lobbyId);
 
-    public static WebPubSubAction UpdateLobby(string userId, string lobbyId, LobbyResponseDto lobby) =>
+    public static WebPubSubAction UpdateLobby(string lobbyId, LobbyResponseDto lobby) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, userId, lobby),
+            MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, "SYSTEM", lobby),
             WebPubSubDataType.Json);
     
     public static WebPubSubAction AddUser(string userId, string lobbyId) =>

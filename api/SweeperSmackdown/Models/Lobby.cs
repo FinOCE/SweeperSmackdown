@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SweeperSmackdown.Structures;
+using System;
 using System.Collections.Generic;
 
 namespace SweeperSmackdown.Models;
@@ -13,6 +14,9 @@ public class Lobby
     
     [JsonProperty("userIds")]
     public string[] UserIds { get; set; }
+
+    [JsonProperty("addedUserIds")]
+    public string[] AddedUserIds { get; set; }
 
     [JsonProperty("scores")]
     public IDictionary<string, int> Scores { get; set; }
@@ -34,6 +38,7 @@ public class Lobby
         Id = id;
         HostId = hostId;
         UserIds = userIds;
+        AddedUserIds = Array.Empty<string>();
         Scores = scores;
         Wins = wins;
         Settings = settings;
