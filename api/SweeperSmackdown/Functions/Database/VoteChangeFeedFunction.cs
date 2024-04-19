@@ -8,6 +8,7 @@ using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,7 +23,7 @@ public static class VoteChangeFeedFunction
             containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             Connection = "CosmosDbConnectionString",
             CreateLeaseContainerIfNotExists = true)]
-            Vote vote,
+            IEnumerable<Vote> votes,
         [CosmosDB(
             containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -31,34 +32,44 @@ public static class VoteChangeFeedFunction
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
     {
-        await ws.AddAsync(ActionFactory.UpdateVoteState(vote.LobbyId, VoteGroupResponseDto.FromModel(vote)));
-
-        // Handle starting vote
-        if (!vote.Triggered && (vote.Votes.Any(kvp => kvp.Value.Length == vote.RequiredVotes) || vote.Forced))
+        foreach (var vote in votes)
         {
-            var choice = vote.Votes.First(kvp => kvp.Value.Length == vote.RequiredVotes).Key;
-            var expiry = DateTime.UtcNow.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
+            try
+            {
+                await ws.AddAsync(ActionFactory.UpdateVoteState(vote.LobbyId, VoteGroupResponseDto.FromModel(vote)));
 
-            await orchestrationClient.RaiseEventAsync(
-                Id.ForInstance(nameof(TimerOrchestratorFunction), vote.LobbyId),
-                DurableEvents.START_TIMER,
-                expiry);
+                // Handle starting vote
+                if (!vote.Triggered && (vote.Votes.Any(kvp => kvp.Value.Length == vote.RequiredVotes) || vote.Forced))
+                {
+                    var choice = vote.Votes.First(kvp => kvp.Value.Length == vote.RequiredVotes).Key;
+                    var expiry = DateTime.UtcNow.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
 
-            vote.Triggered = true;
-            await voteDb.AddAsync(vote);
-            await ws.AddAsync(ActionFactory.StartTimer(vote.LobbyId, expiry));
-        }
+                    await orchestrationClient.RaiseEventAsync(
+                        Id.ForInstance(nameof(TimerOrchestratorFunction), vote.LobbyId),
+                        DurableEvents.START_TIMER,
+                        expiry);
 
-        // Handle stopping vote
-        if (vote.Triggered && (vote.Votes.Any(kvp => kvp.Value.Length == vote.RequiredVotes - 1) || vote.Forced))
-        {
-            await orchestrationClient.RaiseEventAsync(
-                Id.ForInstance(nameof(TimerOrchestratorFunction), vote.LobbyId),
-                DurableEvents.RESET_TIMER);
+                    vote.Triggered = true;
+                    await voteDb.AddAsync(vote);
+                    await ws.AddAsync(ActionFactory.StartTimer(vote.LobbyId, expiry));
+                }
 
-            vote.Triggered = false;
-            await voteDb.AddAsync(vote);
-            await ws.AddAsync(ActionFactory.ResetTimer(vote.LobbyId));
+                // Handle stopping vote
+                if (vote.Triggered && (vote.Votes.Any(kvp => kvp.Value.Length == vote.RequiredVotes - 1) || vote.Forced))
+                {
+                    await orchestrationClient.RaiseEventAsync(
+                        Id.ForInstance(nameof(TimerOrchestratorFunction), vote.LobbyId),
+                        DurableEvents.RESET_TIMER);
+
+                    vote.Triggered = false;
+                    await voteDb.AddAsync(vote);
+                    await ws.AddAsync(ActionFactory.ResetTimer(vote.LobbyId));
+                }
+            }
+            catch (Exception)
+            {
+                // TODO: Check if this ever occurs
+            }
         }
     }
 }
