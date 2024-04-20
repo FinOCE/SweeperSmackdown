@@ -11,7 +11,7 @@ namespace SweeperSmackdown.Functions.Entities;
 
 public interface IBoard
 {
-    void Create(byte[] gameState);
+    void Create((byte[] GameState, int Lives) args);
 
     void Delete();
 
@@ -29,13 +29,22 @@ public class Board : IBoard
 {
     [DataMember]
     public byte[] InitialState { get; private set; } = null!;
+
     [DataMember]
     public byte[] GameState { get; private set; } = null!;
 
-    public void Create(byte[] gameState)
+    [DataMember]
+    public int InitialLives { get; private set; }
+
+    [DataMember]
+    public int Lives { get; private set; }
+
+    public void Create((byte[] GameState, int Lives) args)
     {
-        InitialState = gameState;
-        GameState = gameState;
+        InitialState = args.GameState;
+        GameState = args.GameState;
+        InitialLives = args.Lives;
+        Lives = args.Lives;
     }
 
     public void Delete() =>
@@ -49,6 +58,9 @@ public class Board : IBoard
 
     public void MakeMove(OnMoveData data)
     {
+        if (Lives == 0)
+            throw new InvalidOperationException("No lives remaining");
+
         if (data.FlagAdd != null)
         {
             // Set flag on state
@@ -69,11 +81,17 @@ public class Board : IBoard
             GameState = GameState
                 .Select((state, i) => data.Reveals.Contains(i) ? State.Reveal(state) : state)
                 .ToArray();
+
+            if (State.IsBomb(GameState[i]) && Lives != -1)
+                Lives--;
         }
     }
 
-    public void Reset() =>
+    public void Reset()
+    {
         GameState = InitialState;
+        Lives = InitialLives;
+    }
 
     [FunctionName(nameof(Board))]
     public static Task Run([EntityTrigger] IDurableEntityContext ctx) =>

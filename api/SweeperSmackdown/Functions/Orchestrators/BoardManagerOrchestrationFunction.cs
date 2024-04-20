@@ -45,11 +45,12 @@ public static class BoardManagerOrchestrationFunction
 
         // Generate boards
         var gameState = GameStateFactory.Create(seed, props.Settings);
+        var lives = props.Settings.Lives == 0 ? -1 : props.Settings.Lives;
 
         await ctx.CallEntityAsync(
             Id.For<Board>(userId),
             nameof(Board.Create),
-            gameState);
+            (gameState, lives));
 
         // Notify users the board was created
         await ctx.CallActivityAsync(

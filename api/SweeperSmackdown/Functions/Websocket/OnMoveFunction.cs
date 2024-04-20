@@ -8,6 +8,7 @@ using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -25,12 +26,23 @@ public static class OnMoveFunction
         var userId = req.ConnectionContext.UserId;
         var data = JsonSerializer.Deserialize<Message<OnMoveData>>(req.Data.ToString())!;
 
-        // Pass event onto other players (temporary)
-        await ws.AddAsync(ActionFactory.MakeMove(data.UserId, data.Data.LobbyId, data.Data));
-        
+        // Get user board entity
+        var entity = await entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId));
+
+        if (!entity.EntityExists)
+            return;
+
+        var board = entity.EntityState;
+            
         // Update board state
-        await entityClient.SignalEntityAsync<IBoard>(
-            Id.For<Board>(userId),
-            board => board.MakeMove(data.Data));
+        try
+        {
+            board.MakeMove(data.Data);
+            await ws.AddAsync(ActionFactory.MakeMove(data.UserId, data.Data.LobbyId, data.Data));
+        }
+        catch (InvalidOperationException)
+        {
+            // Ignore error, prevents event propagation
+        }
     }
 }
