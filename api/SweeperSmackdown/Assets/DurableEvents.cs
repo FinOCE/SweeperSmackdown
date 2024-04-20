@@ -10,6 +10,8 @@ public static class DurableEvents
 
     public const string CANCEL_TIMER = "CANCEL_TIMER";
 
+    public const string TIMER_COMPLETED = "TIMER_COMPLETED";
+
     public const string BOARD_COMPLETED = "BOARD_COMPLETED";
 
     public const string BOARD_SKIPPED = "BOARD_SKIPPED";

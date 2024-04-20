@@ -12,9 +12,12 @@ public class TimerOrchestratorFunctionProps
 {
     public int? Duration { get; }
 
-    public TimerOrchestratorFunctionProps(int? duration = null)
+    public string? RaiseEventTo { get; }
+
+    public TimerOrchestratorFunctionProps(int? duration = null, string? raiseEventTo = null)
     {
         Duration = duration;
+        RaiseEventTo = raiseEventTo;
     }
 }
 
@@ -22,7 +25,8 @@ public static class TimerOrchestratorFunction
 {
     [FunctionName(nameof(TimerOrchestratorFunction))]
     public static async Task Run(
-        [OrchestrationTrigger] IDurableOrchestrationContext ctx)
+        [OrchestrationTrigger] IDurableOrchestrationContext ctx,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
         var props = ctx.GetInput<TimerOrchestratorFunctionProps>();
         var tasks = new List<Task>();
@@ -51,8 +55,13 @@ public static class TimerOrchestratorFunction
 
         if (!timeoutTask.IsCompleted)
             timeoutCts.Cancel();
-        
+
         if (winner == resetTask)
             ctx.ContinueAsNew(new TimerOrchestratorFunctionProps());
+        else if (props.RaiseEventTo != null)
+            await orchestrationClient.RaiseEventAsync(
+                props.RaiseEventTo,
+                DurableEvents.TIMER_COMPLETED);
+            
     }
 }

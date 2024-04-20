@@ -31,15 +31,6 @@ public static class GameActiveFunction
 
         var tasks = new List<Task>();
 
-        // Setup timer if needed
-        var timerTask = ctx.CallSubOrchestratorAsync(
-            nameof(TimerOrchestratorFunction),
-            Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId),
-            new TimerOrchestratorFunctionProps(props.Settings.TimeLimit));
-
-        if (props.Settings.TimeLimit != 0)
-            tasks.Add(timerTask);
-
         // Create board manager for each user
         var lobby = await ctx.CallActivityAsync<Lobby>(
             nameof(LobbyFetchActivityFunction),
@@ -56,6 +47,18 @@ public static class GameActiveFunction
                 Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId));
 
         // TODO: Ensure all players have a board created before starting
+
+        // Setup timer if needed
+        if (props.Settings.TimeLimit != 0)
+        {
+            _ = ctx.StartNewOrchestration(
+                nameof(TimerOrchestratorFunction),
+                new TimerOrchestratorFunctionProps(props.Settings.TimeLimit, ctx.InstanceId),
+                Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId));
+
+            var timerTask = ctx.WaitForExternalEvent(DurableEvents.TIMER_COMPLETED);
+            tasks.Add(timerTask);
+        }
 
         // Listen for a winner
         var winnerTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_WON);
