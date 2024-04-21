@@ -101,6 +101,7 @@ public static class LobbyPatchFunction
             payload.Height,
             payload.Width,
             payload.Mines,
+            payload.Difficulty,
             payload.Lives,
             payload.TimeLimit,
             payload.BoardCount,

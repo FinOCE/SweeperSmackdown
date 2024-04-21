@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SweeperSmackdown.Utils;
 using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.Structures;
@@ -21,6 +22,10 @@ public class GameSettings
     [JsonPropertyName("mines")]
     public int Mines { get; private set; } = 40;
 
+    [JsonProperty("difficulty")]
+    [JsonPropertyName("difficulty")]
+    public EDifficulty? Difficulty { get; private set; } = null;
+
     [JsonProperty("lives")]
     [JsonPropertyName("lives")]
     public int Lives { get; private set; } = 0;
@@ -42,17 +47,31 @@ public class GameSettings
         int? height,
         int? width,
         int? mines,
+        EDifficulty? difficulty,
         int? lives,
         int? timeLimit,
         int? boardCount,
         int? seed)
     {
+        EDifficulty? updatedDifficulty = null;
+
+        if (difficulty == null && mines == null)
+            updatedDifficulty = Difficulty;
+        else if (difficulty != null)
+            updatedDifficulty = difficulty;
+        else if (mines != null)
+            updatedDifficulty = null;
+
+        if (updatedDifficulty != null)
+            mines = MineUtils.CalculateMineCount(updatedDifficulty.Value, (height ?? Height) * (width ?? Width));
+
         return new GameSettings()
         {
             Mode = mode ?? Mode,
             Height = height ?? Height,
             Width = width ?? Width,
             Mines = mines ?? Mines,
+            Difficulty = updatedDifficulty,
             Lives = lives ?? Lives,
             TimeLimit = timeLimit ?? TimeLimit,
             BoardCount = boardCount ?? BoardCount,

@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Factories;
+using SweeperSmackdown.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,6 +24,9 @@ public class LobbyPatchRequestDto
 
     [JsonProperty("mines")]
     public int? Mines { get; set; }
+
+    [JsonProperty("difficulty")]
+    public EDifficulty? Difficulty { get; set; }
 
     [JsonProperty("lives")]
     public int? Lives { get; set; }
@@ -59,6 +64,9 @@ public class LobbyPatchRequestDto
 
             if (Mines != null && Mines <= 0)
                 errors.Add($"The 'mines' must be greater than 0");
+
+            if (Difficulty != null && !Enum.IsDefined(Difficulty.Value))
+                errors.Add("The 'difficulty' must be a valid difficulty");
 
             if (Lives != null && Lives < 0)
                 errors.Add($"The 'lives' must be greater than or equal to 0 (0 means unlimited)");

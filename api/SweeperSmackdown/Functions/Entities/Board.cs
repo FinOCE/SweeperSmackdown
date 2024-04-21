@@ -82,8 +82,9 @@ public class Board : IBoard
                 .Select((state, i) => data.Reveals.Contains(i) ? State.Reveal(state) : state)
                 .ToArray();
 
-            if (State.IsBomb(GameState[i]) && Lives != -1)
-                Lives--;
+            foreach (var reveal in data.Reveals)
+                if (State.IsBomb(GameState[reveal]) && Lives != -1 && Lives != 0)
+                    Lives--;
         }
     }
 
