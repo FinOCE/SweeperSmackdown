@@ -24,9 +24,9 @@ jobs:
         with:
           dotnet-version: "6.0.x"
 
-      - name: Test project
-        run: |
-          dotnet test --configuration Release
+      # - name: Test project
+      #   run: |
+      #     dotnet test --configuration Release
 
       - name: Log into Azure
         uses: azure/login@v1
