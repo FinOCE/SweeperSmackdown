@@ -61,7 +61,7 @@ jobs:
           action: "upload"
           app_location: "/app"
           api_location: ""
-          output_location: ""
+          output_location: "/dist"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
