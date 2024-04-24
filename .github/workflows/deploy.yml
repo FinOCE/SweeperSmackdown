@@ -43,12 +43,6 @@ jobs:
           failOnStdErr: false
           region: ${{ env.REGION }}
 
-      - name: Create public dotenv for app
-        run: |
-          cd ./app
-          echo "PUBLIC_ENV__DISCORD_CLIENT_ID=1224239153831608340\nPUBLIC_ENV__API_BASE_URL=https://${{ steps.deploy.outputs.functionAppDefaultHostName }}" > .env
-          cd ..
-
       - name: Get deployment token for SWA
         run: |
           echo "DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name swa-sweepersmackdown-${{ env.ENVIRONMENT }} --query 'properties.apiKey' | tr -d '"')" >> $GITHUB_ENV
@@ -64,6 +58,8 @@ jobs:
           output_location: "/dist"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLIC_ENV__DISCORD_CLIENT_ID: 1224239153831608340
+          PUBLIC_ENV__API_BASE_URL: https://${{ steps.deploy.outputs.functionAppDefaultHostName }}
 
       - name: Create zip and prepare for deployment
         run: |

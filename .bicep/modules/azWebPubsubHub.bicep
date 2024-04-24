@@ -12,6 +12,7 @@ resource azWebPubsubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
   name: 'Game'
   parent: azWebPubsub
   properties: {
+    anonymousConnectPolicy: 'allow'
     eventHandlers: [
       {
         systemEvents: [
