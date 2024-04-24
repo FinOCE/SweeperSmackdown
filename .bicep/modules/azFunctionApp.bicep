@@ -23,12 +23,12 @@ resource azCosmosDb 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing 
 
 var azCosmosDbConnectionString = azCosmosDb.listConnectionStrings().connectionStrings[0].connectionString
 
-// // Get web pubsub
-// resource azWebPubsub 'Microsoft.SignalRService/webPubSub@2023-02-01' existing = {
-//   name: webPubsubName
-// }
+// Get web pubsub
+resource azWebPubsub 'Microsoft.SignalRService/webPubSub@2023-02-01' existing = {
+  name: webPubsubName
+}
 
-// var webPubsubConnectionString = azWebPubsub.listConnectionStrings().connectionStrings[0].connectionString
+var webPubsubConnectionString = azWebPubsub.listKeys().primaryConnectionString
 
 // Create function app
 resource azFunctionApp 'Microsoft.Web/sites@2022-09-01' = {
@@ -76,10 +76,10 @@ resource azFunctionApp 'Microsoft.Web/sites@2022-09-01' = {
           name: 'CosmosDbConnectionString'
           value: azCosmosDbConnectionString
         }
-        // {
-        //   name: 'WebPubsubConnectionString'
-        //   value: webPubsubConnectionString
-        // }
+        {
+          name: 'WebPubsubConnectionString'
+          value: webPubsubConnectionString
+        }
       ]
       cors: {
         allowedOrigins: [
