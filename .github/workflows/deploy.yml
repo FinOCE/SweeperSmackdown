@@ -11,6 +11,8 @@ on:
 env:
   ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'dev' }}
   REGION: eastus2
+  DISCORD_CLIENT_ID: 1224239153831608340 # TODO: Handle dev/prod
+  DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }} # TODO: Handle dev/prod
 
 jobs:
   deploy:
@@ -39,7 +41,7 @@ jobs:
         with:
           scope: "subscription"
           template: .bicep/main.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }}"
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ secrets.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }}"
           failOnStdErr: false
           region: ${{ env.REGION }}
 
@@ -58,7 +60,7 @@ jobs:
           output_location: "/dist"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLIC_ENV__DISCORD_CLIENT_ID: 1224239153831608340
+          PUBLIC_ENV__DISCORD_CLIENT_ID: ${{ env.DISCORD_CLIENT_ID }}
           PUBLIC_ENV__API_BASE_URL: https://${{ steps.deploy.outputs.functionAppDefaultHostName }}
 
       - name: Create zip and prepare for deployment

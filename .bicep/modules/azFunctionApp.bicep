@@ -7,6 +7,14 @@ param storageName string
 param serverFarmId string
 
 @secure()
+param bearerTokenSecretKey string
+
+param discordClientId string
+
+@secure()
+param discordClientSecret string
+
+@secure()
 param applicationInsightsInstrumentationKey string
 
 // Get storage account connection string
@@ -79,6 +87,18 @@ resource azFunctionApp 'Microsoft.Web/sites@2022-09-01' = {
         {
           name: 'WebPubsubConnectionString'
           value: webPubsubConnectionString
+        }
+        {
+          name: 'BearerTokenSecretKey'
+          value: bearerTokenSecretKey
+        }
+        {
+          name: 'DiscordClientId'
+          value: discordClientId
+        }
+        {
+          name: 'DiscordClientSecret'
+          value: discordClientSecret
         }
       ]
       cors: {

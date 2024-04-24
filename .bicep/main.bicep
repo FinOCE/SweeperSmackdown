@@ -11,6 +11,17 @@ param environment string
 @description('The location to deploy to')
 param location string
 
+@description('The secret key used to hash bearer tokens')
+@secure()
+param bearerTokenSecretKey string
+
+@description('The client ID of the Discord application')
+param discordClientId string
+
+@description('The client secret of the Discord application')
+@secure()
+param discordClientSecret string
+
 // Names
 var product = 'sweepersmackdown'
 
@@ -91,6 +102,10 @@ module azFunctionApp 'modules/azFunctionApp.bicep' = {
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
     serverFarmId: azServerFarm.outputs.id
     storageName: azStorageAccount.outputs.name
+
+    bearerTokenSecretKey: bearerTokenSecretKey
+    discordClientId: discordClientId
+    discordClientSecret: discordClientSecret
   }
 }
 
