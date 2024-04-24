@@ -10,7 +10,7 @@ on:
 
 env:
   ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'dev' }}
-  REGION: useast
+  REGION: eastus
 
 jobs:
   deploy:
@@ -41,7 +41,7 @@ jobs:
           template: .bicep/main.bicep
           parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }}"
           failOnStdErr: false
-          region: useast
+          region: eastus
 
       - name: Get deployment token for SWA
         run: |
