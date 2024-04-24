@@ -15,6 +15,9 @@
   ],
   "author": "FinOCE",
   "license": "GPL-3.0-only",
+  "engines": {
+    "node": "^20.0.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.24.3",
     "@babel/preset-env": "^7.24.3",
