@@ -15,3 +15,4 @@ resource azStaticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
 
 // Outputs
 output name string = azStaticWebApp.name
+output defaultHostName string = azStaticWebApp.properties.defaultHostname

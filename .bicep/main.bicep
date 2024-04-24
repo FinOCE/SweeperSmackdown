@@ -119,4 +119,6 @@ module azStaticWebApp 'modules/azStaticWebApp.bicep' = {
 // Outputs
 output resourceGroupName string = azResourceGroup.name
 output functionAppName string = azFunctionApp.outputs.name
+output functionAppDefaultHostName string = azFunctionApp.outputs.defaultHostName
 output staticWebAppName string = azStaticWebApp.outputs.name
+output staticWebAppDefaultHostName string = azStaticWebApp.outputs.defaultHostName
