@@ -118,6 +118,7 @@ module azWebPubsubHub 'modules/azWebPubsubHub.bicep' = {
   params: {
     webPubsubName: webPubsub
     eventHandlerAddress: 'https://${azFunctionAppDefaultHostName}/runtime/webhooks/webpubsub'
+    functionAppName: azFunctionApp.outputs.name
   }
 }
 

@@ -12,7 +12,7 @@ resource azWebPubsub 'Microsoft.SignalRService/webPubSub@2023-02-01' = {
     tier: 'Free'
   }
   identity: {
-    type: 'SystemAssigned'
+    type: 'None'
   }
   properties: {
     publicNetworkAccess: 'Enabled'
