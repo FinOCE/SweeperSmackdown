@@ -5,6 +5,7 @@ on:
     branches:
       - production
       - main
+      - deployment # temporary
   workflow_dispatch:
 
 env:
