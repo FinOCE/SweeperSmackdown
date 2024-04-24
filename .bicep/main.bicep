@@ -12,16 +12,16 @@ param environment string
 param location string
 
 // Names
-var product = 'sweeper-smackdown'
+var product = 'sweepersmackdown'
 
 var resourceGroup = 'rg-${product}-${environment}'
 var cosmosDb = 'db-${product}-${environment}'
 var webPubsub = 'ws-${product}-${environment}'
-var webPubsubHub = 'wsh-${product}-${environment}'
 var applicationInsights = 'ai-${product}-${environment}'
 var serverFarm = 'sf-${product}-${environment}'
-var storageAccount = 'sasweepersmackdown${environment}'
+var storageAccount = 'sa${product}${environment}'
 var functionApp = 'fa-${product}-${environment}'
+var staticWebApp = 'swa-${product}-${environment}'
 
 // Create resource group
 resource azResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -46,8 +46,6 @@ module azWebPubsub 'modules/azWebPubsub.bicep' = {
   params: {
     name: webPubsub
     location: location
-    webPubsubHubName: webPubsubHub
-    eventHandlerAddress: eventHandlerAddress
   }
 }
 
@@ -108,6 +106,17 @@ module azWebPubsubHub 'modules/azWebPubsubHub.bicep' = {
   }
 }
 
+// Create static web app
+module azStaticWebApp 'modules/azStaticWebApp.bicep' = {
+  scope: azResourceGroup
+  name: 'staticWebApp'
+  params: {
+    name: staticWebApp
+    location: location
+  }
+}
+
 // Outputs
 output resourceGroupName string = azResourceGroup.name
 output functionAppName string = azFunctionApp.outputs.name
+output staticWebAppName string = azStaticWebApp.outputs.name

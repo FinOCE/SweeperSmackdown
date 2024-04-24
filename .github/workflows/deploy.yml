@@ -42,27 +42,40 @@ jobs:
           failOnStdErr: false
           region: useast
 
+      - name: Get deployment token for SWA
+        run: |
+          echo "DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name swa-sweepersmackdown-${{ env.ENVIRONMENT }} --query 'properties.apiKey' | tr -d '"')" >> $GITHUB_ENV
+
+      - name: Deploy SWA
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/app"
+          api_location: ""
+          output_location: ""
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create zip and prepare for deployment
         run: |
+          cd ./api
           dotnet publish --configuration Release --output ./output --self-contained
           cd ./output
           zip -r ../deploy.zip .
-          cd ..
+          cd ../..
 
-      - name: Configure CORS
-        run: |
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-
-      - name: Upload zip artifact
+      - name: Upload zip artifact for API
         uses: actions/upload-artifact@v3
         with:
           name: ${{ github.event.repository.name }}-${{ github.sha }}
           path: ./deploy.zip
 
-      - name: Deploy zip through Azure CLI
+      - name: Deploy API through Azure CLI
         run: |
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.functionAppName }} --src ./deploy.zip
+          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.functionAppName }} --src ./api/deploy.zip
 
       - name: Log out of Azure
         run: az logout
