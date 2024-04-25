@@ -50,6 +50,7 @@ jobs:
           touch .env
           echo "PUBLIC_ENV__DISCORD_CLIENT_ID=${{ env.DISCORD_CLIENT_ID }}" >> .env
           echo "PUBLIC_ENV__API_BASE_URL=https://${{ steps.deploy.outputs.functionAppDefaultHostName }}" >> .env
+          npm ci
           npm run build
           popd
           echo "DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name swa-sweepersmackdown-${{ env.ENVIRONMENT }} --query 'properties.apiKey' | tr -d '"')" >> $GITHUB_ENV
