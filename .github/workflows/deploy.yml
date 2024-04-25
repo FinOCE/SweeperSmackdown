@@ -10,7 +10,7 @@ on:
 env:
   ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'dev' }}
   REGION: eastus2
-  DISCORD_CLIENT_ID: 1233026365213773965 # TODO: Handle dev/prod
+  DISCORD_CLIENT_ID: "1233026365213773965" # TODO: Handle dev/prod
   DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }} # TODO: Handle dev/prod
 
 jobs:
