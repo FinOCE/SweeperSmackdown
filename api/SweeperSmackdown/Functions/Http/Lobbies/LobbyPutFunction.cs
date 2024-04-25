@@ -10,6 +10,7 @@ using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -52,7 +53,7 @@ public static class LobbyPutFunction
             new[] { requesterId },
             new Dictionary<string, int>(),
             new Dictionary<string, int>(),
-            new GameSettings());
+            new GameSettings(Guid.NewGuid().GetHashCode()));
 
         await db.AddAsync(lobby);
 

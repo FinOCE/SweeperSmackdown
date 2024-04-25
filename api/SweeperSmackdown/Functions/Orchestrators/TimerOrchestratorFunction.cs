@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.Functions.Activities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,9 +25,7 @@ public class TimerOrchestratorFunctionProps
 public static class TimerOrchestratorFunction
 {
     [FunctionName(nameof(TimerOrchestratorFunction))]
-    public static async Task Run(
-        [OrchestrationTrigger] IDurableOrchestrationContext ctx,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient)
+    public static async Task Run([OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var props = ctx.GetInput<TimerOrchestratorFunctionProps>();
         var tasks = new List<Task>();
@@ -59,9 +58,9 @@ public static class TimerOrchestratorFunction
         if (winner == resetTask)
             ctx.ContinueAsNew(new TimerOrchestratorFunctionProps());
         else if (props.RaiseEventTo != null)
-            await orchestrationClient.RaiseEventAsync(
-                props.RaiseEventTo,
-                DurableEvents.TIMER_COMPLETED);
+            await ctx.CallActivityAsync(
+                nameof(TimerCompletedActivityFunction),
+                new TimerCompletedActivityFunctionProps(props.RaiseEventTo));
             
     }
 }

@@ -8,7 +8,7 @@ public class GameSettings
 {
     [JsonProperty("mode")]
     [JsonPropertyName("mode")]
-    public int Mode { get; private set; } = 0;
+    public int Mode { get; private set; }
 
     [JsonProperty("height")]
     [JsonPropertyName("height")]
@@ -28,19 +28,26 @@ public class GameSettings
 
     [JsonProperty("lives")]
     [JsonPropertyName("lives")]
-    public int Lives { get; private set; } = 0;
+    public int Lives { get; private set; }
 
     [JsonProperty("timeLimit")]
     [JsonPropertyName("timeLimit")]
-    public int TimeLimit { get; private set; } = 0;
+    public int TimeLimit { get; private set; }
 
     [JsonProperty("boardCount")]
     [JsonPropertyName("boardCount")]
-    public int BoardCount { get; private set; } = 0;
+    public int BoardCount { get; private set; } = 1;
 
     [JsonProperty("seed")]
     [JsonPropertyName("seed")]
-    public int Seed { get; private set; } = 0;
+    public int Seed { get; private set; }
+
+    public GameSettings() { }
+
+    public GameSettings(int seed)
+    {
+        Seed = seed;
+    }
 
     public GameSettings Update(
         int? mode,
