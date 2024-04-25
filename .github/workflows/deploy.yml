@@ -44,8 +44,14 @@ jobs:
           failOnStdErr: false
           region: ${{ env.REGION }}
 
-      - name: Get deployment token for SWA
+      - name: Build SWA
         run: |
+          pushd ./app
+          touch .env
+          echo "PUBLIC_ENV__DISCORD_CLIENT_ID=${{ env.DISCORD_CLIENT_ID }}" >> .env
+          echo "PUBLIC_ENV__API_BASE_URL=https://${{ steps.deploy.outputs.functionAppDefaultHostName }}" >> .env
+          npm run build
+          popd
           echo "DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name swa-sweepersmackdown-${{ env.ENVIRONMENT }} --query 'properties.apiKey' | tr -d '"')" >> $GITHUB_ENV
 
       - name: Deploy SWA
@@ -54,13 +60,12 @@ jobs:
           azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/app"
+          app_location: "app/dist"
           api_location: ""
-          output_location: "/dist"
+          output_location: ""
+          skip_app_build: true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLIC_ENV__DISCORD_CLIENT_ID: ${{ env.DISCORD_CLIENT_ID }}
-          PUBLIC_ENV__API_BASE_URL: https://${{ steps.deploy.outputs.functionAppDefaultHostName }}
 
       - name: Create zip and prepare for deployment
         run: |
