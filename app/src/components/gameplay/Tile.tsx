@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import "./Tile.scss"
 import { State } from "../../utils/State"
 import { Flag } from "../ui/icons/Flag"
@@ -39,11 +39,42 @@ export function Tile(props: TileProps) {
     }
   })()
 
+  const [isDown, setIsDown] = useState(false)
+
+  useEffect(() => {
+    if (!isDown) return
+
+    const interval = setTimeout(() => {
+      props.onRightClick(props.index)
+      setIsDown(false)
+    }, 500)
+
+    return () => clearInterval(interval)
+  }, [isDown])
+
+  function onMouseDown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    if (e.button !== 0) return
+    setIsDown(true)
+  }
+
+  function onMouseUp() {
+    if (!isDown) return
+    setIsDown(false)
+
+    props.onLeftClick(props.index)
+  }
+
+  function onMouseLeave() {
+    setIsDown(false)
+  }
+
   return (
     <button
       className={"tile " + classes}
       disabled={props.lost || State.isRevealed(props.state)}
-      onClick={() => props.onLeftClick(props.index)}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
       onContextMenu={e => (e.preventDefault(), props.onRightClick(props.index))}
     >
       {content}
