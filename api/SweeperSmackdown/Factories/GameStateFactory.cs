@@ -27,8 +27,8 @@ public static class GameStateFactory
         
         while (true)
         {
-            var x = random.Next(height);
-            var y = random.Next(width);
+            var x = random.Next(width);
+            var y = random.Next(height);
 
             if (!mineMask[x + y * width])
             {
@@ -46,10 +46,10 @@ public static class GameStateFactory
         for (int i = 0; i < height * width; i++)
         {
             var hugsTopEdge = i < width;
-            var hugsBottomEdge = i >= height * (width - 1);
+            var hugsBottomEdge = i >= (height - 1) * width;
             var hugsLeftEdge = i % width == 0;
             var hugsRightEdge = i % width == width - 1;
-            
+
             var adjacentBombs = 0;
 
             if (!hugsTopEdge && mineMask[i - width]) adjacentBombs++;
