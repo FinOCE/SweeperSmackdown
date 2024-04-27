@@ -1,8 +1,8 @@
 import React, { createContext, ReactNode, useContext, useState } from "react"
 import { Api } from "../types/Api"
-import { useUser } from "./useUser"
 import { useApi } from "./useApi"
 import { LobbyWithoutNested } from "../types/Lobby"
+import { useEmbeddedAppSdk } from "./useEmbeddAppSdk"
 
 type TLobbyContext = {
   lobby: LobbyWithoutNested | null
@@ -35,7 +35,7 @@ export const useLobby = () => useContext(LobbyContext)
 
 export function LobbyProvider(props: { children?: ReactNode }) {
   const { api } = useApi()
-  const user = useUser()
+  const { user } = useEmbeddedAppSdk()
 
   const [lobby, setLobby] = useState<LobbyWithoutNested | null>(null)
   const [settings, setSettings] = useState<Api.GameSettings | null>(null)

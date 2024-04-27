@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react"
 import "./Entrypoint.scss"
 import { useNavigation } from "../hooks/useNavigation"
-import { useUser } from "../hooks/useUser"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Bomb } from "../components/ui/icons/Bomb"
 import { Text } from "../components/ui/Text"
 
 export function Entrypoint() {
-  const sdk = useEmbeddedAppSdk()
-  const user = useUser()
+  const { sdk, user } = useEmbeddedAppSdk()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
 

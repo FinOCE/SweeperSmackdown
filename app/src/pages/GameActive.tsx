@@ -6,7 +6,6 @@ import { State } from "../utils/State"
 import { useApi } from "../hooks/useApi"
 import { isEvent } from "../utils/isEvent"
 import { useLobby } from "../hooks/useLobby"
-import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
 import { ButtonList } from "../components/ui/ButtonList"
 import { Box } from "../components/ui/Box"
@@ -15,10 +14,11 @@ import { useNavigation } from "../hooks/useNavigation"
 import { Board } from "../components/gameplay/Board"
 import { BoardPreview } from "../components/gameplay/BoardPreview"
 import { useCountdown } from "../hooks/useCountdown"
+import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 
 export function GameActive() {
   const { api } = useApi()
-  const user = useUser()
+  const { user } = useEmbeddedAppSdk()
   const { lobby, settings, leave, scores, setScores, wins, setWins } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()

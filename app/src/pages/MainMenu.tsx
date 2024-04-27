@@ -3,10 +3,8 @@ import "./MainMenu.scss"
 import { useNavigation } from "../hooks/useNavigation"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { useLobby } from "../hooks/useLobby"
-import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
 import { Text } from "../components/ui/Text"
-import { Bomb } from "../components/ui/icons/Bomb"
 import { Box } from "../components/ui/Box"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { useOrigin } from "../hooks/useOrigin"
@@ -14,8 +12,7 @@ import { ButtonList } from "../components/ui/ButtonList"
 
 export function MainMenu() {
   const { origin } = useOrigin()
-  const sdk = useEmbeddedAppSdk()
-  const user = useUser()
+  const { sdk, user } = useEmbeddedAppSdk()
   const { lobby, create, join } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()

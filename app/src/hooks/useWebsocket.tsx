@@ -2,8 +2,8 @@ import { WebPubSubClient } from "@azure/web-pubsub-client"
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react"
 import { useApi } from "./useApi"
 import { EventManager, IEventManager } from "../managers/EventManager"
-import { useUser } from "./useUser"
 import { useOrigin } from "./useOrigin"
+import { useEmbeddedAppSdk } from "./useEmbeddAppSdk"
 
 const WebsocketContext = createContext<IEventManager | null>(null)
 export const useWebsocket = () => useContext(WebsocketContext)
@@ -11,7 +11,7 @@ export const useWebsocket = () => useContext(WebsocketContext)
 export function WebsocketProvider(props: { children: ReactNode }) {
   const { origin } = useOrigin()
   const { api, hasToken } = useApi()
-  const user = useUser()
+  const { user } = useEmbeddedAppSdk()
 
   const [ready, setReady] = useState(false)
 

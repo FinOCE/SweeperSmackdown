@@ -8,17 +8,17 @@ import { isEvent } from "../utils/isEvent"
 import { Api } from "../types/Api"
 import { SliderInput } from "../components/SliderInput"
 import { useLobby } from "../hooks/useLobby"
-import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
 import { LobbyWithoutNested } from "../types/Lobby"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
 import { ButtonList } from "../components/ui/ButtonList"
 import { useCountdown } from "../hooks/useCountdown"
+import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 
 export function GameConfigure() {
   const { api } = useApi()
-  const user = useUser()
+  const { user } = useEmbeddedAppSdk()
   const { lobby, setLobby, leave, settings, setSettings } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
