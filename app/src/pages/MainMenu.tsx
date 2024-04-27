@@ -19,11 +19,46 @@ export function MainMenu() {
 
   const [lobbyId, setLobbyId] = useState("")
   const [error, setError] = useState<string>()
+  const [redirecting, setRedirecting] = useState(false)
 
   // Go to lobby if already in one
   useEffect(() => {
-    if (lobby) navigate("GameConfigure")
-  }, [lobby])
+    if (!redirecting || !lobby) return
+    navigate("GameConfigure")
+  }, [lobby, redirecting])
+
+  async function joinOrCreateLobby(id: string) {
+    try {
+      await join(id)
+    } catch (err) {
+      try {
+        await create(id)
+      } catch (err) {
+        setError("Could not create or join lobby")
+        return
+      }
+    }
+
+    setRedirecting(true)
+  }
+
+  async function createLobby(id: string) {
+    try {
+      await create(id)
+      setRedirecting(true)
+    } catch (err) {
+      setError("Could not create lobby")
+    }
+  }
+
+  async function joinLobby(id: string) {
+    try {
+      await join(id)
+      setRedirecting(true)
+    } catch (err) {
+      setError("Could not join lobby")
+    }
+  }
 
   // Show loading if not ready
   if (!user || !ws || !sdk) return <Loading hide />
@@ -34,25 +69,14 @@ export function MainMenu() {
       <ButtonList>
         {origin === "discord" && (
           <>
-            <Box
-              onClick={() =>
-                join(sdk.instanceId).catch(() =>
-                  create(sdk.instanceId).catch(() => setError("Could not create or join lobby"))
-                )
-              }
-              important
-            >
+            <Box onClick={() => joinOrCreateLobby(sdk.instanceId)} important>
               <Text type="big">Play In Discord Call</Text>
             </Box>
             <br />
           </>
         )}
 
-        <Box
-          onClick={() =>
-            create(Math.floor(Math.random() * 100000).toString()).catch(() => setError("Could not create lobby"))
-          }
-        >
+        <Box onClick={() => createLobby(Math.floor(Math.random() * 100000).toString())}>
           <Text type="big">Create Party</Text>
         </Box>
         <div className="main-menu-join-container">
@@ -62,7 +86,7 @@ export function MainMenu() {
             value={lobbyId}
             onChange={e => setLobbyId(e.currentTarget.value)}
           />
-          <Box onClick={() => join(lobbyId).catch(() => setError("Could not join lobby"))}>
+          <Box onClick={() => joinLobby(lobbyId)} disabled={lobbyId.length === 0}>
             <Text type="big">Join Party</Text>
           </Box>
         </div>

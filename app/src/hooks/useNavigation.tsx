@@ -35,11 +35,11 @@ export function NavigationProvider() {
   return (
     <NavigationContext.Provider value={{ navigate }}>
       <FadeWrapper animate={animate}>
-        {page === "Entrypoint" && <Entrypoint />}
-        {page === "MainMenu" && <MainMenu />}
-        {page === "GameConfigure" && <GameConfigure />}
-        {page === "GameActive" && <GameActive />}
-        {page === "GameCelebration" && <GameCelebration />}
+        {page === "Entrypoint" && (() => <Entrypoint />)()}
+        {page === "MainMenu" && (() => <MainMenu />)()}
+        {page === "GameConfigure" && (() => <GameConfigure />)()}
+        {page === "GameActive" && (() => <GameActive />)()}
+        {page === "GameCelebration" && (() => <GameCelebration />)()}
       </FadeWrapper>
     </NavigationContext.Provider>
   )

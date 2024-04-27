@@ -9,8 +9,8 @@ type TEmbeddedAppSdkContext = {
   user: User | null
 }
 
-type Participant = Awaited<ReturnType<CommandTypes["getInstanceConnectedParticipants"]>>["participants"][0]
-type User = Awaited<ReturnType<CommandTypes["authenticate"]>>["user"]
+export type Participant = Awaited<ReturnType<CommandTypes["getInstanceConnectedParticipants"]>>["participants"][0]
+export type User = Awaited<ReturnType<CommandTypes["authenticate"]>>["user"]
 
 const EmbeddedAppSdkContext = createContext<TEmbeddedAppSdkContext>({ sdk: null, participants: null, user: null })
 export const useEmbeddedAppSdk = () => useContext(EmbeddedAppSdkContext)

@@ -15,10 +15,12 @@ import { Box } from "../components/ui/Box"
 import { ButtonList } from "../components/ui/ButtonList"
 import { useCountdown } from "../hooks/useCountdown"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
+import { UserList } from "../components/pages/GameConfigure/UserList"
+import { isGuid } from "../utils/isGuid"
 
 export function GameConfigure() {
   const { api } = useApi()
-  const { user } = useEmbeddedAppSdk()
+  const { participants, user } = useEmbeddedAppSdk()
   const { lobby, setLobby, leave, settings, setSettings } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
@@ -107,7 +109,7 @@ export function GameConfigure() {
   }, [changes])
 
   // Show loading if not ready
-  if (!user || !ws || !lobby || !settings || !vote) return <Loading />
+  if (!participants || !user || !ws || !lobby || !settings || !vote) return <Loading />
 
   // Register websocket events
   ws.clear()
@@ -178,15 +180,15 @@ export function GameConfigure() {
   // Render page
   return (
     <div>
-      <p>
-        <Text type="normal">Party {lobby.lobbyId}</Text>
-      </p>
-      <br />
-      <p>
-        <Text>Current Players: {lobby.userIds.join(", ")}</Text>
-      </p>
+      {!isGuid(lobby.lobbyId) && (
+        <div id="game-configure-party-title">
+          <Text type="normal">Party {lobby.lobbyId}</Text>
+        </div>
+      )}
 
-      <br />
+      <div id="game-configure-participants">
+        <UserList />
+      </div>
 
       <ButtonList>
         <fieldset>
