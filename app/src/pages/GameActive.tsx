@@ -8,8 +8,6 @@ import { isEvent } from "../utils/isEvent"
 import { useLobby } from "../hooks/useLobby"
 import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
-import { Page } from "../components/ui/Page"
-import { RollingBackground } from "../components/ui/RollingBackground"
 import { ButtonList } from "../components/ui/ButtonList"
 import { Box } from "../components/ui/Box"
 import { Text } from "../components/ui/Text"
@@ -193,53 +191,49 @@ export function GameActive() {
   if (!localGameState) return <Loading />
 
   return (
-    <RollingBackground fade>
-      <Page>
-        <div id="game-active">
-          <div id="game-active-boards-container">
-            <div id="game-active-current-board-container">
-              <Board
-                height={settings.height}
-                width={settings.width}
-                localState={localGameState}
-                setLocalState={setLocalGameState}
-                lost={lost}
-                setLost={setLost}
-                notifyMoveAdd={notifyMoveAdd}
-              />
-            </div>
-            {Object.keys(competitionState ?? {}).length > 0 && (
-              <div id="game-active-competitors">
-                {Object.entries(competitionState ?? {}).map(([userId, state]) => (
-                  <div key={userId}>
-                    <Text type="small">
-                      {userId} - {scores[userId] ?? 0} ({wins[userId] ?? 0})
-                    </Text>
-                    <br />
-                    <BoardPreview {...{ userId, settings, state }} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {countdown && <Text type="normal">Recover in {countdown}</Text>}
-
-          <ButtonList>
-            <ButtonList horizontal>
-              <Box onClick={reset}>
-                <Text type="big">Reset</Text>
-              </Box>
-              <Box onClick={skip} disabled={settings.seed !== 0}>
-                <Text type="big">Skip</Text>
-              </Box>
-            </ButtonList>
-            <Box onClick={leaveParty}>
-              <Text type="big">Leave Party</Text>
-            </Box>
-          </ButtonList>
+    <div id="game-active">
+      <div id="game-active-boards-container">
+        <div id="game-active-current-board-container">
+          <Board
+            height={settings.height}
+            width={settings.width}
+            localState={localGameState}
+            setLocalState={setLocalGameState}
+            lost={lost}
+            setLost={setLost}
+            notifyMoveAdd={notifyMoveAdd}
+          />
         </div>
-      </Page>
-    </RollingBackground>
+        {Object.keys(competitionState ?? {}).length > 0 && (
+          <div id="game-active-competitors">
+            {Object.entries(competitionState ?? {}).map(([userId, state]) => (
+              <div key={userId}>
+                <Text type="small">
+                  {userId} - {scores[userId] ?? 0} ({wins[userId] ?? 0})
+                </Text>
+                <br />
+                <BoardPreview {...{ userId, settings, state }} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {countdown && <Text type="normal">Recover in {countdown}</Text>}
+
+      <ButtonList>
+        <ButtonList horizontal>
+          <Box onClick={reset}>
+            <Text type="big">Reset</Text>
+          </Box>
+          <Box onClick={skip} disabled={settings.seed !== 0}>
+            <Text type="big">Skip</Text>
+          </Box>
+        </ButtonList>
+        <Box onClick={leaveParty}>
+          <Text type="big">Leave Party</Text>
+        </Box>
+      </ButtonList>
+    </div>
   )
 }

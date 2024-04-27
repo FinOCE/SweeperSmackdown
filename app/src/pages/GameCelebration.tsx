@@ -1,7 +1,5 @@
 import React from "react"
 import "./GameCelebration.scss"
-import { Page } from "../components/ui/Page"
-import { RollingBackground } from "../components/ui/RollingBackground"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Loading } from "../components/Loading"
 import { Websocket } from "../types/Websocket"
@@ -21,11 +19,5 @@ export function GameCelebration() {
     navigate("GameConfigure")
   })
 
-  return (
-    <RollingBackground fade>
-      <Page>
-        {/* TODO: Create game celebration screen */}
-      </Page>
-    </RollingBackground>
-  )
+  return <div>TODO</div>
 }

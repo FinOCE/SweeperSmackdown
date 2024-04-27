@@ -5,9 +5,7 @@ import { useWebsocket } from "../hooks/useWebsocket"
 import { useLobby } from "../hooks/useLobby"
 import { useUser } from "../hooks/useUser"
 import { Loading } from "../components/Loading"
-import { Page } from "../components/ui/Page"
 import { Text } from "../components/ui/Text"
-import { RollingBackground } from "../components/ui/RollingBackground"
 import { Bomb } from "../components/ui/icons/Bomb"
 import { Box } from "../components/ui/Box"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
@@ -35,57 +33,53 @@ export function MainMenu() {
 
   // Render screen
   return (
-    <RollingBackground fade>
-      <Page>
-        <div className="main-menu-content">
-          <div className="main-menu-title">
-            <Bomb color="yellow" />
-            <div>
-              <Text type="title">Sweeper</Text>
-              <br />
-              <Text type="title">Smackdown</Text>
-            </div>
-          </div>
+    <div className="main-menu-content">
+      <div className="main-menu-title">
+        <Bomb color="yellow" />
+        <div>
+          <Text type="title">Sweeper</Text>
+          <br />
+          <Text type="title">Smackdown</Text>
+        </div>
+      </div>
 
-          <ButtonList>
-            {origin === "discord" && (
-              <>
-                <Box
-                  onClick={() =>
-                    join(sdk.instanceId).catch(() =>
-                      create(sdk.instanceId).catch(() => setError("Could not create or join lobby"))
-                    )
-                  }
-                  important
-                >
-                  <Text type="big">Play In Discord Call</Text>
-                </Box>
-                <br />
-              </>
-            )}
-
+      <ButtonList>
+        {origin === "discord" && (
+          <>
             <Box
               onClick={() =>
-                create(Math.floor(Math.random() * 100000).toString()).catch(() => setError("Could not create lobby"))
+                join(sdk.instanceId).catch(() =>
+                  create(sdk.instanceId).catch(() => setError("Could not create or join lobby"))
+                )
               }
+              important
             >
-              <Text type="big">Create Party</Text>
+              <Text type="big">Play In Discord Call</Text>
             </Box>
-            <div className="main-menu-join-container">
-              <input
-                type="text"
-                placeholder="Enter Party Code Here"
-                value={lobbyId}
-                onChange={e => setLobbyId(e.currentTarget.value)}
-              />
-              <Box onClick={() => join(lobbyId).catch(() => setError("Could not join lobby"))}>
-                <Text type="big">Join Party</Text>
-              </Box>
-            </div>
-            {error && <p>{error}</p>}
-          </ButtonList>
+            <br />
+          </>
+        )}
+
+        <Box
+          onClick={() =>
+            create(Math.floor(Math.random() * 100000).toString()).catch(() => setError("Could not create lobby"))
+          }
+        >
+          <Text type="big">Create Party</Text>
+        </Box>
+        <div className="main-menu-join-container">
+          <input
+            type="text"
+            placeholder="Enter Party Code Here"
+            value={lobbyId}
+            onChange={e => setLobbyId(e.currentTarget.value)}
+          />
+          <Box onClick={() => join(lobbyId).catch(() => setError("Could not join lobby"))}>
+            <Text type="big">Join Party</Text>
+          </Box>
         </div>
-      </Page>
-    </RollingBackground>
+        {error && <p>{error}</p>}
+      </ButtonList>
+    </div>
   )
 }

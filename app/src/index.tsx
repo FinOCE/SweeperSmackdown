@@ -9,6 +9,8 @@ import { WebsocketProvider } from "./hooks/useWebsocket"
 import { NavigationProvider } from "./hooks/useNavigation"
 import { OriginProvider } from "./hooks/useOrigin"
 import { DevPreview } from "./pages/DevPreview"
+import { RollingBackground } from "./components/ui/RollingBackground"
+import { Page } from "./components/ui/Page"
 
 function App() {
   // Show dev preview for developing UI features without running full app
@@ -16,19 +18,23 @@ function App() {
 
   // Render app
   return (
-    <OriginProvider>
-      <ApiProvider>
-        <EmbeddedAppSdkProvider>
-          <UserProvider>
-            <LobbyProvider>
-              <WebsocketProvider>
-                <NavigationProvider />
-              </WebsocketProvider>
-            </LobbyProvider>
-          </UserProvider>
-        </EmbeddedAppSdkProvider>
-      </ApiProvider>
-    </OriginProvider>
+    <RollingBackground>
+      <Page>
+        <OriginProvider>
+          <ApiProvider>
+            <EmbeddedAppSdkProvider>
+              <UserProvider>
+                <LobbyProvider>
+                  <WebsocketProvider>
+                    <NavigationProvider />
+                  </WebsocketProvider>
+                </LobbyProvider>
+              </UserProvider>
+            </EmbeddedAppSdkProvider>
+          </ApiProvider>
+        </OriginProvider>
+      </Page>
+    </RollingBackground>
   )
 }
 

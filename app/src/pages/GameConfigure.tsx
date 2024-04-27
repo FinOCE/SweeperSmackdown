@@ -14,8 +14,6 @@ import { LobbyWithoutNested } from "../types/Lobby"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
 import { ButtonList } from "../components/ui/ButtonList"
-import { Page } from "../components/ui/Page"
-import { RollingBackground } from "../components/ui/RollingBackground"
 import { useCountdown } from "../hooks/useCountdown"
 
 export function GameConfigure() {
@@ -179,174 +177,172 @@ export function GameConfigure() {
 
   // Render page
   return (
-    <RollingBackground fade>
-      <Page>
-        <p>
-          <Text type="normal">Party {lobby.lobbyId}</Text>
-        </p>
-        <br />
-        <p>
-          <Text>Current Players: {lobby.userIds.join(", ")}</Text>
-        </p>
+    <div>
+      <p>
+        <Text type="normal">Party {lobby.lobbyId}</Text>
+      </p>
+      <br />
+      <p>
+        <Text>Current Players: {lobby.userIds.join(", ")}</Text>
+      </p>
 
-        <br />
+      <br />
 
-        <ButtonList>
-          <fieldset>
-            <legend>
-              <Text>Mode</Text>
-            </legend>
+      <ButtonList>
+        <fieldset>
+          <legend>
+            <Text>Mode</Text>
+          </legend>
 
-            <div className="game-configure-selector-label-container">
-              <input
-                type="radio"
-                name="mode"
-                id="mode-0"
-                value="0"
-                checked={localSettings.mode === 0}
-                onChange={() => change({ mode: 0 })}
-              />
-              <label htmlFor="mode-0">
-                <Text type="small">Classic</Text>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>
-              <Text>Height</Text>
-            </legend>
-
-            <SliderInput
-              name="height"
-              id="height"
-              min={7}
-              max={32}
-              value={localSettings.height}
-              onChange={e =>
-                change({
-                  height: e,
-                  mines: Math.floor(e * localSettings.width * 0.15625)
-                })
-              }
+          <div className="game-configure-selector-label-container">
+            <input
+              type="radio"
+              name="mode"
+              id="mode-0"
+              value="0"
+              checked={localSettings.mode === 0}
+              onChange={() => change({ mode: 0 })}
             />
-          </fieldset>
+            <label htmlFor="mode-0">
+              <Text type="small">Classic</Text>
+            </label>
+          </div>
+        </fieldset>
 
-          <fieldset>
-            <legend>
-              <Text>Width</Text>
-            </legend>
+        <fieldset>
+          <legend>
+            <Text>Height</Text>
+          </legend>
 
-            <SliderInput
-              name="width"
-              id="width"
-              min={7}
-              max={32}
-              value={localSettings.width}
-              onChange={e =>
-                change({
-                  width: e,
-                  mines: Math.floor(localSettings.height * e * 0.15625)
-                })
-              }
+          <SliderInput
+            name="height"
+            id="height"
+            min={7}
+            max={32}
+            value={localSettings.height}
+            onChange={e =>
+              change({
+                height: e,
+                mines: Math.floor(e * localSettings.width * 0.15625)
+              })
+            }
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Width</Text>
+          </legend>
+
+          <SliderInput
+            name="width"
+            id="width"
+            min={7}
+            max={32}
+            value={localSettings.width}
+            onChange={e =>
+              change({
+                width: e,
+                mines: Math.floor(localSettings.height * e * 0.15625)
+              })
+            }
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Lives</Text>
+          </legend>
+
+          <SliderInput
+            name="lives"
+            id="lives"
+            min={0}
+            max={10}
+            value={localSettings.lives}
+            onChange={e => change({ lives: e })}
+            display={v => (v !== 0 ? String(v) : "Unlimited")}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Time Limit</Text>
+          </legend>
+
+          <SliderInput
+            name="timeLimit"
+            id="timeLimit"
+            min={0}
+            max={600}
+            step={10}
+            value={localSettings.timeLimit}
+            onChange={e => change({ timeLimit: e })}
+            display={v => (v !== 0 ? `${v}s` : "Unlimited")}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Board Count</Text>
+          </legend>
+
+          <SliderInput
+            name="boardCount"
+            id="boardCount"
+            min={0}
+            max={25}
+            value={localSettings.boardCount}
+            onChange={e => change({ boardCount: e })}
+            display={v => (v !== 0 ? String(v) : "Unlimited")}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Options</Text>
+          </legend>
+
+          <div className="game-configure-selector-label-container">
+            <input
+              type="checkbox"
+              name="shareBoards"
+              id="shareBoards"
+              checked={localSettings.shareBoards}
+              onChange={e => change({ shareBoards: e.target.checked })}
             />
-          </fieldset>
+            <label htmlFor="shareBoards">
+              <Text type="small">Share Boards</Text>
+            </label>
+          </div>
+        </fieldset>
+      </ButtonList>
 
-          <fieldset>
-            <legend>
-              <Text>Lives</Text>
-            </legend>
+      <br />
 
-            <SliderInput
-              name="lives"
-              id="lives"
-              min={0}
-              max={10}
-              value={localSettings.lives}
-              onChange={e => change({ lives: e })}
-              display={v => (v !== 0 ? String(v) : "Unlimited")}
-            />
-          </fieldset>
+      <ButtonList>
+        {countdown && (
+          <div className="game-configure-countdown-container">
+            <Text type="title">Starting in {countdown}</Text>
+          </div>
+        )}
 
-          <fieldset>
-            <legend>
-              <Text>Time Limit</Text>
-            </legend>
-
-            <SliderInput
-              name="timeLimit"
-              id="timeLimit"
-              min={0}
-              max={600}
-              step={10}
-              value={localSettings.timeLimit}
-              onChange={e => change({ timeLimit: e })}
-              display={v => (v !== 0 ? `${v}s` : "Unlimited")}
-            />
-          </fieldset>
-
-          <fieldset>
-            <legend>
-              <Text>Board Count</Text>
-            </legend>
-
-            <SliderInput
-              name="boardCount"
-              id="boardCount"
-              min={0}
-              max={25}
-              value={localSettings.boardCount}
-              onChange={e => change({ boardCount: e })}
-              display={v => (v !== 0 ? String(v) : "Unlimited")}
-            />
-          </fieldset>
-
-          <fieldset>
-            <legend>
-              <Text>Options</Text>
-            </legend>
-
-            <div className="game-configure-selector-label-container">
-              <input
-                type="checkbox"
-                name="shareBoards"
-                id="shareBoards"
-                checked={localSettings.shareBoards}
-                onChange={e => change({ shareBoards: e.target.checked })}
-              />
-              <label htmlFor="shareBoards">
-                <Text type="small">Share Boards</Text>
-              </label>
-            </div>
-          </fieldset>
-        </ButtonList>
-
-        <br />
-
-        <ButtonList>
-          {countdown && (
-            <div className="game-configure-countdown-container">
-              <Text type="title">Starting in {countdown}</Text>
-            </div>
-          )}
-
-          <Box onClick={isReady ? voteCancel : voteStart} disabled={votePending}>
-            <Text type="big">
-              {isReady
-                ? `Cancel Vote (${vote.votes.READY.length}/${vote.requiredVotes})`
-                : `Vote Start (${vote.votes.READY.length}/${vote.requiredVotes})`}
-            </Text>
+        <Box onClick={isReady ? voteCancel : voteStart} disabled={votePending}>
+          <Text type="big">
+            {isReady
+              ? `Cancel Vote (${vote.votes.READY.length}/${vote.requiredVotes})`
+              : `Vote Start (${vote.votes.READY.length}/${vote.requiredVotes})`}
+          </Text>
+        </Box>
+        {isReady && (
+          <Box onClick={voteForce} disabled={user.id !== lobby.hostId}>
+            <Text type="big">Force Countdown</Text>
           </Box>
-          {isReady && (
-            <Box onClick={voteForce} disabled={user.id !== lobby.hostId}>
-              <Text type="big">Force Countdown</Text>
-            </Box>
-          )}
-          <Box onClick={leaveLobby}>
-            <Text type="big">Leave Party</Text>
-          </Box>
-        </ButtonList>
-      </Page>
-    </RollingBackground>
+        )}
+        <Box onClick={leaveLobby}>
+          <Text type="big">Leave Party</Text>
+        </Box>
+      </ButtonList>
+    </div>
   )
 }
