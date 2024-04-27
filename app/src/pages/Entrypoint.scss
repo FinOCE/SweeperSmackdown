@@ -1,0 +1,20 @@
+.entrypoint-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 80px;
+  position: relative;
+  left: 15px;
+  margin-bottom: 60px;
+
+  & > .bomb {
+    transform: scale(1.8);
+    top: 4px;
+  }
+}
+
+.entrypoint-start-text {
+  display: flex;
+  justify-content: center;
+  font-style: italic;
+}

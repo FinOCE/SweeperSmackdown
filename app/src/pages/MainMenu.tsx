@@ -34,15 +34,6 @@ export function MainMenu() {
   // Render screen
   return (
     <div className="main-menu-content">
-      <div className="main-menu-title">
-        <Bomb color="yellow" />
-        <div>
-          <Text type="title">Sweeper</Text>
-          <br />
-          <Text type="title">Smackdown</Text>
-        </div>
-      </div>
-
       <ButtonList>
         {origin === "discord" && (
           <>

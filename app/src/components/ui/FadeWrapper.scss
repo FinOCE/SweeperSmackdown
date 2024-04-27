@@ -1,0 +1,13 @@
+.fade-wrapper-in {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.fade-wrapper-out {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.fade-wrapper-off {
+  opacity: 1;
+}
