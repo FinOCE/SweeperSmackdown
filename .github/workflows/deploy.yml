@@ -76,12 +76,6 @@ jobs:
           zip -r ../deploy.zip .
           cd ../..
 
-      - name: Upload zip artifact for API
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ github.event.repository.name }}-${{ github.sha }}
-          path: ./deploy.zip
-
       - name: Deploy API through Azure CLI
         run: |
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
