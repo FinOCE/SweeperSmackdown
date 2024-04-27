@@ -92,10 +92,10 @@ function getMockSdk(clientId: string) {
         expires: "",
         scopes: ["identify"],
         user: {
-          discriminator: "",
+          discriminator: "-1", // User -1 discriminator to indicate it is mocked
           id: args.access_token ?? "",
           public_flags: 0,
-          username: ""
+          username: args.access_token ?? ""
         }
       }
     },

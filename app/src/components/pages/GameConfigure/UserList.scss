@@ -13,10 +13,16 @@
     background: $user-no-pfp-background-color;
     height: 75px;
     width: 75px;
+    display: grid;
+    place-items: center;
 
     & img {
       height: 100%;
       width: 100%;
+    }
+
+    & .user-list-default-icon {
+      transform: scale(0.7);
     }
   }
 }
