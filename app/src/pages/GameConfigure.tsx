@@ -32,22 +32,7 @@ export function GameConfigure() {
   useEffect(() => {
     if (!user || !lobby) return
 
-    const getInitialVote = (attempts: number = 0) => {
-      // TODO: Fix api so the vote is created on first load as well (this function is a workaround)
-
-      if (attempts > 5) throw new Error("Vailed to get initial vote")
-
-      setTimeout(
-        () =>
-          api
-            .voteGetAll(lobby.lobbyId)
-            .then(([votes]) => setVote(votes))
-            .catch(_ => getInitialVote(++attempts)),
-        500 * attempts
-      )
-    }
-
-    getInitialVote()
+    api.voteGetAll(lobby.lobbyId).then(([votes]) => setVote(votes))
   }, [user, lobby?.lobbyId])
 
   // Create function to handle translatin between game settings and payloads

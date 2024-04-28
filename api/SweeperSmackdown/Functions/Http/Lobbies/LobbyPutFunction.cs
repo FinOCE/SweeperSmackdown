@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -33,6 +34,7 @@ public static class LobbyPutFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> db,
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         string lobbyId)
     {
@@ -56,6 +58,20 @@ public static class LobbyPutFunction
             new GameSettings(Guid.NewGuid().GetHashCode()));
 
         await db.AddAsync(lobby);
+
+        // Create vote synchronously (duplicate of VoteCreateActivityFunction - fixes not being available instantly)
+        await cosmosClient
+            .GetVoteContainer()
+            .UpsertItemAsync(
+                new Vote(
+                    lobby.Id,
+                    new Dictionary<string, string[]>()
+                    {
+                        { "READY", Array.Empty<string>() }
+                    },
+                    VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length),
+                new[] { "READY" }),
+                new(lobby.Id));
 
         // Start orchestrator
         await orchestrationClient.StartNewAsync(
