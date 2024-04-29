@@ -37,7 +37,7 @@ export function Board(props: BoardProps) {
         if (travelled.includes(index)) return
         travelled.push(index)
 
-        if (State.isFlagged(props.localState[i])) return
+        if (State.isFlagged(props.localState[index])) return
 
         reveals.push(index)
 
