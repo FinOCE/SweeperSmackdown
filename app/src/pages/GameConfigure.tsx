@@ -164,7 +164,7 @@ export function GameConfigure() {
 
   // Render page
   return (
-    <div>
+    <div id="game-configure">
       {!isGuid(lobby.lobbyId) && (
         <div id="game-configure-party-title">
           <Text type="normal">Party {lobby.lobbyId}</Text>
