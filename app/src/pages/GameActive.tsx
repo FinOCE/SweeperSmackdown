@@ -15,6 +15,7 @@ import { Board } from "../components/gameplay/Board"
 import { BoardPreview } from "../components/gameplay/BoardPreview"
 import { useCountdown } from "../hooks/useCountdown"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
+import { Settings } from "../components/ui/controls/Settings"
 
 export function GameActive() {
   const { api } = useApi()
@@ -192,6 +193,24 @@ export function GameActive() {
 
   return (
     <div id="game-active">
+      <div id="game-active-settings-container">
+        <Settings>
+          <ButtonList>
+            <ButtonList horizontal>
+              <Box onClick={reset}>
+                <Text type="big">Reset</Text>
+              </Box>
+              <Box onClick={skip} disabled={settings.seed !== 0}>
+                <Text type="big">Skip</Text>
+              </Box>
+            </ButtonList>
+            <Box onClick={leaveParty}>
+              <Text type="big">Leave Party</Text>
+            </Box>
+          </ButtonList>
+        </Settings>
+      </div>
+
       <div id="game-active-boards-container">
         <div id="game-active-current-board-container">
           <Board
@@ -220,20 +239,6 @@ export function GameActive() {
       </div>
 
       {countdown && <Text type="normal">Recover in {countdown}</Text>}
-
-      <ButtonList>
-        <ButtonList horizontal>
-          <Box onClick={reset}>
-            <Text type="big">Reset</Text>
-          </Box>
-          <Box onClick={skip} disabled={settings.seed !== 0}>
-            <Text type="big">Skip</Text>
-          </Box>
-        </ButtonList>
-        <Box onClick={leaveParty}>
-          <Text type="big">Leave Party</Text>
-        </Box>
-      </ButtonList>
     </div>
   )
 }

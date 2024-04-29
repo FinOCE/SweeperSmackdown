@@ -45,26 +45,30 @@ $padding: 15px;
   padding: $padding;
 }
 
-.box-button:not(.box-disabled) {
+.box-button:not(.box-disabled):not(.box-disabled-nocolor) {
   cursor: pointer;
-
-  &:hover > .box-inner {
-    background: linear-gradient(to bottom, #19212e, #15232f);
-    color: #e4ebfb;
-  }
 }
 
-.box-button:active:not(.box-disabled) {
+.box-button:hover:not(.box-disabled):not(.box-disabled-nocolor) > .box-inner {
+  background: linear-gradient(to bottom, #19212e, #15232f);
+  color: #e4ebfb !important;
+}
+
+.box-button:active:not(.box-disabled):not(.box-disabled-nocolor) {
   margin-top: calc($border-top * 2);
   padding-top: 0;
 
-  .box-inner {
+  & > .box-inner {
     top: 0;
   }
 }
 
-.box-disabled > .box-inner {
+.box-disabled > .box-inner,
+.box-disabled-nocolor > .box-inner {
   background: linear-gradient(to bottom, #19212e, #15232f);
+}
+
+.box-disabled > .box-inner {
   color: #e4ebfb;
 }
 

@@ -1,7 +1,13 @@
 import React from "react"
+import "./Loading.scss"
 import { Text } from "./ui/Text"
-import { Page } from "./ui/Page"
 
 export function Loading(props: { hide?: boolean }) {
-  return <Page>{props.hide === true ? <></> : <Text type="title">Loading...</Text>}</Page>
+  return props.hide === true ? (
+    <></>
+  ) : (
+    <div className="loading">
+      <Text type="title">Loading...</Text>
+    </div>
+  )
 }

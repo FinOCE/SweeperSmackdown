@@ -1,0 +1,30 @@
+.settings-button {
+  width: 80px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+
+  & .hamburger {
+    transform: scale(0.8);
+  }
+
+  &:hover {
+    .settings-hamburger-container {
+      & .hamburger > * {
+        background-color: #e4ebfb;
+      }
+    }
+  }
+}
+
+.settings-popup {
+  position: absolute;
+  z-index: 100;
+  top: 120px;
+  right: 20px;
+
+  & > div {
+    width: 70vw;
+    max-width: 600px;
+  }
+}

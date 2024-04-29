@@ -6,20 +6,22 @@ type BoxProps = {
   onClick?: () => void
   disabled?: boolean
   important?: boolean
+  innerClass?: string
+  ignoreColorOverwrite?: boolean
 }
 
 export function Box(props: BoxProps) {
   return (
     <div
       className={`box-outer ${props.important ? "box-important" : ""} ${props.onClick ? "box-button" : ""} ${
-        props.disabled ? "box-disabled" : ""
+        props.disabled ? (props.ignoreColorOverwrite ? "box-disabled-nocolor" : "box-disabled") : ""
       }`}
       onClick={props.onClick}
     >
       <div className="box-border-highlight-container">
         <div className="box-border-highlight" />
       </div>
-      <div className="box-inner">{props.children}</div>
+      <div className={`box-inner ${props.innerClass ?? ""}`}>{props.children}</div>
     </div>
   )
 }

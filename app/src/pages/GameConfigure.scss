@@ -4,10 +4,12 @@
   align-items: center;
 }
 
-#game-configure-party-title {
+#game-configure-header {
+  width: 100%;
+  max-width: 600px; // Copied off ButtonList max-width
+  margin-bottom: 20px;
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
 }
 
 #game-configure-participants {

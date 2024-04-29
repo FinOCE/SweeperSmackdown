@@ -17,6 +17,7 @@ import { useCountdown } from "../hooks/useCountdown"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { UserList } from "../components/pages/GameConfigure/UserList"
 import { isGuid } from "../utils/isGuid"
+import { Settings } from "../components/ui/controls/Settings"
 
 export function GameConfigure() {
   const { api } = useApi()
@@ -166,8 +167,8 @@ export function GameConfigure() {
   return (
     <div id="game-configure">
       {!isGuid(lobby.lobbyId) && (
-        <div id="game-configure-party-title">
-          <Text type="normal">Party {lobby.lobbyId}</Text>
+        <div id="game-configure-header">
+          <Text type="title">Party {lobby.lobbyId}</Text>
         </div>
       )}
 
@@ -326,10 +327,15 @@ export function GameConfigure() {
             <Text type="big">Force Countdown</Text>
           </Box>
         )}
-        <Box onClick={leaveLobby}>
-          <Text type="big">Leave Party</Text>
-        </Box>
       </ButtonList>
+
+      <Settings>
+        <ButtonList>
+          <Box onClick={leaveLobby}>
+            <Text type="big">Leave Party</Text>
+          </Box>
+        </ButtonList>
+      </Settings>
     </div>
   )
 }

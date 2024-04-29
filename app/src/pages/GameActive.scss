@@ -7,6 +7,12 @@
   gap: 50px;
 }
 
+#game-active-settings-container {
+  display: flex;
+  width: 100%;
+  justify-content: right;
+}
+
 #game-active-current-board-container {
   border-radius: $tile-separator-line-width;
   overflow: hidden;
