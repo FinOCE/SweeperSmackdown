@@ -16,6 +16,14 @@
   margin-bottom: 20px;
 }
 
+.game-configure-participants-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
 .game-configure-selector-label-container {
   display: flex;
   flex-direction: row;

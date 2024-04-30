@@ -15,14 +15,15 @@ import { Box } from "../components/ui/Box"
 import { ButtonList } from "../components/ui/ButtonList"
 import { useCountdown } from "../hooks/useCountdown"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
-import { UserList } from "../components/pages/GameConfigure/UserList"
 import { isGuid } from "../utils/isGuid"
 import { Settings } from "../components/ui/controls/Settings"
+import { getDisplayDetails } from "../utils/getDisplayDetails"
+import { ProfilePicture } from "../components/ui/users/ProfilePicture"
 
 export function GameConfigure() {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
-  const { lobby, setLobby, leave, settings, setSettings } = useLobby()
+  const { lobby, setLobby, leave, settings, setSettings, wins, scores } = useLobby()
   const ws = useWebsocket()
   const { navigate } = useNavigation()
   const { countdown, start, stop } = useCountdown(() => navigate("GameActive"))
@@ -173,7 +174,13 @@ export function GameConfigure() {
       )}
 
       <div id="game-configure-participants">
-        <UserList />
+        <div className="game-configure-participants-list">
+          {(lobby?.userIds ?? [])
+            .map(id => getDisplayDetails(id, user, participants, wins, scores))
+            .map(({ id, displayName, avatarUrl }) => (
+              <ProfilePicture {...{ id, displayName, avatarUrl }} />
+            ))}
+        </div>
       </div>
 
       <ButtonList>

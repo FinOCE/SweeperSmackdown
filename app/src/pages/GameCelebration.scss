@@ -1,3 +1,14 @@
+#game-celebration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#game-celebration-leaderboard-wrapper {
+  width: 100%;
+  max-width: 600px; // To match button list width
+}
+
 #game-celebration-podium {
   display: flex;
   flex-direction: column;
@@ -12,15 +23,35 @@
   justify-content: center;
   gap: 20px;
 
-  & > div:nth-of-type(2) {
+  & > div:nth-of-type(1) {
+    padding-left: 10px;
+    width: 50px;
+  }
+
+  & > div:nth-of-type(3) {
     display: flex;
     flex-direction: column;
     align-items: left;
     justify-content: center;
     gap: 5px;
+    width: 100%;
   }
 }
 
-// #game-celebration-remaining {
+#game-celebration-remaining {
+  padding: 10px 10px 10px 22px;
 
-// }
+  & td {
+    padding: 10px;
+  }
+
+  & tr > td:nth-of-type(1) {
+    width: 31px;
+  }
+}
+
+.game-celebration-remaining-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

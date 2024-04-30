@@ -1,3 +1,5 @@
+@import "../../theme";
+
 $border-top: 4px;
 $border-bottom: 6px;
 $border-sides: 2px;
@@ -84,5 +86,41 @@ $padding: 15px;
     filter: blur(20px);
     background: #fbc74d;
     z-index: -1;
+  }
+}
+
+.box-gold {
+  background: darken($podium-gold-color, 20%) !important;
+
+  & .box-border-highlight {
+    background: darken($podium-gold-color, 20%) !important;
+  }
+
+  & .box-inner {
+    background: $podium-gold-color !important;
+  }
+}
+
+.box-silver {
+  background: darken($podium-silver-color, 20%) !important;
+
+  & .box-border-highlight {
+    background: darken($podium-silver-color, 20%) !important;
+  }
+
+  & .box-inner {
+    background: $podium-silver-color !important;
+  }
+}
+
+.box-bronze {
+  background: darken($podium-bronze-color, 20%) !important;
+
+  & .box-border-highlight {
+    background: darken($podium-bronze-color, 20%) !important;
+  }
+
+  & .box-inner {
+    background: $podium-bronze-color !important;
   }
 }

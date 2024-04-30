@@ -8,6 +8,7 @@ type BoxProps = {
   important?: boolean
   innerClass?: string
   ignoreColorOverwrite?: boolean
+  type?: "bronze" | "silver" | "gold"
 }
 
 export function Box(props: BoxProps) {
@@ -15,7 +16,7 @@ export function Box(props: BoxProps) {
     <div
       className={`box-outer ${props.important ? "box-important" : ""} ${props.onClick ? "box-button" : ""} ${
         props.disabled ? (props.ignoreColorOverwrite ? "box-disabled-nocolor" : "box-disabled") : ""
-      }`}
+      } ${props.type ? `box-${props.type}` : ""}`}
       onClick={props.onClick}
     >
       <div className="box-border-highlight-container">
