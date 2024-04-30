@@ -316,11 +316,9 @@ export function GameConfigure() {
       <br />
 
       <ButtonList>
-        {countdown && (
-          <div className="game-configure-countdown-container">
-            <Text type="title">Starting in {countdown}</Text>
-          </div>
-        )}
+        <div className="game-configure-countdown-container">
+          <Text type="title">{countdown ? `Starting in ${countdown}` : " "}</Text>
+        </div>
 
         <Box onClick={isReady ? voteCancel : voteStart} disabled={votePending}>
           <Text type="big">

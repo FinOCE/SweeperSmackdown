@@ -242,7 +242,9 @@ export function GameActive() {
         )}
       </div>
 
-      {countdown && <Text type="normal">Recover in {countdown}</Text>}
+      <div id="game-active-countdown-text">
+        <Text type="normal">{countdown ? `Recover in ${countdown}` : ""}</Text>
+      </div>
     </div>
   )
 }
