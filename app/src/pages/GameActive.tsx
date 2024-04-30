@@ -29,6 +29,7 @@ export function GameActive() {
   const [lost, setLost] = useState(false)
   const { countdown, start, stop } = useCountdown(() => setLost(false))
   const [won, setWon] = useState(false)
+  const [minesRemaining, setMinesRemaining] = useState<number>()
 
   const [pendingCompetitionMoves, setPendingCompetitionMoves] = useState<
     Record<string, { reveals?: number[]; flagAdd?: number[]; flagRemove?: number[] }>
@@ -41,6 +42,17 @@ export function GameActive() {
 
     if (State.isCompleted(localGameState)) setWon(true)
   }, [localGameState])
+
+  // Keep expected mine count up to date
+  useEffect(() => {
+    if (!localGameState || !settings) return
+
+    const mines = localGameState.reduce(
+      (c, v) => (State.isFlagged(v) || (State.isBomb(v) && State.isRevealed(v)) ? c + 1 : c),
+      0
+    )
+    setMinesRemaining(settings.mines - mines)
+  }, [localGameState, settings])
 
   // Send solution to server if game has been won
   useEffect(() => {
@@ -193,27 +205,7 @@ export function GameActive() {
 
   return (
     <div id="game-active">
-      <div id="game-active-settings-container">
-        <Settings>
-          <ButtonList>
-            <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
-              <Text type="big">Solve (DEV)</Text>
-              {/* TODO: Remove this once ready */}
-            </Box>
-            <ButtonList horizontal>
-              <Box onClick={reset}>
-                <Text type="big">Reset</Text>
-              </Box>
-              <Box onClick={skip} disabled={settings.seed !== 0}>
-                <Text type="big">Skip</Text>
-              </Box>
-            </ButtonList>
-            <Box onClick={leaveParty}>
-              <Text type="big">Leave Party</Text>
-            </Box>
-          </ButtonList>
-        </Settings>
-      </div>
+      <Text type="normal">Mines Remaining: {minesRemaining ?? ""}</Text>
 
       <div id="game-active-boards-container">
         <div id="game-active-current-board-container">
@@ -245,6 +237,26 @@ export function GameActive() {
       <div id="game-active-countdown-text">
         <Text type="normal">{countdown ? `Recover in ${countdown}` : ""}</Text>
       </div>
+
+      <Settings>
+        <ButtonList>
+          <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
+            <Text type="big">Solve (DEV)</Text>
+            {/* TODO: Remove this once ready */}
+          </Box>
+          <ButtonList horizontal>
+            <Box onClick={reset}>
+              <Text type="big">Reset</Text>
+            </Box>
+            <Box onClick={skip} disabled={settings.seed !== 0}>
+              <Text type="big">Skip</Text>
+            </Box>
+          </ButtonList>
+          <Box onClick={leaveParty}>
+            <Text type="big">Leave Party</Text>
+          </Box>
+        </ButtonList>
+      </Settings>
     </div>
   )
 }

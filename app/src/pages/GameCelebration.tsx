@@ -53,7 +53,7 @@ export function GameCelebration() {
                   type={(["gold", "silver", "bronze"] as const)[i]}
                 >
                   <div>
-                    <Text type="big">{i + 1}</Text>
+                    <Text type="big">#{i + 1}</Text>
                   </div>
                   <div>
                     <ProfilePicture id={details.id} displayName={details.displayName} avatarUrl={details.avatarUrl} />
@@ -76,7 +76,7 @@ export function GameCelebration() {
                 return (
                   <tr>
                     <td>
-                      <Text type="normal">{i + 1 + 3}</Text>
+                      <Text type="normal">#{i + 1 + 3}</Text>
                     </td>
                     <td>
                       <ProfilePicture id={details.id} displayName={details.displayName} avatarUrl={details.avatarUrl} />
