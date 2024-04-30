@@ -196,6 +196,10 @@ export function GameActive() {
       <div id="game-active-settings-container">
         <Settings>
           <ButtonList>
+            <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
+              <Text type="big">Solve (DEV)</Text>
+              {/* TODO: Remove this once ready */}
+            </Box>
             <ButtonList horizontal>
               <Box onClick={reset}>
                 <Text type="big">Reset</Text>

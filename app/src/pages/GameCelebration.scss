@@ -1,0 +1,26 @@
+#game-celebration-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.game-celebration-podium-winner-1,
+.game-celebration-podium-winner-2,
+.game-celebration-podium-winner-3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+
+  & > div:nth-of-type(2) {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: center;
+    gap: 5px;
+  }
+}
+
+// #game-celebration-remaining {
+
+// }
