@@ -60,13 +60,24 @@ public static class GameActiveFunction
             tasks.Add(timerTask);
         }
 
+        // Set state to active
+        await ctx.CallActivityAsync(
+            nameof(LobbyStateSetActivityFunction),
+            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Play));
+
         // Listen for a winner
         var winnerTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_WON);
         tasks.Add(winnerTask);
         
         // Determine the winner
         var winner = await Task.WhenAny(tasks);
+
+        // Update state to won
+        await ctx.CallActivityAsync(
+            nameof(LobbyStateSetActivityFunction),
+            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Won));
         
+        // Return winner ID
         return (winner == winnerTask)
             ? winnerTask.Result
             : null;

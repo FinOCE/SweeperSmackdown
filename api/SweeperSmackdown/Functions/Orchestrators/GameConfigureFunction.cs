@@ -26,6 +26,11 @@ public static class GameConfigureFunction
             nameof(VoteCreateActivityFunction),
             new VoteCreateActivityFunctionProps(lobby));
 
+        // Set state to configure
+        await ctx.CallActivityAsync(
+            nameof(LobbyStateSetActivityFunction),
+            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Configure));
+
         // Wait for countdown to complete
         await ctx.CallSubOrchestratorAsync(
             nameof(TimerOrchestratorFunction),

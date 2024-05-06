@@ -15,32 +15,24 @@ public static class LobbyOrchestratorFunction
         var lobbyId = Id.FromInstance(ctx.InstanceId);
 
         // Configure game
-        ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Configure.ToString());
-        
         var settings = await ctx.CallSubOrchestratorAsync<GameSettings>(
             nameof(GameConfigureFunction),
             Id.ForInstance(nameof(GameConfigureFunction), lobbyId),
             null);
 
         // Begin play
-        ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Play.ToString());
-        
         var winnerId = await ctx.CallSubOrchestratorAsync<string?>(
             nameof(GameActiveFunction),
             Id.ForInstance(nameof(GameActiveFunction), lobbyId),
             new GameActiveFunctionProps(settings));
 
         // Clean up after games
-        ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Clean.ToString());
-        
         await ctx.CallSubOrchestratorAsync(
             nameof(GameCleanupFunction),
             Id.ForInstance(nameof(GameCleanupFunction), lobbyId),
             new GameCleanupFunctionProps(winnerId));
 
         // Celebrate
-        ctx.SetCustomStatus(ELobbyOrchestratorFunctionStatus.Celebrate.ToString());
-        
         await ctx.CallSubOrchestratorAsync(
             nameof(GameCelebrationFunction),
             Id.ForInstance(nameof(GameCelebrationFunction), lobbyId),
@@ -49,12 +41,4 @@ public static class LobbyOrchestratorFunction
         // Restart lobby
         ctx.ContinueAsNew(null);
     }
-}
-
-public enum ELobbyOrchestratorFunctionStatus
-{
-    Configure,
-    Play,
-    Clean,
-    Celebrate
 }

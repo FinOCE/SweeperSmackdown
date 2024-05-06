@@ -88,27 +88,18 @@ public static class LobbyChangeFeedFunction
                 }
 
                 // Create boards for players joining mid-game
-                var orchestrationStatus = await orchestrationClient.GetStatusAsync(
-                    Id.ForInstance(nameof(LobbyOrchestratorFunction), lobby.Id));
-
-                if (orchestrationStatus != null)
+                if (lobby.State == ELobbyState.Play)
                 {
-                    var customStatus = orchestrationStatus.CustomStatus.ToString();
-                    var status = Enum.Parse<ELobbyOrchestratorFunctionStatus>(customStatus);
-
-                    if (status == ELobbyOrchestratorFunctionStatus.Play)
+                    foreach (var id in unaddedUsers)
                     {
-                        foreach (var id in unaddedUsers)
-                        {
-                            var boardManagerStatus = await orchestrationClient.GetStatusAsync(
-                                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id));
+                        var boardManagerStatus = await orchestrationClient.GetStatusAsync(
+                            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id));
 
-                            if (boardManagerStatus.IsInactive())
-                                await orchestrationClient.StartNewAsync(
-                                    nameof(BoardManagerOrchestrationFunction),
-                                    Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
-                                    new BoardManagerOrchestrationFunctionProps(lobby.Settings));
-                        }
+                        if (boardManagerStatus.IsInactive())
+                            await orchestrationClient.StartNewAsync(
+                                nameof(BoardManagerOrchestrationFunction),
+                                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
+                                new BoardManagerOrchestrationFunctionProps(lobby.Settings));
                     }
                 }
 

@@ -27,6 +27,9 @@ public class Lobby
     [JsonProperty("settings")]
     public GameSettings Settings { get; set; }
 
+    [JsonProperty("state")]
+    public ELobbyState State { get; set; }
+
     public Lobby(
         string id,
         string hostId,
@@ -42,5 +45,15 @@ public class Lobby
         Scores = scores;
         Wins = wins;
         Settings = settings;
+        State = ELobbyState.Init;
     }
+}
+
+public enum ELobbyState
+{
+    Init,
+    Configure,
+    Play,
+    Won,
+    Celebrate
 }

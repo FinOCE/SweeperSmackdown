@@ -1,6 +1,8 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.Functions.Activities;
+using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 
@@ -24,6 +26,11 @@ public static class GameCelebrationFunction
     {
         var lobbyId = Id.FromInstance(ctx.InstanceId);
         var props = ctx.GetInput<GameCelebrationFunctionProps>();
+
+        // Set state to celebrate
+        await ctx.CallActivityAsync(
+            nameof(LobbyStateSetActivityFunction),
+            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.Celebrate));
 
         // Wait for countdown to complete
         await ctx.CallSubOrchestratorAsync(

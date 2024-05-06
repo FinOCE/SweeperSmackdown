@@ -6,9 +6,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
-using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,20 +48,8 @@ public static class LobbyPatchFunction
         if (lobby == null)
             return new NotFoundResult();
 
-        var orchestrationStatus = await orchestrationClient.GetStatusAsync(
-            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-
-        if (orchestrationStatus != null)
-        {
-            var customStatus = orchestrationStatus.CustomStatus.ToString();
-            var status = Enum.Parse<ELobbyOrchestratorFunctionStatus>(customStatus);
-
-            // TODO: Fix this so it doesn't allow requests after countdown rather than any point during configuration
-            //       (edge case, not urgent, but still a potential issue)
-
-            if (status != ELobbyOrchestratorFunctionStatus.Configure)
-                return new ConflictResult();
-        }
+        if (lobby.State != ELobbyState.Configure)
+            return new ConflictResult();
 
         // Only allow lobby members to modify
         if (!lobby.UserIds.Contains(requesterId))
