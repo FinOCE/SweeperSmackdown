@@ -30,10 +30,14 @@ public static class TimerOrchestratorFunction
         var props = ctx.GetInput<TimerOrchestratorFunctionProps>();
         var tasks = new List<Task>();
 
+        ctx.SetCustomStatus(ETimerStatus.NotStarted);
+
         // Wait for setup countdown to be initiated
         var expiration = props.Duration == null
             ? await ctx.WaitForExternalEvent<DateTime>(DurableEvents.START_TIMER)
             : ctx.CurrentUtcDateTime.AddSeconds(props.Duration.Value);
+
+        ctx.SetCustomStatus(ETimerStatus.Countdown);
 
         // Start countdown
         using var timeoutCts = new CancellationTokenSource();
@@ -54,6 +58,8 @@ public static class TimerOrchestratorFunction
 
         if (!timeoutTask.IsCompleted)
             timeoutCts.Cancel();
+        else
+            ctx.SetCustomStatus(ETimerStatus.Completed);
 
         if (winner == resetTask)
             ctx.ContinueAsNew(new TimerOrchestratorFunctionProps());
@@ -61,6 +67,12 @@ public static class TimerOrchestratorFunction
             await ctx.CallActivityAsync(
                 nameof(TimerCompletedActivityFunction),
                 new TimerCompletedActivityFunctionProps(props.RaiseEventTo));
-            
     }
+}
+
+public enum ETimerStatus
+{
+    NotStarted,
+    Countdown,
+    Completed
 }

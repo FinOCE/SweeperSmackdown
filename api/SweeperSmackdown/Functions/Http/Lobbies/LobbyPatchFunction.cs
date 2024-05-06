@@ -6,7 +6,9 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
+using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -73,6 +75,13 @@ public static class LobbyPatchFunction
                 "Cannot change host ID because you are not the current host"
             });
 
+        // Check if the configure countdown has already started
+        var timerStatus = await orchestrationClient.GetStatusAsync(
+            Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId));
+
+        if (timerStatus != null && Enum.Parse<ETimerStatus>(timerStatus.CustomStatus.ToString()) != ETimerStatus.NotStarted)
+            return new ConflictResult();
+        
         // Update lobby settings
         int? seed = null;
 
