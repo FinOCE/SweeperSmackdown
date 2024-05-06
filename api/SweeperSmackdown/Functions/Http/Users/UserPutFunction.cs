@@ -6,6 +6,7 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
+using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,7 +39,7 @@ public static class UserPutFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobby exists and that user is in it
+        // Check if lobby exists
         if (lobby == null)
             return new NotFoundResult();
 
@@ -48,7 +49,7 @@ public static class UserPutFunction
 
         // Add to lobby
         var alreadyInLobby = lobby.UserIds.Contains(userId);
-        lobby.UserIds = lobby.UserIds.Append(userId).Distinct().ToArray();
+        lobby.UserIds = lobby.UserIds.Append(userId).DistinctBy(id => Id.FromUser(id).UserId).ToArray();
         await lobbyDb.AddAsync(lobby);
 
         // Respond to request

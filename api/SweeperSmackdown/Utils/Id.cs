@@ -57,4 +57,26 @@ public static class Id
     /// <returns>The user's ID</returns>
     public static string UserFromInstance(string instanceId) =>
         instanceId.Split(":")[2];
+
+    /// <summary>
+    /// Get the ID for a user by combining a base user ID with the connection ID.
+    /// </summary>
+    /// <param name="userId">The user's base ID</param>
+    /// <param name="connectionId">The user's connection ID</param>
+    /// <returns>The composite user ID</returns>
+    public static string ForUser(string userId, string connectionId) =>
+        $"{userId}_{connectionId}";
+
+    /// <summary>
+    /// Get the base user ID and connection ID from a composite ID.
+    /// </summary>
+    /// <param name="id">The composite user ID</param>
+    /// <returns>The user ID and connection ID</returns>
+    public static (string UserId, string? ConnectionId) FromUser(string id)
+    {
+        var parts = id.Split("_");
+        return (parts[0], parts.Length > 1 ? parts[1] : null);
+
+        // TODO: Once fully implemented, make ConnectionId not nullable
+    }
 }
