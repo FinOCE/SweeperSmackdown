@@ -17,7 +17,7 @@ import { ProfilePicture } from "../components/ui/users/ProfilePicture"
 export function GameCelebration() {
   const { user, participants } = useEmbeddedAppSdk()
   const { leave, wins, scores } = useLobby()
-  const ws = useWebsocket()
+  const { manager: ws } = useWebsocket()
   const { navigate } = useNavigation()
 
   if (!ws || !user || !participants) return <Loading hide />

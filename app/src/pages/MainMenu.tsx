@@ -14,7 +14,7 @@ export function MainMenu() {
   const { origin } = useOrigin()
   const { sdk, user } = useEmbeddedAppSdk()
   const { lobby, create, join } = useLobby()
-  const ws = useWebsocket()
+  const { manager: ws } = useWebsocket()
   const { navigate } = useNavigation()
 
   const [lobbyId, setLobbyId] = useState("")

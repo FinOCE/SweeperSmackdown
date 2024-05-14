@@ -21,7 +21,7 @@ export function GameActive() {
   const { api } = useApi()
   const { user } = useEmbeddedAppSdk()
   const { lobby, settings, leave, scores, setScores, wins, setWins } = useLobby()
-  const ws = useWebsocket()
+  const { manager: ws } = useWebsocket()
   const { navigate } = useNavigation()
 
   const [initialGameState, setInitialGameState] = useState<Uint8Array>()

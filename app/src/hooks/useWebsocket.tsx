@@ -5,7 +5,16 @@ import { EventManager, IEventManager } from "../managers/EventManager"
 import { useOrigin } from "./useOrigin"
 import { useEmbeddedAppSdk } from "./useEmbeddAppSdk"
 
-const WebsocketContext = createContext<IEventManager | null>(null)
+type TWebsocketContext = {
+  ws: WebPubSubClient | null
+  /** @deprecated Migrate to ws, removed once no longer used */
+  manager: IEventManager | null
+}
+
+const WebsocketContext = createContext<TWebsocketContext>({
+  ws: null,
+  manager: null
+})
 export const useWebsocket = () => useContext(WebsocketContext)
 
 export function WebsocketProvider(props: { children: ReactNode }) {
@@ -17,6 +26,7 @@ export function WebsocketProvider(props: { children: ReactNode }) {
 
   const [client, setClient] = useState<WebPubSubClient | null>(null)
   const [manager, setManager] = useState<EventManager | null>(null)
+  const [ws, setWs] = useState<WebPubSubClient | null>(null)
 
   useEffect(() => {
     if (!user || !hasToken) return
@@ -55,9 +65,13 @@ export function WebsocketProvider(props: { children: ReactNode }) {
     client.on("server-message", e => manager.emit("server-message", e))
 
     setManager(manager)
+    setWs(client)
 
-    return () => setManager(null)
+    return () => {
+      setManager(null)
+      setWs(null)
+    }
   }, [ready, client])
 
-  return <WebsocketContext.Provider value={manager}>{props.children}</WebsocketContext.Provider>
+  return <WebsocketContext.Provider value={{ manager, ws }}>{props.children}</WebsocketContext.Provider>
 }

@@ -24,7 +24,7 @@ export function GameConfigure() {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
   const { lobby, setLobby, leave, settings, setSettings, wins, scores } = useLobby()
-  const ws = useWebsocket()
+  const { manager: ws } = useWebsocket()
   const { navigate } = useNavigation()
   const { countdown, start, stop } = useCountdown(() => navigate("GameActive"))
 

@@ -8,7 +8,7 @@ import { Text } from "../components/ui/Text"
 
 export function Entrypoint() {
   const { sdk, user } = useEmbeddedAppSdk()
-  const ws = useWebsocket()
+  const { manager: ws } = useWebsocket()
   const { navigate } = useNavigation()
 
   const [loading, setLoading] = useState(true)
