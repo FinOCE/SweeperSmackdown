@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { useApi } from "../useApi"
 import { useWebsocket } from "../useWebsocket"
 import { useEmbeddedAppSdk } from "../useEmbeddAppSdk"
+import { isEvent } from "../../utils/isEvent"
+import { Websocket } from "../../types/Websocket"
+import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 
 type TLobby = {
   id: string
@@ -43,14 +46,14 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
       .then(data => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
-    if (lobbyPutError) throw lobbyPutError
+    if (lobbyPutError) throw new Error("Lobby already exists")
 
     const [userPutError] = await api
       .userPut(lobbyId, user.id)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
-    if (userPutError) throw userPutError
+    if (userPutError) throw new Error("Failed to join lobby")
 
     setLobby({
       id: lobby.lobbyId,
@@ -66,14 +69,14 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
-    if (userPutError) throw userPutError
+    if (userPutError) throw new Error("Failed to join lobby")
 
     const [lobbyGetError, lobby] = await api
       .lobbyGet(lobbyId)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
-    if (lobbyGetError) throw lobbyGetError
+    if (lobbyGetError) throw new Error("Failed to find lobby")
 
     setLobby({
       id: lobby.lobbyId,
@@ -90,12 +93,40 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
-    if (userDeleteError) throw userDeleteError
+    if (userDeleteError) throw new Error("Failed to leave lobby")
 
     setLobby(null)
   }
 
-  // TODO: Handle websocket events that impact the lobby
+  useEffect(() => {
+    if (!ws) return
+
+    function onLobbyUpdate(e: OnGroupDataMessageArgs) {
+      if (!lobby) return
+
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
+
+      if (data.data.hostId !== lobby.hostId) setLobby({ ...lobby, hostId: data.data.hostId })
+    }
+
+    function onUserLeave(e: OnGroupDataMessageArgs) {
+      if (!lobby || !user) return
+
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.UserLeave>("USER_LEAVE", data)) return
+
+      if (data.userId === user.id) setLobby(null)
+    }
+
+    ws.on("group-message", onLobbyUpdate)
+    ws.on("group-message", onUserLeave)
+
+    return () => {
+      ws.off("group-message", onLobbyUpdate)
+      ws.off("group-message", onUserLeave)
+    }
+  }, [ws])
 
   return (
     <LobbyContext.Provider value={{ lobby, createLobby, joinLobby, leaveLobby }}>
