@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { useApi } from "../useApi"
-import { useWebsocket } from "../useWebsocket"
 import { Api } from "../../types/Api"
-import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
-import { Websocket } from "../../types/Websocket"
-import { isEvent } from "../../utils/isEvent"
-import { useLobby } from "../useLobby"
+import { useLobbyData } from "../data/useLobbyData"
 
 type TSettingsContext = {
   settings: Api.GameSettings | null
@@ -17,44 +13,26 @@ export const useSettings = () => useContext(SettingsContext)
 
 export function SettingsProvider(props: { children?: React.ReactNode }) {
   const { api } = useApi()
-  const { ws } = useWebsocket()
-  const { lobby } = useLobby()
+  const { lobbyData, setLobbyData } = useLobbyData()
 
   const [settings, setSettings] = useState<Api.GameSettings | null>(null)
 
-  async function updateSettings(settings: Api.Request.LobbyPatch) {
-    if (!lobby) throw new Error("No lobby")
+  useEffect(() => {
+    setSettings(lobbyData ? lobbyData.settings : null)
+  }, [lobbyData])
 
-    const [err] = await api
-      .lobbyPatch(lobby.lobbyId, settings)
+  async function updateSettings(settings: Api.Request.LobbyPatch) {
+    if (!lobbyData) throw new Error("No lobby")
+
+    const [err, lobby] = await api
+      .lobbyPatch(lobbyData.lobbyId, settings)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
     if (err) throw new Error("Failed to update settings")
+
+    setLobbyData(lobby)
   }
-
-  useEffect(() => {
-    if (!lobby) setSettings(null)
-  }, [lobby])
-
-  useEffect(() => {
-    if (!ws) return
-
-    function onLobbyUpdate(e: OnGroupDataMessageArgs) {
-      if (!lobby) return
-
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
-
-      setSettings(data.data.settings)
-    }
-
-    ws.on("group-message", onLobbyUpdate)
-
-    return () => {
-      ws.off("group-message", onLobbyUpdate)
-    }
-  }, [ws])
 
   return <SettingsContext.Provider value={{ settings, updateSettings }}>{props.children}</SettingsContext.Provider>
 }

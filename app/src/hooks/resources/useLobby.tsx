@@ -2,9 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react"
 import { useApi } from "../useApi"
 import { useWebsocket } from "../useWebsocket"
 import { useEmbeddedAppSdk } from "../useEmbeddAppSdk"
-import { isEvent } from "../../utils/isEvent"
-import { Websocket } from "../../types/Websocket"
-import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
+import { useLobbyData } from "../data/useLobbyData"
 
 type TLobby = {
   id: string
@@ -30,8 +28,13 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
   const { api } = useApi()
   const { ws } = useWebsocket()
   const { user } = useEmbeddedAppSdk()
+  const { lobbyData, setLobbyData } = useLobbyData()
 
   const [lobby, setLobby] = useState<TLobby | null>(null)
+
+  useEffect(() => {
+    setLobby(lobbyData ? { id: lobbyData.lobbyId, hostId: lobbyData.hostId } : null)
+  }, [lobbyData])
 
   async function createLobby(lobbyId?: string) {
     if (!user) throw new Error("No user")
@@ -55,10 +58,7 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
 
     if (userPutError) throw new Error("Failed to join lobby")
 
-    setLobby({
-      id: lobby.lobbyId,
-      hostId: lobby.hostId
-    })
+    setLobbyData(lobby)
   }
 
   async function joinLobby(lobbyId: string) {
@@ -78,13 +78,8 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
 
     if (lobbyGetError) throw new Error("Failed to find lobby")
 
-    setLobby({
-      id: lobby.lobbyId,
-      hostId: lobby.hostId
-    })
+    setLobbyData(lobby)
   }
-
-  // TODO: Figure out how to update other lobby state info in other hooks when join/create called
 
   async function leaveLobby() {
     if (!user) throw new Error("No user")
@@ -97,38 +92,8 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
 
     if (userDeleteError) throw new Error("Failed to leave lobby")
 
-    setLobby(null)
+    setLobbyData(null)
   }
-
-  useEffect(() => {
-    if (!ws) return
-
-    function onLobbyUpdate(e: OnGroupDataMessageArgs) {
-      if (!lobby) return
-
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
-
-      if (data.data.hostId !== lobby.hostId) setLobby({ ...lobby, hostId: data.data.hostId })
-    }
-
-    function onUserLeave(e: OnGroupDataMessageArgs) {
-      if (!lobby || !user) return
-
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.UserLeave>("USER_LEAVE", data)) return
-
-      if (data.userId === user.id) setLobby(null)
-    }
-
-    ws.on("group-message", onLobbyUpdate)
-    ws.on("group-message", onUserLeave)
-
-    return () => {
-      ws.off("group-message", onLobbyUpdate)
-      ws.off("group-message", onUserLeave)
-    }
-  }, [ws])
 
   return (
     <LobbyContext.Provider value={{ lobby, createLobby, joinLobby, leaveLobby }}>

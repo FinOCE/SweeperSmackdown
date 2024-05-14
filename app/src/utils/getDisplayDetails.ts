@@ -24,11 +24,11 @@ export function getDisplayDetails(
   }
 }
 
-function getDefaultAvatarIndex(user: User | Participant) {
+export function getDefaultAvatarIndex(user: User | Participant) {
   return user.discriminator === "0" ? (parseInt(user.id) >> 22) % 6 : parseInt(user.discriminator) % 5
 }
 
-function getAvatarUrl(id: string, user: User | null, participants: Participant[]) {
+export function getAvatarUrl(id: string, user: User | null, participants: Participant[]) {
   if (!user) return null
 
   if (id === user.id) {
@@ -50,7 +50,7 @@ function getAvatarUrl(id: string, user: User | null, participants: Participant[]
   }
 }
 
-function getUsername(id: string, user: User | null, participants: Participant[]) {
+export function getUsername(id: string, user: User | null, participants: Participant[]) {
   if (!user) return null
 
   if (id === user.id) {

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
-import { useApi } from "../useApi"
-import { useWebsocket } from "../useWebsocket"
-import { useLobby } from "./useLobby"
+import { useLobbyData } from "../data/useLobbyData"
+import { useEmbeddedAppSdk } from "../useEmbeddAppSdk"
+import { getAvatarUrl, getUsername } from "../../utils/getDisplayDetails"
 
 type TMember = {
   id: string
@@ -17,23 +17,25 @@ const MemberContext = createContext<TMemberContext>({ members: null })
 export const useMembers = () => useContext(MemberContext)
 
 export function MemberProvider(props: { children?: React.ReactNode }) {
-  const { api } = useApi()
-  const { ws } = useWebsocket()
-  const { lobby } = useLobby()
+  const { participants, user } = useEmbeddedAppSdk()
+  const { lobbyData } = useLobbyData()
 
   const [members, setMembers] = useState<TMember[] | null>(null)
 
   useEffect(() => {
-    if (!lobby) setMembers(null)
-  }, [lobby])
+    if (!lobbyData) {
+      setMembers(null)
+      return
+    }
 
-  useEffect(() => {
-    if (!ws) return
+    const members = lobbyData.userIds.map(id => {
+      const displayName = getUsername(id, user, participants ?? []) ?? id
+      const avatarUrl = getAvatarUrl(id, user, participants ?? [])
+      return { id, displayName, avatarUrl } as TMember
+    })
 
-    // TODO: Handle websocket events
-
-    return () => {}
-  }, [ws])
+    setMembers(members)
+  }, [lobbyData, participants, user])
 
   return <MemberContext.Provider value={{ members }}>{props.children}</MemberContext.Provider>
 }
