@@ -84,6 +84,8 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
     })
   }
 
+  // TODO: Figure out how to update other lobby state info in other hooks when join/create called
+
   async function leaveLobby() {
     if (!user) throw new Error("No user")
     if (!lobby) throw new Error("No lobby")
