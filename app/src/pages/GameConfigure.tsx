@@ -34,7 +34,13 @@ export function GameConfigure() {
   useEffect(() => {
     if (!user || !lobby) return
 
-    api.voteGetAll(lobby.lobbyId).then(([votes]) => setVote(votes))
+    api
+      .voteGetAll(lobby.lobbyId)
+      .then(([votes]) => setVote(votes))
+      .catch(() => {
+        alert("An unknown error occurred, please try again later.")
+        navigate("MainMenu")
+      })
   }, [user, lobby?.lobbyId])
 
   // Create function to handle translatin between game settings and payloads
