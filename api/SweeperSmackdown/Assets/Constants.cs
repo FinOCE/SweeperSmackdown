@@ -12,7 +12,7 @@ public static class Constants
 
     public const int SETUP_COUNTDOWN_DURATION = 10;
 
-    public const int CELEBRATION_COUNTDOWN_DURATION = 20;
+    public const int CELEBRATION_COUNTDOWN_DURATION = 10;
 
     public const decimal MINE_RATIO_EASY = 0.078125M;
 

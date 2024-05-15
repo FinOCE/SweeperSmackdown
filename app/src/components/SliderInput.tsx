@@ -19,10 +19,12 @@ export function SliderInput(props: SliderInputProps) {
   const set = useCallback((e: ChangeEvent<HTMLInputElement>) => props.onChange(Number(e.target.value)), [])
 
   function increment() {
+    if (props.disabled || props.value >= props.max) return
     props.onChange(props.value + (props.step ?? 1))
   }
 
   function decrement() {
+    if (props.disabled || props.value <= props.min) return
     props.onChange(props.value - (props.step ?? 1))
   }
 

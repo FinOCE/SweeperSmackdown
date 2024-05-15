@@ -1,3 +1,5 @@
+@import "./theme";
+
 @font-face {
   font-family: "Titan One";
   src: url(../public/TitanOne-Regular.ttf);
@@ -37,4 +39,17 @@ fieldset {
 
 legend {
   margin-bottom: 5px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: $background-color;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $scrollbar-thumb-color;
+  border-radius: 10px;
 }

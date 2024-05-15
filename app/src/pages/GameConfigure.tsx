@@ -3,13 +3,9 @@ import "./GameConfigure.scss"
 import { useApi } from "../hooks/useApi"
 import { useNavigation } from "../hooks/useNavigation"
 import { useWebsocket } from "../hooks/useWebsocket"
-import { Websocket } from "../types/Websocket"
-import { isEvent } from "../utils/isEvent"
 import { Api } from "../types/Api"
 import { SliderInput } from "../components/SliderInput"
-import { useLobby } from "../hooks/useLobby"
 import { Loading } from "../components/Loading"
-import { LobbyWithoutNested } from "../types/Lobby"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
 import { ButtonList } from "../components/ui/ButtonList"
@@ -19,29 +15,38 @@ import { isGuid } from "../utils/isGuid"
 import { Settings } from "../components/ui/controls/Settings"
 import { getDisplayDetails } from "../utils/getDisplayDetails"
 import { ProfilePicture } from "../components/ui/users/ProfilePicture"
+import { useLobby } from "../hooks/resources/useLobby"
+import { useSettings } from "../hooks/resources/useSettings"
+import { useWins } from "../hooks/resources/useWins"
+import { useScores } from "../hooks/resources/useScores"
+import { useVotes } from "../hooks/resources/useVotes"
+import { useMembers } from "../hooks/resources/useMembers"
 
 export function GameConfigure() {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
-  const { lobby, setLobby, leave, settings, setSettings, wins, scores } = useLobby()
-  const ws = useWebsocket()
+  const { lobby, leaveLobby } = useLobby()
+  const { settings } = useSettings()
+  const { wins } = useWins()
+  const { scores } = useScores()
+  const { votes, requiredVotes, countdownExpiry, fetchVotes, clearCountdownExpiry } = useVotes()
+  const { members } = useMembers()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => navigate("GameActive"))
-
-  let [vote, setVote] = useState<Api.VoteGroup>()
+  const { countdown, start, stop } = useCountdown(() => {
+    clearCountdownExpiry()
+    navigate("GameActive")
+  })
 
   // Fetch current vote on load
   useEffect(() => {
     if (!user || !lobby) return
 
-    api
-      .voteGetAll(lobby.lobbyId)
-      .then(([votes]) => setVote(votes))
-      .catch(() => {
-        alert("An unknown error occurred, please try again later.")
-        navigate("MainMenu")
-      })
-  }, [user, lobby?.lobbyId])
+    fetchVotes().catch((err: Error) => {
+      alert("An error occurred while fetching votes. Please try again later.")
+      console.error(err)
+      navigate("MainMenu")
+    })
+  }, [user, lobby?.id])
 
   // Create function to handle translatin between game settings and payloads
   type LocalSettings = Required<Omit<Api.Request.LobbyPatch, "hostId">>
@@ -93,7 +98,7 @@ export function GameConfigure() {
 
     const timer = setTimeout(() => {
       if (Object.keys(changes).length > 0) {
-        api.lobbyPatch(lobby.lobbyId, changes)
+        api.lobbyPatch(lobby.id, changes)
         setChanges({})
       }
     }, 500)
@@ -101,49 +106,25 @@ export function GameConfigure() {
     return () => clearTimeout(timer)
   }, [changes])
 
+  // Handle countdown timer
+  useEffect(() => {
+    if (!countdownExpiry) return
+
+    start(countdownExpiry - Date.now())
+    return () => stop()
+  }, [countdownExpiry])
+
   // Show loading if not ready
-  if (!participants || !user || !ws || !lobby || !settings || !vote) return <Loading />
-
-  // Register websocket events
-  ws.clear()
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.VoteStateUpdate>("VOTE_STATE_UPDATE", data)) return
-
-    setVote(data.data)
-  })
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
-
-    setLobby({ ...data.data, settings: undefined, scores: undefined, wins: undefined } as LobbyWithoutNested)
-    setSettings(data.data.settings)
-  })
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.TimerStart>("TIMER_START", data)) return
-
-    start(data.data.expiry - Date.now())
-  })
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.TimerReset>("TIMER_RESET", data)) return
-
-    stop()
-  })
-
-  const isReady = vote?.votes?.READY?.includes(user.id) ?? false
+  if (!participants || !user || !lobby || !settings || !votes || !wins || !scores) return <Loading />
 
   // Setup UI functions
+  const isReady = votes?.READY?.includes(user.id) ?? false
+
   async function voteStart() {
     if (!lobby || !user) return
 
     setVotePending(true)
-    await api.votePut(lobby.lobbyId, user.id, "READY").catch(() => {})
+    await api.votePut(lobby.id, user.id, "READY").catch(() => {})
     setVotePending(false)
   }
 
@@ -151,7 +132,7 @@ export function GameConfigure() {
     if (!lobby || !user) return
 
     setVotePending(true)
-    await api.voteDelete(lobby.lobbyId, user.id, lobby?.hostId === user.id).catch(() => {})
+    await api.voteDelete(lobby.id, user.id, lobby.hostId === user.id).catch(() => {})
     setVotePending(false)
   }
 
@@ -159,32 +140,32 @@ export function GameConfigure() {
     if (!lobby || !user) return
 
     setVotePending(true)
-    await api.votePut(lobby.lobbyId, user.id, "READY", true).catch(() => {})
+    await api.votePut(lobby.id, user.id, "READY", true).catch(() => {})
     setVotePending(false)
   }
 
-  async function leaveLobby() {
+  async function leave() {
     if (!lobby || !user) return
 
-    await leave()
+    await leaveLobby()
     navigate("MainMenu")
   }
 
   // Render page
   return (
     <div id="game-configure">
-      {!isGuid(lobby.lobbyId) && (
+      {!isGuid(lobby.id) && (
         <div id="game-configure-header">
-          <Text type="title">Party {lobby.lobbyId}</Text>
+          <Text type="title">Party {lobby.id}</Text>
         </div>
       )}
 
       <div id="game-configure-participants">
         <div className="game-configure-participants-list">
-          {(lobby?.userIds ?? [])
-            .map(id => getDisplayDetails(id, user, participants, wins, scores))
+          {(members ?? [])
+            .map(member => getDisplayDetails(member.id, user, participants, wins, scores))
             .map(({ id, displayName, avatarUrl }) => (
-              <ProfilePicture {...{ id, displayName, avatarUrl }} />
+              <ProfilePicture {...{ id, displayName, avatarUrl }} key={id} />
             ))}
         </div>
       </div>
@@ -329,8 +310,8 @@ export function GameConfigure() {
         <Box onClick={isReady ? voteCancel : voteStart} disabled={votePending}>
           <Text type="big">
             {isReady
-              ? `Cancel Vote (${vote.votes.READY.length}/${vote.requiredVotes})`
-              : `Vote Start (${vote.votes.READY.length}/${vote.requiredVotes})`}
+              ? `Cancel Vote (${votes.READY.length}/${requiredVotes})`
+              : `Vote Start (${votes.READY.length}/${requiredVotes})`}
           </Text>
         </Box>
         {isReady && (
@@ -342,7 +323,7 @@ export function GameConfigure() {
 
       <Settings>
         <ButtonList>
-          <Box onClick={leaveLobby}>
+          <Box onClick={leave}>
             <Text type="big">Leave Party</Text>
           </Box>
         </ButtonList>

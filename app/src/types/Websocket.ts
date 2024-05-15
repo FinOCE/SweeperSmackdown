@@ -52,6 +52,11 @@ export namespace Websocket {
       userId: "SYSTEM"
     }
 
+    export type TimerClear = {
+      eventName: "TIMER_CLEAR"
+      userId: "SYSTEM"
+    }
+
     export type BoardCreate = {
       eventName: "BOARD_CREATE"
       userId: string

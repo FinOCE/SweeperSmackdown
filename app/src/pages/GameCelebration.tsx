@@ -1,11 +1,10 @@
-import React from "react"
+import React, { useEffect } from "react"
 import "./GameCelebration.scss"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Loading } from "../components/Loading"
 import { Websocket } from "../types/Websocket"
 import { isEvent } from "../utils/isEvent"
 import { useNavigation } from "../hooks/useNavigation"
-import { useLobby } from "../hooks/useLobby"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
@@ -13,28 +12,41 @@ import { Settings } from "../components/ui/controls/Settings"
 import { ButtonList } from "../components/ui/ButtonList"
 import { getDisplayDetails } from "../utils/getDisplayDetails"
 import { ProfilePicture } from "../components/ui/users/ProfilePicture"
+import { useLobby } from "../hooks/resources/useLobby"
+import { useWins } from "../hooks/resources/useWins"
+import { useScores } from "../hooks/resources/useScores"
+import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 
 export function GameCelebration() {
   const { user, participants } = useEmbeddedAppSdk()
-  const { leave, wins, scores } = useLobby()
-  const ws = useWebsocket()
+  const { leaveLobby } = useLobby()
+  const { wins } = useWins()
+  const { scores } = useScores()
+  const { ws } = useWebsocket()
   const { navigate } = useNavigation()
 
-  if (!ws || !user || !participants) return <Loading hide />
+  useEffect(() => {
+    if (!ws) return
+
+    function onLobbyStart(e: OnGroupDataMessageArgs) {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.LobbyStart>("LOBBY_START", data)) return
+
+      navigate("GameConfigure")
+    }
+
+    ws.on("group-message", onLobbyStart)
+    return () => ws.off("group-message", onLobbyStart)
+  }, [ws])
+
+  if (!user || !participants || !wins || !scores) return <Loading hide />
 
   const leaderboard = Object.entries({ ...wins })
     .sort((a, b) => b[1] - a[1])
     .map(([id]) => id)
 
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.LobbyStart>("LOBBY_START", data)) return
-
-    navigate("GameConfigure")
-  })
-
-  async function leaveParty() {
-    await leave()
+  async function leave() {
+    await leaveLobby()
     navigate("MainMenu")
   }
 
@@ -51,6 +63,7 @@ export function GameCelebration() {
                 <Box
                   innerClass={`game-celebration-podium-winner-${i + 1}`}
                   type={(["gold", "silver", "bronze"] as const)[i]}
+                  key={id}
                 >
                   <div>
                     <Text type="big">#{i + 1}</Text>
@@ -74,7 +87,7 @@ export function GameCelebration() {
                 const details = getDisplayDetails(id, user, participants, wins, scores)
 
                 return (
-                  <tr>
+                  <tr key={id}>
                     <td>
                       <Text type="normal">#{i + 1 + 3}</Text>
                     </td>
@@ -94,9 +107,14 @@ export function GameCelebration() {
         </table>
       </div>
 
+      <div className="game-celebration-countdown-container">
+        <Text type="normal">Next round will begin in a moment...</Text>
+        {/* TODO: Change to proper countdown */}
+      </div>
+
       <Settings>
         <ButtonList>
-          <Box onClick={leaveParty}>
+          <Box onClick={leave}>
             <Text type="big">Leave Party</Text>
           </Box>
         </ButtonList>
