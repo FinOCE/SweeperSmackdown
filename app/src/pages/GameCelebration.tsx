@@ -63,6 +63,7 @@ export function GameCelebration() {
                 <Box
                   innerClass={`game-celebration-podium-winner-${i + 1}`}
                   type={(["gold", "silver", "bronze"] as const)[i]}
+                  key={id}
                 >
                   <div>
                     <Text type="big">#{i + 1}</Text>
@@ -86,7 +87,7 @@ export function GameCelebration() {
                 const details = getDisplayDetails(id, user, participants, wins, scores)
 
                 return (
-                  <tr>
+                  <tr key={id}>
                     <td>
                       <Text type="normal">#{i + 1 + 3}</Text>
                     </td>

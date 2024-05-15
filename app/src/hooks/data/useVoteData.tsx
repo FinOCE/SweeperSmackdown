@@ -67,7 +67,7 @@ export function VoteDataProvider(props: { children?: React.ReactNode }) {
       ws.off("group-message", onTimerStart)
       ws.off("group-message", onTimerReset)
     }
-  }, [ws])
+  }, [ws, voteData])
 
   return (
     <VoteDataContext.Provider value={{ voteData, setVoteData, countdown }}>{props.children}</VoteDataContext.Provider>

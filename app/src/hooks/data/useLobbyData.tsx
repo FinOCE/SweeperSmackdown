@@ -51,7 +51,7 @@ export function LobbyDataProvider(props: { children?: React.ReactNode }) {
       ws.off("group-message", onLobbyUpdate)
       ws.off("group-message", onUserLeave)
     }
-  }, [ws])
+  }, [ws, lobbyData, user])
 
   return <LobbyDataContext.Provider value={{ lobbyData, setLobbyData }}>{props.children}</LobbyDataContext.Provider>
 }

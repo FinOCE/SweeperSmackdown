@@ -179,7 +179,7 @@ export function GameActive() {
       ws.off("group-message", onMoveAdd)
       ws.off("group-message", onGameWon)
     }
-  }, [ws])
+  }, [ws, user])
 
   // Only render once all dependencies are loaded
   if (!user || !lobby || !settings || !wins || !scores) return <Loading />
