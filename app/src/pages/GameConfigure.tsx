@@ -29,10 +29,13 @@ export function GameConfigure() {
   const { settings } = useSettings()
   const { wins } = useWins()
   const { scores } = useScores()
-  const { votes, requiredVotes, countdownExpiry, fetchVotes } = useVotes()
+  const { votes, requiredVotes, countdownExpiry, fetchVotes, clearCountdownExpiry } = useVotes()
   const { members } = useMembers()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => navigate("GameActive"))
+  const { countdown, start, stop } = useCountdown(() => {
+    clearCountdownExpiry()
+    navigate("GameActive")
+  })
 
   // Fetch current vote on load
   useEffect(() => {

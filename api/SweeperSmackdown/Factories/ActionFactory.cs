@@ -59,6 +59,12 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.TIMER_RESET, "SYSTEM", ""),
             WebPubSubDataType.Json);
 
+    public static WebPubSubAction ClearTimer(string lobbyId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.TIMER_CLEAR, "SYSTEM", ""),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState, bool reset) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,

@@ -10,12 +10,14 @@ type TVoteDataContext = {
   voteData: Api.VoteGroup | null
   setVoteData: (votes: Api.VoteGroup) => void
   countdown: number | null
+  clearCountdown: () => void
 }
 
 const VoteDataContext = createContext<TVoteDataContext>({
   voteData: null,
   setVoteData: () => {},
-  countdown: null
+  countdown: null,
+  clearCountdown: () => {}
 })
 export const useVoteData = () => useContext(VoteDataContext)
 
@@ -58,18 +60,35 @@ export function VoteDataProvider(props: { children?: React.ReactNode }) {
       setCountdown(null)
     }
 
+    function onTimerClear(e: OnGroupDataMessageArgs) {
+      if (!voteData) return
+
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.TimerClear>("TIMER_CLEAR", data)) return
+
+      setCountdown(null)
+    }
+
     ws.on("group-message", onVoteStateUpdate)
     ws.on("group-message", onTimerStart)
     ws.on("group-message", onTimerReset)
+    ws.on("group-message", onTimerClear)
 
     return () => {
       ws.off("group-message", onVoteStateUpdate)
       ws.off("group-message", onTimerStart)
       ws.off("group-message", onTimerReset)
+      ws.off("group-message", onTimerClear)
     }
   }, [ws, voteData])
 
+  function clearCountdown() {
+    setCountdown(null)
+  }
+
   return (
-    <VoteDataContext.Provider value={{ voteData, setVoteData, countdown }}>{props.children}</VoteDataContext.Provider>
+    <VoteDataContext.Provider value={{ voteData, setVoteData, countdown, clearCountdown }}>
+      {props.children}
+    </VoteDataContext.Provider>
   )
 }

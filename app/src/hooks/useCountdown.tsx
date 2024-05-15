@@ -16,9 +16,14 @@ export function useCountdown(callback: () => void) {
     }
   }, [expiry])
 
-  return {
-    countdown,
-    start: (duration: number) => setExpiry(Date.now() + duration),
-    stop: () => setExpiry(null)
+  function start(duration: number) {
+    if (duration < 0) return
+    setExpiry(Date.now() + duration)
   }
+
+  function stop() {
+    setExpiry(null)
+  }
+
+  return { countdown, start, stop }
 }

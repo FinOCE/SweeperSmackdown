@@ -12,6 +12,7 @@ type TVoteContext = {
   addVote: (choice: string, force?: boolean) => Promise<void>
   removeVote: (force?: boolean) => Promise<void>
   fetchVotes: () => Promise<void>
+  clearCountdownExpiry: () => void
 }
 
 const VoteContext = createContext<TVoteContext>({
@@ -21,7 +22,8 @@ const VoteContext = createContext<TVoteContext>({
   countdownExpiry: null,
   async addVote(choice, force) {},
   async removeVote(force) {},
-  async fetchVotes() {}
+  async fetchVotes() {},
+  clearCountdownExpiry() {}
 })
 export const useVotes = () => useContext(VoteContext)
 
@@ -29,7 +31,7 @@ export function VoteProvider(props: { children?: React.ReactNode }) {
   const { api } = useApi()
   const { user } = useEmbeddedAppSdk()
   const { lobbyData } = useLobbyData()
-  const { voteData, countdown, setVoteData } = useVoteData()
+  const { voteData, countdown, setVoteData, clearCountdown } = useVoteData()
 
   const [votes, setVotes] = useState<Record<string, string[]> | null>(null)
   const [choices, setChoices] = useState<string[] | null>(null)
@@ -83,8 +85,14 @@ export function VoteProvider(props: { children?: React.ReactNode }) {
     if (err) throw new Error("Failed to remove vote")
   }
 
+  function clearCountdownExpiry() {
+    clearCountdown()
+  }
+
   return (
-    <VoteContext.Provider value={{ votes, choices, requiredVotes, countdownExpiry, addVote, removeVote, fetchVotes }}>
+    <VoteContext.Provider
+      value={{ votes, choices, requiredVotes, countdownExpiry, addVote, removeVote, fetchVotes, clearCountdownExpiry }}
+    >
       {props.children}
     </VoteContext.Provider>
   )

@@ -18,6 +18,8 @@ public static class PubSubEvents
 
     public const string TIMER_RESET = "TIMER_RESET";
 
+    public const string TIMER_CLEAR = "TIMER_CLEAR";
+
     public const string BOARD_CREATE = "BOARD_CREATE";
 
     public const string MOVE_ADD = "MOVE_ADD";
