@@ -107,6 +107,11 @@ export function GameCelebration() {
         </table>
       </div>
 
+      <div className="game-celebration-countdown-container">
+        <Text type="normal">Next round will begin in a moment...</Text>
+        {/* TODO: Change to proper countdown */}
+      </div>
+
       <Settings>
         <ButtonList>
           <Box onClick={leave}>
