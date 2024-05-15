@@ -46,6 +46,7 @@ export function GameActive() {
   // Determine if game has been won
   useEffect(() => {
     if (!localGameState) return
+    if (won) return
 
     if (State.isCompleted(localGameState)) setWon(true)
   }, [localGameState])
