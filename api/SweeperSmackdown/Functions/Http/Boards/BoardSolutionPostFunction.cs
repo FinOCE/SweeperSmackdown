@@ -45,6 +45,8 @@ public static class BoardSolutionPostFunction
         string lobbyId,
         string userId)
     {
+        Console.WriteLine($"{userId} submitted solution for lobby {lobbyId}");
+        
         // Ensure request is from logged in user
         var requesterId = req.GetUserId();
 

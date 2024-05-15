@@ -32,11 +32,8 @@ public static class ScoreAddActivityFunction
         var container = cosmosClient.GetLobbyContainer();
 
         Lobby lobby = await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
-        var scores = lobby.Scores.ContainsKey(props.WinnerId) ? lobby.Scores[props.WinnerId] + 1 : 1;
+        lobby.Scores[props.WinnerId] = lobby.Scores.ContainsKey(props.WinnerId) ? lobby.Scores[props.WinnerId] + 1 : 1;
 
-        await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
-        {
-            PatchOperation.Set($"/scores/{props.WinnerId}", scores)
-        });
+        await container.UpsertItemAsync(lobby, new(props.LobbyId));
     }
 }

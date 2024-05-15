@@ -33,12 +33,9 @@ public static class WinAddActivityFunction
         var container = cosmosClient.GetLobbyContainer();
         
         Lobby lobby = await container.ReadItemAsync<Lobby>(props.LobbyId, new(props.LobbyId));
-        var wins = lobby.Wins.ContainsKey(props.WinnerId) ? lobby.Wins[props.WinnerId] + 1 : 1;
+        lobby.Wins[props.WinnerId] = lobby.Wins.ContainsKey(props.WinnerId) ? lobby.Wins[props.WinnerId] + 1 : 1;
+        lobby.Scores = new Dictionary<string, int>();
 
-        await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
-        {
-            PatchOperation.Set($"/wins/{props.WinnerId}", wins),
-            PatchOperation.Replace($"/scores", new Dictionary<string, int>())
-        });
+        await container.UpsertItemAsync(lobby, new(lobby.Id));
     }
 }
