@@ -8,8 +8,8 @@ resource azWebPubsub 'Microsoft.SignalRService/webPubSub@2023-02-01' = {
   location: location
   sku: {
     capacity: 1
-    name: 'Free_F1'
-    tier: 'Free'
+    name: 'Standard_S1'
+    tier: 'Standard'
   }
   identity: {
     type: 'None'
