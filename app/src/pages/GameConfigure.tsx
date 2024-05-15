@@ -103,19 +103,20 @@ export function GameConfigure() {
     return () => clearTimeout(timer)
   }, [changes])
 
-  // Show loading if not ready
-  if (!participants || !user || !lobby || !settings || !votes || !wins || !scores) return <Loading />
-
+  // Handle countdown timer
   useEffect(() => {
     if (!countdownExpiry) return
 
-    start(countdownExpiry.getTime() / 1000 - Date.now())
+    start(countdownExpiry - Date.now())
     return () => stop()
   }, [countdownExpiry])
 
-  const isReady = votes?.READY?.includes(user.id) ?? false
+  // Show loading if not ready
+  if (!participants || !user || !lobby || !settings || !votes || !wins || !scores) return <Loading />
 
   // Setup UI functions
+  const isReady = votes?.READY?.includes(user.id) ?? false
+
   async function voteStart() {
     if (!lobby || !user) return
 
@@ -161,7 +162,7 @@ export function GameConfigure() {
           {(members ?? [])
             .map(member => getDisplayDetails(member.id, user, participants, wins, scores))
             .map(({ id, displayName, avatarUrl }) => (
-              <ProfilePicture {...{ id, displayName, avatarUrl }} />
+              <ProfilePicture {...{ id, displayName, avatarUrl }} key={id} />
             ))}
         </div>
       </div>

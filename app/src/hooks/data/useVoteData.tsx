@@ -8,8 +8,8 @@ import { useLobbyData } from "./useLobbyData"
 
 type TVoteDataContext = {
   voteData: Api.VoteGroup | null
-  setVoteData: (value: SetStateAction<Api.VoteGroup | null>) => void
-  countdown: Date | null
+  setVoteData: (votes: Api.VoteGroup) => void
+  countdown: number | null
 }
 
 const VoteDataContext = createContext<TVoteDataContext>({
@@ -24,7 +24,7 @@ export function VoteDataProvider(props: { children?: React.ReactNode }) {
   const { lobbyData } = useLobbyData()
 
   const [voteData, setVoteData] = useState<Api.VoteGroup | null>(null)
-  const [countdown, setCountdown] = useState<Date | null>(null)
+  const [countdown, setCountdown] = useState<number | null>(null)
 
   useEffect(() => {
     if (!lobbyData) setVoteData(null)
@@ -34,8 +34,6 @@ export function VoteDataProvider(props: { children?: React.ReactNode }) {
     if (!ws) return
 
     function onVoteStateUpdate(e: OnGroupDataMessageArgs) {
-      if (!voteData) return
-
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.VoteStateUpdate>("VOTE_STATE_UPDATE", data)) return
 
@@ -48,7 +46,7 @@ export function VoteDataProvider(props: { children?: React.ReactNode }) {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.TimerStart>("TIMER_START", data)) return
 
-      setCountdown(new Date(data.data.expiry))
+      setCountdown(data.data.expiry)
     }
 
     function onTimerReset(e: OnGroupDataMessageArgs) {
