@@ -77,14 +77,14 @@ export function MainMenu() {
   return (
     <div className="main-menu-content">
       <ButtonList>
-        {origin === "discord" && (
+        {/* origin === "discord" && (
           <>
             <Box onClick={() => joinOrCreate(sdk.instanceId)} important>
               <Text type="big">Play In Discord Call</Text>
             </Box>
             <br />
           </>
-        )}
+        )*/}
 
         <Box onClick={() => create(Math.floor(Math.random() * 100000).toString())}>
           <Text type="big">Create Party</Text>
