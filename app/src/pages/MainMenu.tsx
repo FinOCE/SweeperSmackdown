@@ -20,6 +20,11 @@ export function MainMenu() {
   const [error, setError] = useState<string>()
   const [redirecting, setRedirecting] = useState(false)
 
+  useEffect(() => {
+    if (!error) return
+    alert(error)
+  }, [error])
+
   // Go to lobby if already in one
   useEffect(() => {
     if (!redirecting || !lobby) return
@@ -33,7 +38,7 @@ export function MainMenu() {
       try {
         await createLobby(id)
       } catch (err) {
-        setError("Could not create or join lobby")
+        setError("Failed to create or join the channel lobby. Please try again later.")
         return
       }
     }
@@ -46,7 +51,7 @@ export function MainMenu() {
       await createLobby(id)
       setRedirecting(true)
     } catch (err) {
-      setError("Could not create lobby")
+      setError("Failed to create a lobby. Please try again later.")
     }
   }
 
@@ -55,7 +60,7 @@ export function MainMenu() {
       await joinLobby(id)
       setRedirecting(true)
     } catch (err) {
-      setError("Could not join lobby")
+      setError("Could not find the lobby.")
     }
   }
 
@@ -90,12 +95,12 @@ export function MainMenu() {
             placeholder="Enter Party Code Here"
             value={lobbyId}
             onChange={e => setLobbyId(e.currentTarget.value)}
+            onKeyUp={e => (e.key === "Enter" && lobbyId.length !== 0 ? join(lobbyId) : undefined)}
           />
-          <Box onClick={() => join(lobbyId)} disabled={lobbyId.length === 0}>
+          <Box onClick={() => (lobbyId.length !== 0 ? join(lobbyId) : undefined)} disabled={lobbyId.length === 0}>
             <Text type="big">Join Party</Text>
           </Box>
         </div>
-        {/* {error && <p>{error}</p>} */}
         <br />
         <Box onClick={bugReport}>
           <Text type="big">Found a Bug? Report it Here</Text>

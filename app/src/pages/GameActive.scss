@@ -7,6 +7,13 @@
   gap: 50px;
 }
 
+#game-active-play-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+}
+
 #game-active-current-board-container {
   border-radius: $tile-separator-line-width;
   overflow: hidden;

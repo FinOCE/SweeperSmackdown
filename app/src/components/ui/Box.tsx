@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react"
+import React, { ReactNode, useEffect, useState } from "react"
 import "./Box.scss"
 
 type BoxProps = {
@@ -15,7 +15,7 @@ export function Box(props: BoxProps) {
   const [disabled, setDisabled] = useState(false)
 
   async function onClick() {
-    if (!props.onClick) return
+    if (!props.onClick || disabled) return
 
     setDisabled(true)
     await props.onClick()

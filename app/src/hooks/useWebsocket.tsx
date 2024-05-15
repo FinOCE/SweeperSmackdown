@@ -18,9 +18,15 @@ export function WebsocketProvider(props: { children: ReactNode }) {
 
   const [client, setClient] = useState<WebPubSubClient | null>(null)
   const [ws, setWs] = useState<WebPubSubClient | null>(null)
+  const [retries, setRetries] = useState(0)
 
   useEffect(() => {
     if (!user || !hasToken) return
+
+    if (retries > 3) {
+      alert("Unable to connect to the game servers. Please try again later.")
+      return
+    }
 
     api
       .negotiate(user.id)
@@ -32,9 +38,10 @@ export function WebsocketProvider(props: { children: ReactNode }) {
       .then(url => {
         setClient(new WebPubSubClient({ getClientAccessUrl: url }))
       })
+      .catch(() => setRetries(prev => prev + 1))
 
     return () => setClient(null)
-  }, [user, origin, hasToken])
+  }, [user, origin, hasToken, retries])
 
   useEffect(() => {
     if (!client) return

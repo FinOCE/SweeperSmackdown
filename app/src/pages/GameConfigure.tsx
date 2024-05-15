@@ -42,7 +42,7 @@ export function GameConfigure() {
     if (!user || !lobby) return
 
     fetchVotes().catch((err: Error) => {
-      alert("An error occurred while fetching votes. Please try again later.")
+      alert("Failed to join the party. Please try again later.")
       console.error(err)
       navigate("MainMenu")
     })
@@ -314,11 +314,12 @@ export function GameConfigure() {
               : `Vote Start (${votes.READY.length}/${requiredVotes})`}
           </Text>
         </Box>
-        {isReady && (
+        {/* {isReady && (
           <Box onClick={voteForce} disabled={user.id !== lobby.hostId}>
             <Text type="big">Force Countdown</Text>
           </Box>
-        )}
+        )} */}
+        {/* Temporarily disabled force countdown due to being very buggy */}
       </ButtonList>
 
       <Settings>

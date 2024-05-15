@@ -188,7 +188,16 @@ export function GameActive() {
   function notifyMoveAdd(data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) {
     if (!ws || !user || !lobby) return
 
-    ws.sendToGroup(lobby.id, { ...data, lobbyId: lobby.id }, "json", { fireAndForget: true })
+    ws.sendEvent(
+      "MOVE_ADD",
+      {
+        eventName: "MOVE_ADD",
+        userId: user.id,
+        data: { ...data, lobbyId: lobby.id }
+      },
+      "json",
+      { fireAndForget: true }
+    )
   }
 
   async function reset() {
@@ -216,20 +225,27 @@ export function GameActive() {
       <Text type="normal">Mines Remaining: {minesRemaining ?? ""}</Text>
 
       <div id="game-active-boards-container">
-        <div id="game-active-current-board-container">
-          <Board
-            height={settings.height}
-            width={settings.width}
-            localState={localGameState}
-            setLocalState={setLocalGameState}
-            lost={lost}
-            setLost={setLost}
-            notifyMoveAdd={notifyMoveAdd}
-          />
+        <div id="game-active-play-area">
+          <div id="game-active-current-board-container">
+            <Board
+              height={settings.height}
+              width={settings.width}
+              localState={localGameState}
+              setLocalState={setLocalGameState}
+              lost={lost}
+              setLost={setLost}
+              notifyMoveAdd={notifyMoveAdd}
+            />
+          </div>
+
+          <div id="game-active-countdown-text">
+            <Text type="normal">{countdown ? `Recover in ${countdown}` : ""}</Text>
+          </div>
         </div>
-        {Object.keys(competitionState ?? {}).length > 0 && (
+
+        {competitionState && Object.keys(competitionState).length > 0 && (
           <div id="game-active-competitors">
-            {Object.entries(competitionState ?? {}).map(([userId, state]) => (
+            {Object.entries(competitionState).map(([userId, state]) => (
               <div key={userId}>
                 <Text type="small">
                   {userId} - {scores[userId] ?? 0} ({wins[userId] ?? 0})
@@ -240,10 +256,6 @@ export function GameActive() {
             ))}
           </div>
         )}
-      </div>
-
-      <div id="game-active-countdown-text">
-        <Text type="normal">{countdown ? `Recover in ${countdown}` : ""}</Text>
       </div>
 
       <Settings>
