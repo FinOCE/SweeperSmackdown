@@ -101,6 +101,10 @@ function getMockSdk(clientId: string) {
     },
     async getInstanceConnectedParticipants() {
       return { participants: [] }
+    },
+    async openExternalLink(args) {
+      window.open(args.url, "_blank")
+      return {}
     }
   })
 

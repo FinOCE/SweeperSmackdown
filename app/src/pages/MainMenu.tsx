@@ -59,6 +59,12 @@ export function MainMenu() {
     }
   }
 
+  async function bugReport() {
+    if (!sdk) return
+
+    sdk.commands.openExternalLink({ url: "https://discord.gg/g7HWZatVPy" })
+  }
+
   // Show loading if not ready
   if (!user || !sdk) return <Loading hide />
 
@@ -89,7 +95,11 @@ export function MainMenu() {
             <Text type="big">Join Party</Text>
           </Box>
         </div>
-        {error && <p>{error}</p>}
+        {/* {error && <p>{error}</p>} */}
+        <br />
+        <Box onClick={bugReport}>
+          <Text type="big">Found a Bug? Report it Here</Text>
+        </Box>
       </ButtonList>
     </div>
   )
