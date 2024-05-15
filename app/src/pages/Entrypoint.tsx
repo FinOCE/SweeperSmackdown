@@ -8,23 +8,23 @@ import { Text } from "../components/ui/Text"
 
 export function Entrypoint() {
   const { sdk, user } = useEmbeddedAppSdk()
-  const { manager: ws } = useWebsocket()
+  const { ws } = useWebsocket()
   const { navigate } = useNavigation()
 
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (sdk && user && ws) setLoading(false)
-  }, [sdk, user, ws])
 
   useEffect(() => {
     function handleNavigation() {
       if (!loading) navigate("MainMenu")
     }
 
-    document.addEventListener("click", handleNavigation)
+    if (sdk && user && ws) {
+      setLoading(false)
+      document.addEventListener("click", handleNavigation)
+    }
+
     return () => document.removeEventListener("click", handleNavigation)
-  }, [loading])
+  }, [sdk, user, ws, loading])
 
   return (
     <div>

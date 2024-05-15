@@ -10,6 +10,7 @@ type TVoteContext = {
   countdownExpiry: Date | null
   addVote: (choice: string, force?: boolean) => Promise<void>
   removeVote: (force?: boolean) => Promise<void>
+  fetchVotes: () => Promise<void>
 }
 
 const VoteContext = createContext<TVoteContext>({
@@ -18,14 +19,15 @@ const VoteContext = createContext<TVoteContext>({
   requiredVotes: null,
   countdownExpiry: null,
   async addVote(choice, force) {},
-  async removeVote(force) {}
+  async removeVote(force) {},
+  async fetchVotes() {}
 })
 export const useVotes = () => useContext(VoteContext)
 
 export function VoteProvider(props: { children?: React.ReactNode }) {
   const { api } = useApi()
   const { user } = useEmbeddedAppSdk()
-  const { voteData, countdown } = useVoteData()
+  const { voteData, countdown, setVoteData } = useVoteData()
 
   const [votes, setVotes] = useState<Record<string, string[]> | null>(null)
   const [choices, setChoices] = useState<string[] | null>(null)
@@ -38,6 +40,19 @@ export function VoteProvider(props: { children?: React.ReactNode }) {
     setRequiredVotes(voteData ? voteData.requiredVotes : null)
     setCountdownExpiry(countdown ? countdown : null)
   }, [voteData, countdown])
+
+  async function fetchVotes() {
+    if (!voteData) throw new Error("No vote")
+
+    const [err, votes] = await api
+      .voteGetAll(voteData.lobbyId)
+      .then(([data]) => [null, data] as const)
+      .catch((err: Error) => [err, null] as const)
+
+    if (err) throw new Error("Failed to fetch votes")
+
+    setVoteData(votes)
+  }
 
   async function addVote(choice: string, force?: boolean) {
     if (!user) throw new Error("No user")
@@ -64,7 +79,7 @@ export function VoteProvider(props: { children?: React.ReactNode }) {
   }
 
   return (
-    <VoteContext.Provider value={{ votes, choices, requiredVotes, countdownExpiry, addVote, removeVote }}>
+    <VoteContext.Provider value={{ votes, choices, requiredVotes, countdownExpiry, addVote, removeVote, fetchVotes }}>
       {props.children}
     </VoteContext.Provider>
   )

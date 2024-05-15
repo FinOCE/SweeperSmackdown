@@ -5,7 +5,6 @@ import { Websocket } from "../types/Websocket"
 import { State } from "../utils/State"
 import { useApi } from "../hooks/useApi"
 import { isEvent } from "../utils/isEvent"
-import { useLobby } from "../hooks/useLobby"
 import { Loading } from "../components/Loading"
 import { ButtonList } from "../components/ui/ButtonList"
 import { Box } from "../components/ui/Box"
@@ -16,12 +15,20 @@ import { BoardPreview } from "../components/gameplay/BoardPreview"
 import { useCountdown } from "../hooks/useCountdown"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { Settings } from "../components/ui/controls/Settings"
+import { useLobby } from "../hooks/resources/useLobby"
+import { useSettings } from "../hooks/resources/useSettings"
+import { useScores } from "../hooks/resources/useScores"
+import { useWins } from "../hooks/resources/useWins"
+import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 
 export function GameActive() {
   const { api } = useApi()
   const { user } = useEmbeddedAppSdk()
-  const { lobby, settings, leave, scores, setScores, wins, setWins } = useLobby()
-  const { manager: ws } = useWebsocket()
+  const { lobby, leaveLobby } = useLobby()
+  const { settings } = useSettings()
+  const { wins } = useWins()
+  const { scores } = useScores()
+  const { ws } = useWebsocket()
   const { navigate } = useNavigation()
 
   const [initialGameState, setInitialGameState] = useState<Uint8Array>()
@@ -58,7 +65,7 @@ export function GameActive() {
   useEffect(() => {
     if (!won || !lobby || !user) return
 
-    api.boardSolution(lobby.lobbyId, user.id, localGameState!)
+    api.boardSolution(lobby.id, user.id, localGameState!)
   }, [won, lobby, user])
 
   // Apply pending competitor moves
@@ -90,30 +97,7 @@ export function GameActive() {
     return stop
   }, [lost])
 
-  // Only render once all dependencies are loaded
-  if (!ws || !user || !lobby || !settings) return <Loading />
-
-  ws.clear()
-
-  // TODO: Handle users joining and leaving with USER_JOIN and USER_LEAVE ws events
-
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
-
-    if (data.userId === user.id) {
-      if (data.data.reset) return
-
-      const gameState = new TextEncoder().encode(data.data.gameState)
-      setInitialGameState(gameState)
-      setLocalGameState(gameState)
-      setLost(false)
-      setWon(false)
-    } else {
-      setCompetitionState(prev => ({ ...prev, [data.userId]: new TextEncoder().encode(data.data.gameState) }))
-    }
-  })
-
+  // Handle websocket events
   function isReveals(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; reveals: number[] } {
     return "reveals" in data && data.reveals !== null
   }
@@ -126,78 +110,101 @@ export function GameActive() {
     return "flagRemove" in data && data.flagRemove !== null
   }
 
-  // Track score update
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
+  useEffect(() => {
+    if (!ws) return
 
-    setScores(data.data.scores)
-    setWins(data.data.wins)
-  })
+    function onBoardCreate(e: OnGroupDataMessageArgs) {
+      if (!user) return
 
-  // Queue competitior moves into pending moves to be updated
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.MoveAdd>("MOVE_ADD", data)) return
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
 
-    if (data.userId === user.id) return
+      if (data.userId === user.id) {
+        if (data.data.reset) return
 
-    if (isReveals(data.data)) {
-      const { reveals } = data.data
-      setPendingCompetitionMoves(prev => ({
-        ...prev,
-        [data.userId]: { ...prev[data.userId], reveals: [...(prev[data.userId]?.reveals ?? []), ...reveals] }
-      }))
-    } else if (isFlagAdd(data.data)) {
-      const { flagAdd } = data.data
-      setPendingCompetitionMoves(prev => ({
-        ...prev,
-        [data.userId]: { ...prev[data.userId], flagAdd: [...(prev[data.userId]?.flagAdd ?? []), flagAdd] }
-      }))
-    } else if (isFlagRemove(data.data)) {
-      const { flagRemove } = data.data
-      setPendingCompetitionMoves(prev => ({
-        ...prev,
-        [data.userId]: { ...prev[data.userId], flagRemove: [...(prev[data.userId]?.flagRemove ?? []), flagRemove] }
-      }))
+        const gameState = new TextEncoder().encode(data.data.gameState)
+        setInitialGameState(gameState)
+        setLocalGameState(gameState)
+        setLost(false)
+        setWon(false)
+      } else {
+        setCompetitionState(prev => ({ ...prev, [data.userId]: new TextEncoder().encode(data.data.gameState) }))
+      }
     }
-  })
 
-  // Handle game winner
-  ws.register("group-message", e => {
-    const data = e.message.data as Websocket.Message
-    if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
+    function onMoveAdd(e: OnGroupDataMessageArgs) {
+      if (!user) return
 
-    navigate("GameCelebration")
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.MoveAdd>("MOVE_ADD", data)) return
 
-    // TODO: Change to stop control and tell everyone the game is over on a countdown
-  })
+      if (data.userId === user.id) return
+
+      if (isReveals(data.data)) {
+        const { reveals } = data.data
+        setPendingCompetitionMoves(prev => ({
+          ...prev,
+          [data.userId]: { ...prev[data.userId], reveals: [...(prev[data.userId]?.reveals ?? []), ...reveals] }
+        }))
+      } else if (isFlagAdd(data.data)) {
+        const { flagAdd } = data.data
+        setPendingCompetitionMoves(prev => ({
+          ...prev,
+          [data.userId]: { ...prev[data.userId], flagAdd: [...(prev[data.userId]?.flagAdd ?? []), flagAdd] }
+        }))
+      } else if (isFlagRemove(data.data)) {
+        const { flagRemove } = data.data
+        setPendingCompetitionMoves(prev => ({
+          ...prev,
+          [data.userId]: { ...prev[data.userId], flagRemove: [...(prev[data.userId]?.flagRemove ?? []), flagRemove] }
+        }))
+      }
+    }
+
+    function onGameWon(e: OnGroupDataMessageArgs) {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
+
+      navigate("GameCelebration")
+
+      // TODO: Change to stop control and tell everyone the game is over on a countdown
+    }
+
+    ws.on("group-message", onBoardCreate)
+    ws.on("group-message", onMoveAdd)
+    ws.on("group-message", onGameWon)
+
+    return () => {
+      ws.off("group-message", onBoardCreate)
+      ws.off("group-message", onMoveAdd)
+      ws.off("group-message", onGameWon)
+    }
+  }, [ws])
+
+  // Only render once all dependencies are loaded
+  if (!user || !lobby || !settings || !wins || !scores) return <Loading />
 
   function notifyMoveAdd(data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) {
     if (!ws || !user || !lobby) return
 
-    ws.sendToLobby<Websocket.Response.MoveAdd>(lobby.lobbyId, {
-      eventName: "MOVE_ADD",
-      userId: user.id,
-      data: { ...data, lobbyId: lobby.lobbyId } as Websocket.Response.MoveAdd["data"]
-    })
+    ws.sendToGroup(lobby.id, { ...data, lobbyId: lobby.id }, "json", { fireAndForget: true })
   }
 
   async function reset() {
     if (!lobby || !user) return
 
     setLocalGameState(initialGameState)
-    await api.boardReset(lobby.lobbyId, user.id)
+    await api.boardReset(lobby.id, user.id)
   }
 
   async function skip() {
     if (!lobby || !user) return
 
-    await api.boardSkip(lobby.lobbyId, user.id)
+    await api.boardSkip(lobby.id, user.id)
   }
 
-  async function leaveParty() {
-    await leave()
+  async function leave() {
+    await leaveLobby()
     navigate("MainMenu")
   }
 
@@ -240,10 +247,9 @@ export function GameActive() {
 
       <Settings>
         <ButtonList>
-          <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
+          {/* <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
             <Text type="big">Solve (DEV)</Text>
-            {/* TODO: Remove this once ready */}
-          </Box>
+          </Box> */}
           <ButtonList horizontal>
             <Box onClick={reset}>
               <Text type="big">Reset</Text>
@@ -252,7 +258,7 @@ export function GameActive() {
               <Text type="big">Skip</Text>
             </Box>
           </ButtonList>
-          <Box onClick={leaveParty}>
+          <Box onClick={leave}>
             <Text type="big">Leave Party</Text>
           </Box>
         </ButtonList>

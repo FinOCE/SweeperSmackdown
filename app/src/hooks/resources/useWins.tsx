@@ -8,7 +8,7 @@ type TWinContext = {
 }
 
 const WinContext = createContext<TWinContext>({ wins: null })
-export const useScores = () => useContext(WinContext)
+export const useWins = () => useContext(WinContext)
 
 export function WinProvider(props: { children?: React.ReactNode }) {
   const { lobbyData } = useLobbyData()
