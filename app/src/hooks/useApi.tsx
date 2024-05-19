@@ -159,6 +159,22 @@ function getApi(baseUrl: string | null, token: string | null) {
           .then(accept(200, 201))
           .then(res => result(true)<Api.Response.VotePut>(res)),
 
+      boardGet: (lobbyId: string, userId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(200))
+          .then(res => result(true)<Api.Response.BoardGet>(res)),
+
+      boardGetAll: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(200))
+          .then(res => result(true)<Api.Response.BoardGet>(res)),
+
       boardReset: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/reset`, {
           method: "POST",

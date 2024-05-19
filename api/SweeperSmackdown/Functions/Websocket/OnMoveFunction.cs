@@ -25,19 +25,14 @@ public static class OnMoveFunction
         // Parse data from request
         var userId = req.ConnectionContext.UserId;
         var data = JsonSerializer.Deserialize<Message<OnMoveData>>(req.Data.ToString())!;
-
-        // Get user board entity
-        var entity = await entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId));
-
-        if (!entity.EntityExists)
-            return;
-
-        var board = entity.EntityState;
             
         // Update board state
         try
         {
-            board.MakeMove(data.Data);
+            await entityClient.SignalEntityAsync<IBoard>(
+                Id.For<Board>(userId),
+                board => board.MakeMove(data.Data));
+            
             await ws.AddAsync(ActionFactory.MakeMove(data.UserId, data.Data.LobbyId, data.Data));
         }
         catch (InvalidOperationException)

@@ -43,6 +43,28 @@ export function GameActive() {
   >({})
   const [competitionState, setCompetitionState] = useState<Record<string, Uint8Array>>()
 
+  // Load competitor boards if not already loaded
+  useEffect(() => {
+    if (!lobby) return // TODO: Move below into a resource hook
+    ;(async () => {
+      const [err, boards] = await api
+        .boardGetAll(lobby.id)
+        .then(([data]) => [null, data] as const)
+        .catch((err: Error) => [err, null] as const)
+
+      if (err || !boards) return
+
+      const states = Object.entries(boards)
+        .map(([userId, gameState]) => ({
+          userId,
+          gameState: new TextEncoder().encode(gameState)
+        }))
+        .reduce((pre, cur) => ({ ...pre, [cur.userId]: cur.gameState }), {} as Record<string, Uint8Array>)
+
+      setCompetitionState(prev => ({ ...prev, ...states }))
+    })()
+  }, [])
+
   // Determine if game has been won
   useEffect(() => {
     if (!localGameState) return

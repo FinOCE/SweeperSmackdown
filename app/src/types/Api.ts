@@ -38,6 +38,8 @@ export namespace Api {
     votes: Record<string, string[]>
   }
 
+  export type BoardDictionary = Record<string, string>
+
   export namespace Enums {
     export enum ELobbyState {
       Init = 0,
@@ -92,5 +94,9 @@ export namespace Api {
     export type VoteGet = VoteSingle
 
     export type VotePut = VoteSingle
+
+    export type BoardGet = BoardDictionary
+
+    export type BoardGetAll = BoardDictionary
   }
 }
