@@ -3,7 +3,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
-using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Activities;
@@ -30,8 +29,6 @@ public static class LobbyStateSetActivityFunction
     {
         var props = ctx.GetInput<LobbyStateSetActivityFunctionProps>();
         var container = cosmosClient.GetLobbyContainer();
-
-        Console.WriteLine($"Setting state of {props.LobbyId} to {props.State}");
         
         await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
         {

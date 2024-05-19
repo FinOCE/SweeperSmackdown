@@ -63,7 +63,7 @@ public static class LobbyChangeFeedFunction
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("Error occurred attempting to update vote, skipping...");
+                    // Ignore and continue
                 }
 
                 if (vote != null)
@@ -82,12 +82,9 @@ public static class LobbyChangeFeedFunction
                         await voteDb.AddAsync(vote);
                 }
 
-                Console.WriteLine($"#### {unaddedUsers.Length} joined and {removedUsers.Length} left ####");
-
                 // Add users to websocket and notify
                 foreach (var id in unaddedUsers)
                 {
-                    Console.WriteLine($"Adding user {id}");
                     lobby.AddedUserIds = lobby.AddedUserIds.Append(id).Distinct().ToArray();
 
                     await ws.AddAsync(ActionFactory.AddUser(id, lobby.Id));
@@ -97,25 +94,19 @@ public static class LobbyChangeFeedFunction
                 // Remove users from websocket and notify
                 foreach (var id in removedUsers)
                 {
-                    Console.WriteLine($"Removing user {id}");
                     lobby.AddedUserIds = lobby.AddedUserIds.Where(userId => userId != id).ToArray();
 
                     await ws.AddAsync(ActionFactory.RemoveUser(id, lobby.Id));
                     await ws.AddAsync(ActionFactory.RemoveUserFromLobby(id, lobby.Id));
                 }
 
-                Console.WriteLine("Create boards for players joining mid-game");
-
                 // Create boards for players joining mid-game
                 if (lobby.State == ELobbyState.Play)
                 {
-                    Console.WriteLine($"Proceeding with {unaddedUsers.Count()} players");
                     foreach (var id in unaddedUsers)
                     {
                         var boardManagerStatus = await orchestrationClient.GetStatusAsync(
                             Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id));
-
-                        Console.WriteLine($"For user {id} the board manager is {(boardManagerStatus.IsInactive() ? "inactive" : "active")}");
 
                         if (boardManagerStatus.IsInactive())
                             await orchestrationClient.StartNewAsync(
@@ -128,7 +119,6 @@ public static class LobbyChangeFeedFunction
                 // Update user ID lists
                 if (unaddedUsers.Length > 0 || removedUsers.Length > 0)
                 {
-                    Console.WriteLine("Updating userIds and addedUserIds...");
                     await cosmosClient.GetLobbyContainer().PatchItemAsync<Lobby>(lobby.Id, new(lobby.Id), new[]
                     {
                         PatchOperation.Set("/userIds", lobby.UserIds),

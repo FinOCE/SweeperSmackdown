@@ -30,8 +30,6 @@ export function MainMenu() {
   useEffect(() => {
     if (!redirecting || !lobby) return
 
-    console.log(lobby.state)
-
     switch (lobby.state) {
       case Api.Enums.ELobbyState.Init:
       case Api.Enums.ELobbyState.Configure:
