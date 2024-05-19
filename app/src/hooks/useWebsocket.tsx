@@ -4,6 +4,11 @@ import { useApi } from "./useApi"
 import { useOrigin } from "./useOrigin"
 import { useEmbeddedAppSdk } from "./useEmbeddAppSdk"
 
+// Increase maximum listeners to allow multiple components to subscribe to websocket events
+const maxListeners = 100
+require("events").EventEmitter.prototype._maxListeners = maxListeners
+require("events").defaultMaxListeners = maxListeners
+
 type TWebsocketContext = {
   ws: WebPubSubClient | null
 }

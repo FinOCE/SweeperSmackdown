@@ -207,9 +207,7 @@ export function GameActive() {
       if (!lobby || !competitionState) return
 
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.UserJoin>("USER_JOIN", data)) return
-
-      / TODO: Move below into a resource hook
+      if (!isEvent<Websocket.Response.UserJoin>("USER_JOIN", data)) return // TODO: Move below into a resource hook
       ;(async () => {
         const [err, boards] = await api
           .boardGet(lobby.id, data.userId)
@@ -238,14 +236,14 @@ export function GameActive() {
 
     ws.on("group-message", onBoardCreate)
     ws.on("group-message", onMoveAdd)
-    // ws.on("group-message", onGameWon)
+    ws.on("group-message", onGameWon)
     ws.on("group-message", onUserJoin)
     ws.on("group-message", onUserLeave)
 
     return () => {
       ws.off("group-message", onBoardCreate)
       ws.off("group-message", onMoveAdd)
-      // ws.off("group-message", onGameWon)
+      ws.off("group-message", onGameWon)
       ws.off("group-message", onUserJoin)
       ws.off("group-message", onUserLeave)
     }
