@@ -15,6 +15,10 @@ export class State {
     return (1 << 0) | state
   }
 
+  public static unreveal(state: number): number {
+    return this.mask(1, 7) & state
+  }
+
   public static isRevealed(state: number): boolean {
     return this.containsBit(state, 0)
   }

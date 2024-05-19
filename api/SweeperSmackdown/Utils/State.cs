@@ -25,6 +25,9 @@ public static class State
     public static byte Reveal(byte state) =>
         (byte)(1 << 0 | state);
 
+    public static byte Unreveal(byte state) =>
+        (byte)(Mask(1, 7) & state);
+
     public static bool IsRevealed(byte state) =>
         ContainsBit(state, 0);
 

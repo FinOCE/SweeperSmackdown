@@ -45,7 +45,7 @@ export function GameActive() {
 
   // Load competitor boards if not already loaded
   useEffect(() => {
-    if (!lobby) return // TODO: Move below into a resource hook
+    if (!lobby || !user) return // TODO: Move below into a resource hook
     ;(async () => {
       const [err, boards] = await api
         .boardGetAll(lobby.id)
@@ -54,14 +54,24 @@ export function GameActive() {
 
       if (err || !boards) return
 
-      const states = Object.entries(boards)
-        .map(([userId, gameState]) => ({
-          userId,
-          gameState: new TextEncoder().encode(gameState)
-        }))
-        .reduce((pre, cur) => ({ ...pre, [cur.userId]: cur.gameState }), {} as Record<string, Uint8Array>)
+      if (Object.keys(boards).length > 0) {
+        const states = Object.entries(boards)
+          .map(([userId, gameState]) => ({
+            userId,
+            gameState: new TextEncoder().encode(gameState)
+          }))
+          .filter(({ userId }) => userId !== user.id)
+          .reduce((pre, cur) => ({ ...pre, [cur.userId]: cur.gameState }), {} as Record<string, Uint8Array>)
 
-      setCompetitionState(prev => ({ ...prev, ...states }))
+        setCompetitionState(prev => ({ ...prev, ...states }))
+      }
+
+      if (user.id in boards) {
+        const gameState = new TextEncoder().encode(boards[user.id])
+        setInitialGameState(gameState.map(v => State.unreveal(v)))
+        setLocalGameState(gameState)
+        // TODO: Handle lost/won states
+      }
     })()
   }, [])
 
@@ -193,16 +203,57 @@ export function GameActive() {
       // TODO: Change to stop control and tell everyone the game is over on a countdown
     }
 
+    function onUserJoin(e: OnGroupDataMessageArgs) {
+      if (!lobby || !competitionState) return
+
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.UserJoin>("USER_JOIN", data)) return
+
+      console.log("onUserJoin") // TODO: Move below into a resource hook
+      ;(async () => {
+        const [err, boards] = await api
+          .boardGet(lobby.id, data.userId)
+          .then(([data]) => [null, data] as const)
+          .catch((err: Error) => [err, null] as const)
+
+        console.log(err === null, boards === null, !!competitionState[data.userId])
+
+        if (err || !boards) return
+
+        if (competitionState[data.userId]) return
+
+        const state = new TextEncoder().encode(boards[data.userId])
+        setCompetitionState(prev => ({ ...prev, [data.userId]: state }))
+      })()
+    }
+
+    function onUserLeave(e: OnGroupDataMessageArgs) {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.UserLeave>("USER_LEAVE", data)) return
+
+      setCompetitionState(prev => {
+        const newState = { ...prev }
+        delete newState[data.userId]
+        return newState
+      })
+
+      console.log("onUserLeave")
+    }
+
     ws.on("group-message", onBoardCreate)
     ws.on("group-message", onMoveAdd)
-    ws.on("group-message", onGameWon)
+    // ws.on("group-message", onGameWon)
+    ws.on("group-message", onUserJoin)
+    ws.on("group-message", onUserLeave)
 
     return () => {
       ws.off("group-message", onBoardCreate)
       ws.off("group-message", onMoveAdd)
-      ws.off("group-message", onGameWon)
+      // ws.off("group-message", onGameWon)
+      ws.off("group-message", onUserJoin)
+      ws.off("group-message", onUserLeave)
     }
-  }, [ws, user])
+  }, [ws, user, lobby, competitionState])
 
   // Only render once all dependencies are loaded
   if (!user || !lobby || !settings || !wins || !scores) return <Loading />

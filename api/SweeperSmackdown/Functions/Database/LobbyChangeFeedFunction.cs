@@ -28,8 +28,8 @@ public static class LobbyChangeFeedFunction
             CreateLeaseContainerIfNotExists = true)]
             IEnumerable<Lobby> lobbies,
         [CosmosDB(
-            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
+            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Vote> voteDb,
         [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
@@ -41,6 +41,8 @@ public static class LobbyChangeFeedFunction
         {
             try
             {
+                var initialLobby = lobby;
+                
                 await ws.AddAsync(ActionFactory.UpdateLobby(lobby.Id, LobbyResponseDto.FromModel(lobby)));
 
                 var unaddedUsers = lobby.UserIds
@@ -80,22 +82,26 @@ public static class LobbyChangeFeedFunction
                         await voteDb.AddAsync(vote);
                 }
 
+                Console.WriteLine($"#### {unaddedUsers.Length} joined and {removedUsers.Length} left ####");
+
                 // Add users to websocket and notify
                 foreach (var id in unaddedUsers)
                 {
+                    Console.WriteLine($"Adding user {id}");
                     lobby.AddedUserIds = lobby.AddedUserIds.Append(id).Distinct().ToArray();
 
-                    await ws.AddAsync(ActionFactory.AddUserToLobby(id, lobby.Id));
                     await ws.AddAsync(ActionFactory.AddUser(id, lobby.Id));
+                    await ws.AddAsync(ActionFactory.AddUserToLobby(id, lobby.Id));
                 }
 
                 // Remove users from websocket and notify
                 foreach (var id in removedUsers)
                 {
+                    Console.WriteLine($"Removing user {id}");
                     lobby.AddedUserIds = lobby.AddedUserIds.Where(userId => userId != id).ToArray();
 
-                    await ws.AddAsync(ActionFactory.RemoveUserFromLobby(id, lobby.Id));
                     await ws.AddAsync(ActionFactory.RemoveUser(id, lobby.Id));
+                    await ws.AddAsync(ActionFactory.RemoveUserFromLobby(id, lobby.Id));
                 }
 
                 Console.WriteLine("Create boards for players joining mid-game");
@@ -117,6 +123,17 @@ public static class LobbyChangeFeedFunction
                                 Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
                                 new BoardManagerOrchestrationFunctionProps(lobby.Settings));
                     }
+                }
+
+                // Update user ID lists
+                if (unaddedUsers.Length > 0 || removedUsers.Length > 0)
+                {
+                    Console.WriteLine("Updating userIds and addedUserIds...");
+                    await cosmosClient.GetLobbyContainer().PatchItemAsync<Lobby>(lobby.Id, new(lobby.Id), new[]
+                    {
+                        PatchOperation.Set("/userIds", lobby.UserIds),
+                        PatchOperation.Set("/addedUserIds", lobby.AddedUserIds)
+                    });
                 }
 
                 // Delete lobby if empty
