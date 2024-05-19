@@ -28,6 +28,10 @@ public class LobbyResponseDto
     [JsonPropertyName("wins")]
     public IDictionary<string, int> Wins { get; set; }
 
+    [JsonProperty("state")]
+    [JsonPropertyName("state")]
+    public ELobbyState State { get; set; }
+
     [JsonProperty("settings")]
     [JsonPropertyName("settings")]
     public GameSettings Settings { get; set; }
@@ -38,6 +42,7 @@ public class LobbyResponseDto
         string[] userIds,
         IDictionary<string, int> scores,
         IDictionary<string, int> wins,
+        ELobbyState state,
         GameSettings settings)
     {
         LobbyId = lobbyId;
@@ -45,6 +50,7 @@ public class LobbyResponseDto
         UserIds = userIds;
         Scores = scores;
         Wins = wins;
+        State = state;
         Settings = settings;
     }
 
@@ -55,5 +61,6 @@ public class LobbyResponseDto
             lobby.UserIds,
             lobby.Scores,
             lobby.Wins,
+            lobby.State,
             lobby.Settings);
 }

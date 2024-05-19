@@ -43,33 +43,44 @@ public static class LobbyChangeFeedFunction
             {
                 await ws.AddAsync(ActionFactory.UpdateLobby(lobby.Id, LobbyResponseDto.FromModel(lobby)));
 
-                Vote vote = await cosmosClient
-                    .GetVoteContainer()
-                    .ReadItemAsync<Vote>(lobby.Id, new(lobby.Id));
-
-                // Handle vote requirement changes and clearing removed member votes
-                var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
-
-                var requiredVotesChanged = requiredVotes != vote.RequiredVotes;
-                vote.RequiredVotes = requiredVotes;
-
-                var removedUsers = vote.Votes
-                    .SelectMany(kvp => kvp.Value.Where(id => !lobby.UserIds.Contains(id)))
-                    .ToArray();
-
-                foreach (var choice in vote.Votes.Keys)
-                    vote.Votes[choice] = vote.Votes[choice]
-                        .Where(id => lobby.UserIds.Contains(id))
-                        .ToArray();
-
-                if (requiredVotesChanged || removedUsers.Length > 0)
-                    await voteDb.AddAsync(vote);
-
-                // Add users to websocket and notify
                 var unaddedUsers = lobby.UserIds
                     .Where(id => !lobby.AddedUserIds.Contains(id))
                     .ToArray();
 
+                var removedUsers = lobby.AddedUserIds
+                    .Where(id => !lobby.UserIds.Contains(id))
+                    .ToArray();
+
+                // Handle vote requirement changes and clearing removed member votes
+                Vote? vote = null;
+                try
+                {
+                    vote = await cosmosClient
+                        .GetVoteContainer()
+                        .ReadItemAsync<Vote>(lobby.Id, new(lobby.Id));
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Error occurred attempting to update vote, skipping...");
+                }
+
+                if (vote != null)
+                {
+                    var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
+
+                    var requiredVotesChanged = requiredVotes != vote.RequiredVotes;
+                    vote.RequiredVotes = requiredVotes;
+
+                    foreach (var choice in vote.Votes.Keys)
+                        vote.Votes[choice] = vote.Votes[choice]
+                            .Where(id => lobby.UserIds.Contains(id))
+                            .ToArray();
+
+                    if (requiredVotesChanged || removedUsers.Length > 0)
+                        await voteDb.AddAsync(vote);
+                }
+
+                // Add users to websocket and notify
                 foreach (var id in unaddedUsers)
                 {
                     lobby.AddedUserIds = lobby.AddedUserIds.Append(id).Distinct().ToArray();
@@ -87,13 +98,18 @@ public static class LobbyChangeFeedFunction
                     await ws.AddAsync(ActionFactory.RemoveUser(id, lobby.Id));
                 }
 
+                Console.WriteLine("Create boards for players joining mid-game");
+
                 // Create boards for players joining mid-game
                 if (lobby.State == ELobbyState.Play)
                 {
+                    Console.WriteLine($"Proceeding with {unaddedUsers.Count()} players");
                     foreach (var id in unaddedUsers)
                     {
                         var boardManagerStatus = await orchestrationClient.GetStatusAsync(
                             Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id));
+
+                        Console.WriteLine($"For user {id} the board manager is {(boardManagerStatus.IsInactive() ? "inactive" : "active")}");
 
                         if (boardManagerStatus.IsInactive())
                             await orchestrationClient.StartNewAsync(
@@ -144,14 +160,17 @@ public static class LobbyChangeFeedFunction
                                 Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
                                 "Lobby empty");
                         }
-                        catch (Exception) { } // TODO: Check if this try..catch is needed
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Failed to terminate a board manager orchestration (DOES THIS EVER OCCUR?)");
+                        }
 
                     await boardContainer.DeleteItemAsync<BoardEntityMap>(lobby.Id, new(lobby.Id));
                 }
             }
             catch (Exception)
             {
-                // TODO: Check if this ever occurs
+                Console.WriteLine("Something went wrong updating a lobby (DOES THIS EVEN OCCUR?)");
             }
         }
     }

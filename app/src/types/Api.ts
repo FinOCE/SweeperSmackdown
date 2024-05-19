@@ -17,6 +17,7 @@ export namespace Api {
     scores: Record<string, number>
     wins: Record<string, number>
     settings: Api.GameSettings
+    state: Enums.ELobbyState
   }
 
   export type User = {
@@ -35,6 +36,16 @@ export namespace Api {
     requiredVotes: number
     choices: string[]
     votes: Record<string, string[]>
+  }
+
+  export namespace Enums {
+    export enum ELobbyState {
+      Init = 0,
+      Configure = 1,
+      Play = 2,
+      Won = 3,
+      Celebrate = 4
+    }
   }
 
   export namespace Request {

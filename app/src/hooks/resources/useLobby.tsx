@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { useApi } from "../useApi"
-import { useWebsocket } from "../useWebsocket"
 import { useEmbeddedAppSdk } from "../useEmbeddAppSdk"
 import { useLobbyData } from "../data/useLobbyData"
+import { Api } from "../../types/Api"
 
 type TLobby = {
   id: string
   hostId: string
+  state: Api.Enums.ELobbyState
 }
 
 type TLobbyContext = {
@@ -26,14 +27,13 @@ export const useLobby = () => useContext(LobbyContext)
 
 export function LobbyProvider(props: { children?: React.ReactNode }) {
   const { api } = useApi()
-  const { ws } = useWebsocket()
   const { user } = useEmbeddedAppSdk()
   const { lobbyData, setLobbyData } = useLobbyData()
 
   const [lobby, setLobby] = useState<TLobby | null>(null)
 
   useEffect(() => {
-    setLobby(lobbyData ? { id: lobbyData.lobbyId, hostId: lobbyData.hostId } : null)
+    setLobby(lobbyData ? { id: lobbyData.lobbyId, hostId: lobbyData.hostId, state: lobbyData.state } : null)
   }, [lobbyData])
 
   async function createLobby(lobbyId?: string) {

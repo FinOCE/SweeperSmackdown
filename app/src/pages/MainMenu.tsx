@@ -9,6 +9,7 @@ import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { useOrigin } from "../hooks/useOrigin"
 import { ButtonList } from "../components/ui/ButtonList"
 import { useLobby } from "../hooks/resources/useLobby"
+import { Api } from "../types/Api"
 
 export function MainMenu() {
   const { origin } = useOrigin()
@@ -28,7 +29,22 @@ export function MainMenu() {
   // Go to lobby if already in one
   useEffect(() => {
     if (!redirecting || !lobby) return
-    navigate("GameConfigure")
+
+    console.log(lobby.state)
+
+    switch (lobby.state) {
+      case Api.Enums.ELobbyState.Init:
+      case Api.Enums.ELobbyState.Configure:
+        navigate("GameConfigure")
+        return
+      case Api.Enums.ELobbyState.Play:
+        navigate("GameActive")
+        return
+      case Api.Enums.ELobbyState.Won:
+      case Api.Enums.ELobbyState.Celebrate:
+        navigate("GameCelebration")
+        return
+    }
   }, [lobby, redirecting])
 
   async function joinOrCreate(id: string) {
