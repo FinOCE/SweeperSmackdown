@@ -202,12 +202,7 @@ export function GameConfigure() {
             min={7}
             max={32}
             value={localSettings.height}
-            onChange={e =>
-              change({
-                height: e,
-                mines: Math.floor(e * localSettings.width * 0.15625)
-              })
-            }
+            onChange={e => change({ height: e })}
           />
         </fieldset>
 
@@ -222,12 +217,7 @@ export function GameConfigure() {
             min={7}
             max={32}
             value={localSettings.width}
-            onChange={e =>
-              change({
-                width: e,
-                mines: Math.floor(localSettings.height * e * 0.15625)
-              })
-            }
+            onChange={e => change({ width: e })}
           />
         </fieldset>
 

@@ -57,17 +57,6 @@ public static class LobbyPatchFunction
         if (!lobby.UserIds.Contains(requesterId))
             return new StatusCodeResult(403);
 
-        // Confirm mine count is realistic
-        var newHeight = payload.Height ?? lobby.Settings.Height;
-        var newWidth = payload.Width ?? lobby.Settings.Width;
-        var newMines = payload.Mines ?? lobby.Settings.Mines;
-
-        if (newHeight * newWidth < newMines)
-            return new BadRequestObjectResult(new string[]
-            {
-                "Cannot update because this would result in more mines than there are board squares"
-            });
-
         // Confirm user is allowed to change host ID if attempted
         if (payload.HostId != null && lobby.HostId != requesterId)
             return new BadRequestObjectResult(new string[]
@@ -91,16 +80,27 @@ public static class LobbyPatchFunction
                 : 0;
 
         lobby.HostId = payload.HostId ?? lobby.HostId;
-        lobby.Settings = lobby.Settings.Update(
-            payload.Mode,
-            payload.Height,
-            payload.Width,
-            payload.Mines,
-            payload.Difficulty,
-            payload.Lives,
-            payload.TimeLimit,
-            payload.BoardCount,
-            seed);
+
+        try
+        {
+            lobby.Settings = lobby.Settings.Update(
+                payload.Mode,
+                payload.Height,
+                payload.Width,
+                payload.Mines,
+                payload.Difficulty,
+                payload.Lives,
+                payload.TimeLimit,
+                payload.BoardCount,
+                seed);
+        }
+        catch (ArgumentException)
+        {
+            return new BadRequestObjectResult(new string[]
+            {
+                "Unable to set lobby settings due to conflicting values"
+            });
+        }
 
         await db.AddAsync(lobby);
 

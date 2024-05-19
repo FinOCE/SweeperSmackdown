@@ -36,7 +36,11 @@ export function WebsocketProvider(props: { children: ReactNode }) {
           : `wss://${process.env.PUBLIC_ENV__DISCORD_CLIENT_ID}.discordsays.com/ws/client/hubs/Game?access_token=${res.accessToken}`
       )
       .then(url => {
-        setClient(new WebPubSubClient({ getClientAccessUrl: url }))
+        try {
+          setClient(new WebPubSubClient({ getClientAccessUrl: url }))
+        } catch (err) {
+          console.log("Failed to connect to web pubsub but caught error:", err)
+        }
       })
       .catch(() => setRetries(prev => prev + 1))
 
