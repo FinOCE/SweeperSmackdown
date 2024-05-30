@@ -5,14 +5,13 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using SweeperSmackdown.Utils;
-using SweeperSmackdown.Structures;
-using static Google.Protobuf.Collections.MapField<TKey, TValue>;
+using SweeperSmackdown.Models;
 
 namespace SweeperSmackdown.Strategies.Auth;
 
 public class DiscordAuthStrategy : IAuthStrategy
 {
-    public async Task<string> GenerateAccessToken(string code)
+    public async Task<Authentication> Authenticate(string code)
     {
         using HttpClient client = new();
 
@@ -32,10 +31,17 @@ public class DiscordAuthStrategy : IAuthStrategy
         var res = await client.PostAsync("https://discord.com/api/oauth2/token", content);
         var data = await res.Content.ReadAsAsync<DiscordOAuthTokenResponseDto>();
 
-        return data.AccessToken;
+        var user = await GetUserInfo(data.AccessToken, null);
+        
+        return new Authentication(
+            user.Id,
+            data.AccessToken,
+            data.RefreshToken,
+            data.ExpiresIn,
+            data.Scope);
     }
 
-    public async Task<string> Refresh(string refreshToken)
+    public async Task<Authentication> Refresh(string id, string refreshToken)
     {
         using HttpClient client = new();
 
@@ -55,7 +61,12 @@ public class DiscordAuthStrategy : IAuthStrategy
         var res = await client.PostAsync("https://discord.com/api/oauth2/token", content);
         var data = await res.Content.ReadAsAsync<DiscordOAuthTokenResponseDto>();
 
-        return data.AccessToken;
+        return new Authentication(
+            id,
+            data.AccessToken,
+            data.RefreshToken,
+            data.ExpiresIn,
+            data.Scope);
     }
 
     public async Task<User> GetUserInfo(string accessToken, string? guildId)

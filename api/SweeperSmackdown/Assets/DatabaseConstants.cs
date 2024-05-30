@@ -9,4 +9,8 @@ public static class DatabaseConstants
     public const string VOTE_CONTAINER_NAME = "votes";
 
     public const string BOARD_CONTAINER_NAME = "boards";
+
+    public const string AUTH_CONTAINER_NAME = "auth";
+
+    public const string USER_CONTAINER_NAME = "users";
 }

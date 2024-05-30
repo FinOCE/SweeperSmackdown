@@ -1,13 +1,13 @@
-﻿using SweeperSmackdown.Structures;
+﻿using SweeperSmackdown.Models;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Strategies.Auth;
 
 public interface IAuthStrategy
 {
-    public Task<string> GenerateAccessToken(string code);
+    public Task<Authentication> Authenticate(string code);
 
-    public Task<string> Refresh(string refreshToken);
+    public Task<Authentication> Refresh(string id, string refreshToken);
 
     public Task<User> GetUserInfo(string accessToken, string? guildId);
 }

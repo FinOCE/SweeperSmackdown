@@ -30,7 +30,7 @@ public static class HttpRequestExtensions
         var hash = parts[1];
 
         // Verify token
-        if (!Hash.Verify(id, hash))
+        if (!Crypto.VerifyHash(id, hash))
             return null;
 
         // Return ID on valid request

@@ -100,6 +100,32 @@ public static class PurgeFunction
 
         Console.WriteLine("Board container deleted and recreated");
 
+        // Delete all auth
+        var authContainer = cosmosClient.GetAuthContainer();
+        await authContainer.DeleteContainerAsync();
+
+        await database.CreateContainerAsync(new()
+        {
+            Id = DatabaseConstants.AUTH_CONTAINER_NAME,
+            PartitionKeyPath = "/id",
+            DefaultTimeToLive = 86400 * 14
+        });
+
+        Console.WriteLine("Auth container deleted and recreated");
+
+        // Delete all users
+        var userContainer = cosmosClient.GetAuthContainer();
+        await userContainer.DeleteContainerAsync();
+
+        await database.CreateContainerAsync(new()
+        {
+            Id = DatabaseConstants.USER_CONTAINER_NAME,
+            PartitionKeyPath = "/id"
+        });
+
+        Console.WriteLine("User container deleted and recreated");
+
+        // Respond to request
         return new NoContentResult();
     }
 #endif

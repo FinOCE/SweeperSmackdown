@@ -42,4 +42,24 @@ public static class CosmosClientExtensions
         cosmosClient.GetContainer(
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.VOTE_CONTAINER_NAME);
+
+    /// <summary>
+    /// Get the container holding auth.
+    /// </summary>
+    /// <param name="cosmosClient">The CosmosClient</param>
+    /// <returns>The auth container</returns>
+    public static Container GetAuthContainer(this CosmosClient cosmosClient) =>
+        cosmosClient.GetContainer(
+            DatabaseConstants.DATABASE_NAME,
+            DatabaseConstants.AUTH_CONTAINER_NAME);
+
+    /// <summary>
+    /// Get the container holding users.
+    /// </summary>
+    /// <param name="cosmosClient">The CosmosClient</param>
+    /// <returns>The user container</returns>
+    public static Container GetUserContainer(this CosmosClient cosmosClient) =>
+        cosmosClient.GetContainer(
+            DatabaseConstants.DATABASE_NAME,
+            DatabaseConstants.USER_CONTAINER_NAME);
 }

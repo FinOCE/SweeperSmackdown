@@ -4,9 +4,9 @@ using System.Text;
 
 namespace SweeperSmackdown.Utils;
 
-public static class Hash
+public static class Crypto
 {
-    public static string Compute(string value)
+    public static string ComputeHash(string value)
     {
         var key = Environment.GetEnvironmentVariable("BearerTokenSecretKey")!;
         using var sha256 = new HMACSHA256(Encoding.UTF8.GetBytes(key));
@@ -14,9 +14,9 @@ public static class Hash
         return Convert.ToBase64String(hashBytes);
     }
 
-    public static bool Verify(string value, string hash)
+    public static bool VerifyHash(string value, string hash)
     {
-        var computed = Compute(value);
+        var computed = ComputeHash(value);
         return computed == hash;
     }
 }
