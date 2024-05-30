@@ -82,5 +82,36 @@ resource azCosmosDbContainerBoards 'Microsoft.DocumentDB/databaseAccounts/sqlDat
   }
 }
 
+resource azCosmosDbContainerAuth 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
+  parent: azCosmosDbDatabase
+  name: 'auth'
+  location: location
+  properties: {
+    resource: {
+      id: 'auth'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+      }
+      defaultTtl: 86400 * 14
+    }
+  }
+}
+
+resource azCosmosDbContainerUsers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
+  parent: azCosmosDbDatabase
+  name: 'users'
+  location: location
+  properties: {
+    resource: {
+      id: 'users'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+      }
+    }
+  }
+}
+
 // Outputs
 output name string = azCosmosDb.name
