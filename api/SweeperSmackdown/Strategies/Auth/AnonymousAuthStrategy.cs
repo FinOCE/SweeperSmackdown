@@ -13,7 +13,7 @@ public class AnonymousAuthStrategy : IAuthStrategy
         return Task.FromResult(RandomNumberGenerator.GetInt32(1000000).ToString());
     }
 
-    public Task<User> GetUserInfo(string accessToken)
+    public Task<User> GetUserInfo(string accessToken, string? guildId)
     {
         // TODO: Return real user info
 

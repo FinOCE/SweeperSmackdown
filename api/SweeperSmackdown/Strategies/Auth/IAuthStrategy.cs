@@ -7,5 +7,5 @@ public interface IAuthStrategy
 {
     public Task<string> GenerateAccessToken(string code);
 
-    public Task<User> GetUserInfo(string accessToken);
+    public Task<User> GetUserInfo(string accessToken, string? guildId);
 }

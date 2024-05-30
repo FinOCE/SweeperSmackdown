@@ -34,20 +34,41 @@ public class DiscordAuthStrategy : IAuthStrategy
         return data.AccessToken;
     }
 
-    public async Task<User> GetUserInfo(string accessToken)
+    public async Task<User> GetUserInfo(string accessToken, string? guildId)
     {
         using HttpClient client = new();
-        using HttpRequestMessage req = new(HttpMethod.Get, "https://discord.com/api/users/@me");
 
-        req.Headers.Clear();
-        req.Headers.Add("Authorization", $"Bearer {accessToken}");
+        if (guildId is not null)
+        {
+            using HttpRequestMessage req = new(
+                HttpMethod.Get,
+                $"https://discord.com/api/users/@me/guilds/{guildId}/member");
 
-        var res = await client.SendAsync(req);
-        var data = await res.Content.ReadAsAsync<DiscordOAuthUserResponseDto>();
+            req.Headers.Clear();
+            req.Headers.Add("Authorization", $"Bearer {accessToken}");
 
-        return new User(
-            data.Id,
-            data.GlobalName ?? data.Username,
-            DiscordUtils.GetAvatarUrl(data.Id, data.Discriminator, data.Avatar));
+            var res = await client.SendAsync(req);
+            var data = await res.Content.ReadAsAsync<DiscordOAuthGuildMemberResponseDto>();
+
+            return new User(
+                data.User.Id,
+                data.Nickname ?? data.User.GlobalName ?? data.User.Username,
+                DiscordUtils.GetAvatarUrl(data.User.Id, data.User.Discriminator, data.Avatar ?? data.User.Avatar));
+        }
+        else
+        {
+            using HttpRequestMessage req = new(HttpMethod.Get, "https://discord.com/api/users/@me");
+
+            req.Headers.Clear();
+            req.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+            var res = await client.SendAsync(req);
+            var data = await res.Content.ReadAsAsync<DiscordOAuthUserResponseDto>();
+
+            return new User(
+                data.Id,
+                data.GlobalName ?? data.Username,
+                DiscordUtils.GetAvatarUrl(data.Id, data.Discriminator, data.Avatar));
+        }
     }
 }

@@ -19,7 +19,7 @@ public static class LoginPostFunction
             : "discord";
 
         var authStrategy = AuthStrategyProvider.GetStrategy(type);
-        var user = await authStrategy.GetUserInfo(payload.AccessToken);
+        var user = await authStrategy.GetUserInfo(payload.AccessToken, payload.GuildId);
 
         var hash = Hash.Compute(user.Id);
         var bearerToken = $"{user.Id}:{hash}";
