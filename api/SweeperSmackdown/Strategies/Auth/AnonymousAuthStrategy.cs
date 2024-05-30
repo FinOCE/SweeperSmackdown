@@ -8,9 +8,16 @@ public class AnonymousAuthStrategy : IAuthStrategy
 {
     public Task<string> GenerateAccessToken(string code)
     {
-        // TODO: Generate real SECURE bearer token
+        // TODO: Generate real SECURE access token
 
         return Task.FromResult(RandomNumberGenerator.GetInt32(1000000).ToString());
+    }
+
+    public Task<string> Refresh(string refreshToken)
+    {
+        // TODO: Refresh real SECURE access token
+
+        return Task.FromResult(refreshToken);
     }
 
     public Task<User> GetUserInfo(string accessToken, string? guildId)

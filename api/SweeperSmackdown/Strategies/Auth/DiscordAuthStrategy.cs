@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using SweeperSmackdown.Utils;
 using SweeperSmackdown.Structures;
+using static Google.Protobuf.Collections.MapField<TKey, TValue>;
 
 namespace SweeperSmackdown.Strategies.Auth;
 
@@ -21,6 +22,29 @@ public class DiscordAuthStrategy : IAuthStrategy
                 { "client_secret", Environment.GetEnvironmentVariable("DiscordClientSecret")! },
                 { "grant_type", "authorization_code" },
                 { "code", code }
+            };
+        var encoded = string.Join("&", body.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+
+        var content = new StringContent(encoded);
+        content.Headers.Clear();
+        content.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
+
+        var res = await client.PostAsync("https://discord.com/api/oauth2/token", content);
+        var data = await res.Content.ReadAsAsync<DiscordOAuthTokenResponseDto>();
+
+        return data.AccessToken;
+    }
+
+    public async Task<string> Refresh(string refreshToken)
+    {
+        using HttpClient client = new();
+
+        var body = new Dictionary<string, string>
+            {
+                { "client_id", Environment.GetEnvironmentVariable("DiscordClientId")! },
+                { "client_secret", Environment.GetEnvironmentVariable("DiscordClientSecret")! },
+                { "grant_type", "refresh_token" },
+                { "refresh_token", refreshToken }
             };
         var encoded = string.Join("&", body.Select(kvp => $"{kvp.Key}={kvp.Value}"));
 
