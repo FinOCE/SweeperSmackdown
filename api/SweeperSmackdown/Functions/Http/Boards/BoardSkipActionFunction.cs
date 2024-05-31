@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardSkipPostFunction
+public static class BoardSkipActionFunction
 {
-    [FunctionName(nameof(BoardSkipPostFunction))]
+    [FunctionName(nameof(BoardSkipActionFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -71,7 +71,7 @@ public static class BoardSkipPostFunction
 
         // Notify orchestrator
         await orchestrationClient.RaiseEventAsync(
-            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
+            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, userId),
             DurableEvents.BOARD_SKIPPED);
 
         // Respond to request

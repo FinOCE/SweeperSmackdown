@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardSolutionPostFunction
+public static class BoardSolutionActionFunction
 {
-    [FunctionName(nameof(BoardSolutionPostFunction))]
+    [FunctionName(nameof(BoardSolutionActionFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -83,7 +83,7 @@ public static class BoardSolutionPostFunction
 
         // Notify orchestrator
         await orchestrationClient.RaiseEventAsync(
-            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
+            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, userId),
             DurableEvents.BOARD_COMPLETED);
 
         // Respond to request

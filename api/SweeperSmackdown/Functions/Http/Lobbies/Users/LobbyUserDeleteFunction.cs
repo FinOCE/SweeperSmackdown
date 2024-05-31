@@ -3,20 +3,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http.Users;
+namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
 
-public static class UserPutFunction
+public static class LobbyUserDeleteFunction
 {
-    [FunctionName(nameof(UserPutFunction))]
+    [FunctionName(nameof(LobbyUserDeleteFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -42,20 +40,15 @@ public static class UserPutFunction
         if (lobby == null)
             return new NotFoundResult();
 
-        // Only allow the specific user join themselves
-        if (requesterId != userId)
+        // Only allow the specific user and the host to delete them
+        if (requesterId != userId && lobby.HostId != userId)
             return new StatusCodeResult(403);
 
-        // Add to lobby
-        var alreadyInLobby = lobby.UserIds.Contains(userId);
-        lobby.UserIds = lobby.UserIds.Append(userId).Distinct().ToArray();
+        // Remove user from lobby
+        lobby.UserIds = lobby.UserIds.Where(id => id != userId).ToArray();
         await lobbyDb.AddAsync(lobby);
 
         // Respond to request
-        return alreadyInLobby
-            ? new OkObjectResult(UserResponseDto.FromModel(lobby, userId))
-            : new CreatedResult(
-                $"/lobbies/{lobbyId}/users/{userId}",
-                UserResponseDto.FromModel(lobby, userId));
+        return new NoContentResult();
     }
 }

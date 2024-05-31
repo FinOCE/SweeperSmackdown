@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
 
-public class BoardManagerOrchestrationFunctionProps
+public class BoardManagerOrchestratorFunctionProps
 {
     public GameSettings Settings;
 
     public int Remaining;
 
-    public BoardManagerOrchestrationFunctionProps(GameSettings settings, int? remaining = null)
+    public BoardManagerOrchestratorFunctionProps(GameSettings settings, int? remaining = null)
     {
         int boardCount = settings.BoardCount != 0 ? settings.BoardCount : -1;
         
@@ -26,15 +26,15 @@ public class BoardManagerOrchestrationFunctionProps
     }
 }
 
-public static class BoardManagerOrchestrationFunction
+public static class BoardManagerOrchestratorFunction
 {
-    [FunctionName(nameof(BoardManagerOrchestrationFunction))]
+    [FunctionName(nameof(BoardManagerOrchestratorFunction))]
     public static async Task Run(
         [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var lobbyId = Id.FromInstance(ctx.InstanceId);
         var userId = Id.UserFromInstance(ctx.InstanceId);
-        var props = ctx.GetInput<BoardManagerOrchestrationFunctionProps>();
+        var props = ctx.GetInput<BoardManagerOrchestratorFunctionProps>();
 
         // Create repeatable durable safe random
         var iteration = props.Settings.BoardCount - props.Remaining;
@@ -76,7 +76,7 @@ public static class BoardManagerOrchestrationFunction
         if (props.Remaining > 0 || props.Remaining == -1)
         {
             ctx.ContinueAsNew(
-                new BoardManagerOrchestrationFunctionProps(
+                new BoardManagerOrchestratorFunctionProps(
                     props.Settings,
                     props.Remaining));
         }

@@ -8,11 +8,11 @@ using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
 using System.Linq;
 
-namespace SweeperSmackdown.Functions.Http.Users;
+namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
 
-public static class UserGetFunction
+public static class LobbyUserGetFunction
 {
-    [FunctionName(nameof(UserGetFunction))]
+    [FunctionName(nameof(LobbyUserGetFunction))]
     public static IActionResult Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
         [CosmosDB(
@@ -39,6 +39,6 @@ public static class UserGetFunction
             return new StatusCodeResult(403);
 
         // Respond to request
-        return new OkObjectResult(UserResponseDto.FromModel(lobby, userId));
+        return new OkObjectResult(LobbyUserResponseDto.FromModel(lobby, userId));
     }
 }

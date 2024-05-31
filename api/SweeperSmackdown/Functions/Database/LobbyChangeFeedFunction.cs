@@ -72,13 +72,13 @@ public static class LobbyChangeFeedFunction
                     foreach (var id in unaddedUsers)
                     {
                         var boardManagerStatus = await orchestrationClient.GetStatusAsync(
-                            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id));
+                            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id));
 
                         if (boardManagerStatus.IsInactive())
                             await orchestrationClient.StartNewAsync(
-                                nameof(BoardManagerOrchestrationFunction),
-                                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
-                                new BoardManagerOrchestrationFunctionProps(lobby.Settings));
+                                nameof(BoardManagerOrchestratorFunction),
+                                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id),
+                                new BoardManagerOrchestratorFunctionProps(lobby.Settings));
                     }
                 }
 
@@ -118,7 +118,7 @@ public static class LobbyChangeFeedFunction
                     };
 
                     orchestrationIds.AddRange(boardEntityMap.BoardIds.Select(id =>
-                        Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id)));
+                        Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id)));
 
                     var tasks = boardEntityMap.BoardIds.Select(id =>
                         entityClient.SignalEntityAsync<IBoard>(
@@ -131,7 +131,7 @@ public static class LobbyChangeFeedFunction
                         try
                         {
                             await orchestrationClient.TerminateAsync(
-                                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobby.Id, id),
+                                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id),
                                 "Lobby empty");
                         }
                         catch (Exception)

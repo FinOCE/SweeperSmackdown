@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardResetPostFunction
+public static class BoardResetActionFunction
 {
-    [FunctionName(nameof(BoardResetPostFunction))]
+    [FunctionName(nameof(BoardResetActionFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
