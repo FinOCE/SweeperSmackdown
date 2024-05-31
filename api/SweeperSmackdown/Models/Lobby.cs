@@ -52,7 +52,8 @@ public class Lobby
 public enum ELobbyState
 {
     Init,
-    Configure,
+    ConfigureUnlocked,
+    ConfigureLocked,
     Play,
     Won,
     Celebrate

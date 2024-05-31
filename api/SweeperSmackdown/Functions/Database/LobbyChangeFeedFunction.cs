@@ -27,11 +27,6 @@ public static class LobbyChangeFeedFunction
             Connection = "CosmosDbConnectionString",
             CreateLeaseContainerIfNotExists = true)]
             IEnumerable<Lobby> lobbies,
-        [CosmosDB(
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
-            Connection = "CosmosDbConnectionString")]
-            IAsyncCollector<Vote> voteDb,
         [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
@@ -52,35 +47,6 @@ public static class LobbyChangeFeedFunction
                 var removedUsers = lobby.AddedUserIds
                     .Where(id => !lobby.UserIds.Contains(id))
                     .ToArray();
-
-                // Handle vote requirement changes and clearing removed member votes
-                Vote? vote = null;
-                try
-                {
-                    vote = await cosmosClient
-                        .GetVoteContainer()
-                        .ReadItemAsync<Vote>(lobby.Id, new(lobby.Id));
-                }
-                catch (Exception)
-                {
-                    // Ignore and continue
-                }
-
-                if (vote != null)
-                {
-                    var requiredVotes = VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length);
-
-                    var requiredVotesChanged = requiredVotes != vote.RequiredVotes;
-                    vote.RequiredVotes = requiredVotes;
-
-                    foreach (var choice in vote.Votes.Keys)
-                        vote.Votes[choice] = vote.Votes[choice]
-                            .Where(id => lobby.UserIds.Contains(id))
-                            .ToArray();
-
-                    if (requiredVotesChanged || removedUsers.Length > 0)
-                        await voteDb.AddAsync(vote);
-                }
 
                 // Add users to websocket and notify
                 foreach (var id in unaddedUsers)
@@ -130,11 +96,9 @@ public static class LobbyChangeFeedFunction
                 if (lobby.UserIds.Length == 0)
                 {
                     var lobbyContainer = cosmosClient.GetLobbyContainer();
-                    var voteContainer = cosmosClient.GetVoteContainer();
                     var boardContainer = cosmosClient.GetBoardContainer();
 
                     await lobbyContainer.DeleteItemAsync<Lobby>(lobby.Id, new(lobby.Id));
-                    await voteContainer.DeleteItemAsync<Vote>(lobby.Id, new(lobby.Id));
 
                     BoardEntityMap boardEntityMap = await boardContainer.ReadItemAsync<BoardEntityMap>(
                         lobby.Id,

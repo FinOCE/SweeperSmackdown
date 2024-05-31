@@ -41,12 +41,6 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.LOBBY_START, "SYSTEM", ""),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction UpdateVoteState(string lobbyId, VoteGroupResponseDto vote) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.VOTE_STATE_UPDATE, "SYSTEM", vote),
-            WebPubSubDataType.Json);
-
     public static WebPubSubAction StartTimer(string lobbyId, DateTime expiry) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
@@ -81,5 +75,11 @@ public static class ActionFactory
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
             MessageFactory.Create(PubSubEvents.GAME_WON, userId, ""),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction GameStarting(string lobbyId, DateTime expiry) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.GAME_STARTING, "SYSTEM", expiry),
             WebPubSubDataType.Json);
 }

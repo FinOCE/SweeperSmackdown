@@ -32,14 +32,4 @@ public static class CosmosClientExtensions
         cosmosClient.GetContainer(
             DatabaseConstants.DATABASE_NAME,
             DatabaseConstants.LOBBY_CONTAINER_NAME);
-            
-    /// <summary>
-    /// Get the container holding votes.
-    /// </summary>
-    /// <param name="cosmosClient">The CosmosClient</param>
-    /// <returns>The vote container</returns>
-    public static Container GetVoteContainer(this CosmosClient cosmosClient) =>
-        cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.VOTE_CONTAINER_NAME);
 }
