@@ -6,6 +6,7 @@ using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -49,14 +50,14 @@ public static class GameActiveFunction
         // TODO: Ensure all players have a board created before starting
 
         // Setup timer if needed
+        using var timeoutCts = new CancellationTokenSource();
+        
         if (props.Settings.TimeLimit != 0)
         {
-            _ = ctx.StartNewOrchestration(
-                nameof(TimerOrchestratorFunction),
-                new TimerOrchestratorFunctionProps(props.Settings.TimeLimit, ctx.InstanceId),
-                Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId));
+            var timerTask = ctx.CreateTimer(
+                ctx.CurrentUtcDateTime.AddSeconds(props.Settings.TimeLimit),
+                timeoutCts.Token);
 
-            var timerTask = ctx.WaitForExternalEvent(DurableEvents.TIMER_COMPLETED);
             tasks.Add(timerTask);
         }
 
@@ -71,6 +72,9 @@ public static class GameActiveFunction
         
         // Determine the winner
         var winner = await Task.WhenAny(tasks);
+
+        if (winner == winnerTask)
+            timeoutCts.Cancel();
 
         // Update state to won
         await ctx.CallActivityAsync(

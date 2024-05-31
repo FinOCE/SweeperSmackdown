@@ -52,7 +52,7 @@ public static class GameConfigureFunction
         var expiry = ctx.CurrentUtcDateTime.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
 
         var notification = ctx.CallActivityAsync(
-            nameof(GameStartConfirmationOrchestratorFunction),
+            nameof(GameStartNotifyCountdownActivityFunction),
             new GameStartNotifyCountdownActivityFunctionProps(lobbyId, expiry));
 
         var timer = ctx.CreateTimer(expiry, timeoutCts.Token);

@@ -12,12 +12,6 @@ public static class PubSubEvents
 
     public const string LOBBY_START = "LOBBY_START";
 
-    public const string TIMER_START = "TIMER_START";
-
-    public const string TIMER_RESET = "TIMER_RESET";
-
-    public const string TIMER_CLEAR = "TIMER_CLEAR";
-
     public const string BOARD_CREATE = "BOARD_CREATE";
 
     public const string MOVE_ADD = "MOVE_ADD";
@@ -25,4 +19,6 @@ public static class PubSubEvents
     public const string GAME_WON = "GAME_WON";
 
     public const string GAME_STARTING = "GAME_STARTING";
+
+    public const string GAME_CELEBRATION_STARTING = "GAME_CELEBRATION_STARTING";
 }

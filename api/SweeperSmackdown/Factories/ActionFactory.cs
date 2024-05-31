@@ -3,7 +3,6 @@ using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.DTOs.Websocket;
-using SweeperSmackdown.Extensions;
 using System;
 using System.Text;
 
@@ -41,24 +40,6 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.LOBBY_START, "SYSTEM", ""),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction StartTimer(string lobbyId, DateTime expiry) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.TIMER_START, "SYSTEM", new { expiry = expiry.ToUnixTimeMilliseconds() }),
-            WebPubSubDataType.Json);
-    
-    public static WebPubSubAction ResetTimer(string lobbyId) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.TIMER_RESET, "SYSTEM", ""),
-            WebPubSubDataType.Json);
-
-    public static WebPubSubAction ClearTimer(string lobbyId) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.TIMER_CLEAR, "SYSTEM", ""),
-            WebPubSubDataType.Json);
-
     public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState, bool reset) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
@@ -81,5 +62,11 @@ public static class ActionFactory
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
             MessageFactory.Create(PubSubEvents.GAME_STARTING, "SYSTEM", expiry),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction GameCelebrationStarting(string lobbyId, DateTime expiry) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.GAME_CELEBRATION_STARTING, "SYSTEM", expiry),
             WebPubSubDataType.Json);
 }

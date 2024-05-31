@@ -114,8 +114,7 @@ public static class LobbyChangeFeedFunction
                         Id.ForInstance(nameof(GameActiveFunction), lobby.Id),
                         Id.ForInstance(nameof(GameCelebrationFunction), lobby.Id),
                         Id.ForInstance(nameof(GameCleanupFunction), lobby.Id),
-                        Id.ForInstance(nameof(GameConfigureFunction), lobby.Id),
-                        Id.ForInstance(nameof(TimerOrchestratorFunction), lobby.Id)
+                        Id.ForInstance(nameof(GameConfigureFunction), lobby.Id)
                     };
 
                     orchestrationIds.AddRange(boardEntityMap.BoardIds.Select(id =>
