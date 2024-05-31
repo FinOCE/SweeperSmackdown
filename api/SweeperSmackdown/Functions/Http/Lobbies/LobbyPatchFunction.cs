@@ -50,7 +50,7 @@ public static class LobbyPatchFunction
         if (lobby == null)
             return new NotFoundResult();
 
-        if (lobby.State != ELobbyState.Configure)
+        if (lobby.State != ELobbyState.ConfigureUnlocked)
             return new ConflictResult();
 
         // Only allow lobby members to modify

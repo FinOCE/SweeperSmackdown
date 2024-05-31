@@ -85,8 +85,12 @@ public static class LobbyChangeFeedFunction
                 // Update user ID lists
                 if (unaddedUsers.Length > 0 || removedUsers.Length > 0)
                 {
+                    if (!lobby.UserIds.Contains(lobby.HostId) && lobby.UserIds.Length > 0)
+                        lobby.HostId = lobby.UserIds.First();
+
                     await cosmosClient.GetLobbyContainer().PatchItemAsync<Lobby>(lobby.Id, new(lobby.Id), new[]
                     {
+                        PatchOperation.Set("/hostId", lobby.HostId),
                         PatchOperation.Set("/userIds", lobby.UserIds),
                         PatchOperation.Set("/addedUserIds", lobby.AddedUserIds)
                     });
