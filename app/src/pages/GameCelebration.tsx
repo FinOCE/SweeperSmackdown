@@ -32,6 +32,8 @@ export function GameCelebration() {
 
   // Handle countdown timer
   useEffect(() => {
+    if (!ws) return
+
     function onGameCelebrationStarting(e: OnGroupDataMessageArgs) {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameCelebrationStarting>("GAME_CELEBRATION_STARTING", data)) return

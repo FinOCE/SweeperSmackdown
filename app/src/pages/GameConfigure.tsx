@@ -23,6 +23,7 @@ import { useWebsocket } from "../hooks/useWebsocket"
 import { isEvent } from "../utils/isEvent"
 import { Websocket } from "../types/Websocket"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
+import { useDelay } from "../hooks/useDelay"
 
 export function GameConfigure() {
   const { api } = useApi()
@@ -81,21 +82,20 @@ export function GameConfigure() {
   }, [settings])
 
   // Update server state whenever local state changes
-  useEffect(() => {
-    if (!lobby) return
-
-    const timer = setTimeout(() => {
-      if (Object.keys(changes).length > 0) {
-        api.lobbyPatch(lobby.id, changes)
-        setChanges({})
-      }
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [changes])
+  useDelay(
+    () => {
+      if (!lobby || Object.keys(changes).length === 0) return
+      api.lobbyPatch(lobby.id, changes)
+      setChanges({})
+    },
+    500,
+    [changes]
+  )
 
   // Handle countdown timer
   useEffect(() => {
+    if (!ws) return
+
     function onGameStarting(e: OnGroupDataMessageArgs) {
       if (!lobby) return
 
