@@ -21,7 +21,7 @@ import { Api } from "../types/Api"
 import { MainMenu } from "./MainMenu"
 import { GameConfigure } from "./GameConfigure"
 
-export function GameCelebration() {
+export function GameCelebration(lobbyId: string) {
   const { user, participants } = useEmbeddedAppSdk()
   const { lobby, leaveLobby } = useLobby()
   const { wins } = useWins()
@@ -57,7 +57,7 @@ export function GameCelebration() {
   useEffect(() => {
     if (!lobby) return
 
-    if (lobby.state !== Api.Enums.ELobbyState.Celebrate) navigate(GameConfigure)
+    if (lobby.state !== Api.Enums.ELobbyState.Celebrate) navigate(GameConfigure, lobbyId)
   }, [lobby])
 
   // Load page until ready

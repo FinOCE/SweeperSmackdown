@@ -27,7 +27,7 @@ import { useDelay } from "../hooks/useDelay"
 import { GameActive } from "./GameActive"
 import { MainMenu } from "./MainMenu"
 
-export function GameConfigure() {
+export function GameConfigure(lobbyId: string) {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
   const { ws } = useWebsocket()
@@ -86,8 +86,9 @@ export function GameConfigure() {
   // Update server state whenever local state changes
   useDelay(
     () => {
-      if (!lobby || Object.keys(changes).length === 0) return
-      api.lobbyPatch(lobby.id, changes)
+      if (Object.keys(changes).length === 0) return
+
+      api.lobbyPatch(lobbyId, changes)
       setChanges({})
     },
     500,
@@ -99,8 +100,6 @@ export function GameConfigure() {
     if (!ws) return
 
     function onGameStarting(e: OnGroupDataMessageArgs) {
-      if (!lobby) return
-
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameStarting>("GAME_STARTING", data)) return
 
@@ -109,7 +108,7 @@ export function GameConfigure() {
 
     ws.on("group-message", onGameStarting)
     return () => ws.off("group-message", onGameStarting)
-  }, [ws, lobby])
+  }, [ws])
 
   useEffect(() => {
     if (!countdownExpiry) return
@@ -119,9 +118,9 @@ export function GameConfigure() {
   }, [countdownExpiry])
 
   useEffect(() => {
-    if (!lobby) return
+    if (!lobby || !user) return
 
-    if (lobby.state === Api.Enums.ELobbyState.Play) navigate(GameActive)
+    if (lobby.state === Api.Enums.ELobbyState.Play) navigate(GameActive, lobbyId, user.id)
   }, [lobby])
 
   // Show loading if not ready
@@ -129,8 +128,6 @@ export function GameConfigure() {
 
   // Setup UI functions
   async function lock() {
-    if (!lobby) return
-
     try {
       await lockLobby()
     } catch (err) {
@@ -139,8 +136,6 @@ export function GameConfigure() {
   }
 
   async function unlock() {
-    if (!lobby) return
-
     try {
       await unlockLobby()
     } catch (err) {
@@ -149,8 +144,6 @@ export function GameConfigure() {
   }
 
   async function confirm() {
-    if (!lobby) return
-
     try {
       await confirmLobby()
     } catch (err) {
@@ -159,8 +152,6 @@ export function GameConfigure() {
   }
 
   async function leave() {
-    if (!lobby || !user) return
-
     await leaveLobby()
     navigate(MainMenu)
   }
@@ -168,9 +159,9 @@ export function GameConfigure() {
   // Render page
   return (
     <div id="game-configure">
-      {!isGuid(lobby.id) && (
+      {!isGuid(lobbyId) && (
         <div id="game-configure-header">
-          <Text type="title">Party {lobby.id}</Text>
+          <Text type="title">Party {lobbyId}</Text>
         </div>
       )}
 

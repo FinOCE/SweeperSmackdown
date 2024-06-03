@@ -30,23 +30,23 @@ export function MainMenu() {
 
   // Go to lobby if already in one
   useEffect(() => {
-    if (!redirecting || !lobby) return
+    if (!redirecting || !lobby || !user) return
 
     switch (lobby.state) {
       case Api.Enums.ELobbyState.Init:
       case Api.Enums.ELobbyState.ConfigureUnlocked:
       case Api.Enums.ELobbyState.ConfigureLocked:
-        navigate(GameConfigure)
+        navigate(GameConfigure, lobby.id)
         return
       case Api.Enums.ELobbyState.Play:
-        navigate(GameActive)
+        navigate(GameActive, lobby.id, user.id)
         return
       case Api.Enums.ELobbyState.Won:
       case Api.Enums.ELobbyState.Celebrate:
-        navigate(GameCelebration)
+        navigate(GameCelebration, lobby.id)
         return
     }
-  }, [lobby, redirecting])
+  }, [redirecting, lobby, user])
 
   async function joinOrCreate(id: string) {
     try {
