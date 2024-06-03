@@ -9,6 +9,9 @@ import { useOrigin } from "../hooks/useOrigin"
 import { ButtonList } from "../components/ui/ButtonList"
 import { useLobby } from "../hooks/resources/useLobby"
 import { Api } from "../types/Api"
+import { GameCelebration } from "./GameCelebration"
+import { GameActive } from "./GameActive"
+import { GameConfigure } from "./GameConfigure"
 
 export function MainMenu() {
   const { origin } = useOrigin()
@@ -33,14 +36,14 @@ export function MainMenu() {
       case Api.Enums.ELobbyState.Init:
       case Api.Enums.ELobbyState.ConfigureUnlocked:
       case Api.Enums.ELobbyState.ConfigureLocked:
-        navigate("GameConfigure")
+        navigate(GameConfigure)
         return
       case Api.Enums.ELobbyState.Play:
-        navigate("GameActive")
+        navigate(GameActive)
         return
       case Api.Enums.ELobbyState.Won:
       case Api.Enums.ELobbyState.Celebrate:
-        navigate("GameCelebration")
+        navigate(GameCelebration)
         return
     }
   }, [lobby, redirecting])

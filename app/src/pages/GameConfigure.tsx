@@ -24,6 +24,8 @@ import { isEvent } from "../utils/isEvent"
 import { Websocket } from "../types/Websocket"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 import { useDelay } from "../hooks/useDelay"
+import { GameActive } from "./GameActive"
+import { MainMenu } from "./MainMenu"
 
 export function GameConfigure() {
   const { api } = useApi()
@@ -119,7 +121,7 @@ export function GameConfigure() {
   useEffect(() => {
     if (!lobby) return
 
-    if (lobby.state === Api.Enums.ELobbyState.Play) navigate("GameActive")
+    if (lobby.state === Api.Enums.ELobbyState.Play) navigate(GameActive)
   }, [lobby])
 
   // Show loading if not ready
@@ -160,7 +162,7 @@ export function GameConfigure() {
     if (!lobby || !user) return
 
     await leaveLobby()
-    navigate("MainMenu")
+    navigate(MainMenu)
   }
 
   // Render page

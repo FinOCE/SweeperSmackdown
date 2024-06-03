@@ -5,6 +5,7 @@ import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Bomb } from "../components/ui/icons/Bomb"
 import { Text } from "../components/ui/Text"
+import { MainMenu } from "./MainMenu"
 
 export function Entrypoint() {
   const { sdk, user } = useEmbeddedAppSdk()
@@ -15,7 +16,7 @@ export function Entrypoint() {
 
   useEffect(() => {
     function handleNavigation() {
-      if (!loading) navigate("MainMenu")
+      if (!loading) navigate(MainMenu)
     }
 
     if (sdk && user && ws) {

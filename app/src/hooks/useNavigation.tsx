@@ -1,48 +1,51 @@
-import React, { createContext, useContext, useState } from "react"
-import { MainMenu } from "../pages/MainMenu"
-import { GameConfigure } from "../pages/GameConfigure"
-import { GameActive } from "../pages/GameActive"
-import { GameCelebration } from "../pages/GameCelebration"
+import React, { createContext, useContext, useRef, useState } from "react"
 import { Entrypoint } from "../pages/Entrypoint"
 import { FadeWrapper } from "../components/ui/FadeWrapper"
 
-type Navigation = {
-  navigate: (page: Page, animate?: boolean) => void
+type TNavigationContext = {
+  navigate: <E extends (...args: any[]) => React.JSX.Element>(element: P<E>["element"], ...args: P<E>["args"]) => void
+  navigateWithoutAnimation: <E extends (...args: any[]) => React.JSX.Element>(
+    element: P<E>["element"],
+    ...args: P<E>["args"]
+  ) => void
 }
 
-const NavigationContext = createContext<Navigation>({ navigate: () => {} })
+type P<E extends (...args: any[]) => React.JSX.Element> = {
+  element: E
+  args: Parameters<E>
+}
+
+const NavigationContext = createContext<TNavigationContext>({
+  navigate(element, ...args) {},
+  navigateWithoutAnimation(element, ...args) {}
+})
 export const useNavigation = () => useContext(NavigationContext)
 
-export function NavigationProvider() {
-  const [page, setPage] = useState<Page>("Entrypoint")
+export function NavigationProviderr() {
   const [animate, setAnimate] = useState<"in" | "out" | "off">("off")
+  const page = useRef<React.JSX.Element>(<Entrypoint />)
 
-  function navigate(page: Page, animate: boolean = true) {
-    if (animate) {
-      setAnimate("out")
+  function navigate<E extends (...args: any[]) => React.JSX.Element>(element: P<E>["element"], ...args: P<E>["args"]) {
+    setAnimate("out")
 
-      setTimeout(() => {
-        setPage(page)
-        setAnimate("in")
-      }, 500)
+    setTimeout(() => {
+      page.current = element(args)
+      setAnimate("in")
+    }, 500)
 
-      setTimeout(() => setAnimate("off"), 1000)
-    } else {
-      setPage(page)
-    }
+    setTimeout(() => setAnimate("off"), 1000)
+  }
+
+  function navigateWithoutAnimation<E extends (...args: any[]) => React.JSX.Element>(
+    element: P<E>["element"],
+    ...args: P<E>["args"]
+  ) {
+    page.current = element(args)
   }
 
   return (
-    <NavigationContext.Provider value={{ navigate }}>
-      <FadeWrapper animate={animate}>
-        {page === "Entrypoint" && (() => <Entrypoint />)()}
-        {page === "MainMenu" && (() => <MainMenu />)()}
-        {page === "GameConfigure" && (() => <GameConfigure />)()}
-        {page === "GameActive" && (() => <GameActive />)()}
-        {page === "GameCelebration" && (() => <GameCelebration />)()}
-      </FadeWrapper>
+    <NavigationContext.Provider value={{ navigate, navigateWithoutAnimation }}>
+      <FadeWrapper animate={animate}>{page.current}</FadeWrapper>
     </NavigationContext.Provider>
   )
 }
-
-type Page = "Entrypoint" | "MainMenu" | "GameConfigure" | "GameActive" | "GameCelebration"
