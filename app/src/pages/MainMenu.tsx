@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import "./MainMenu.scss"
 import { useNavigation } from "../hooks/useNavigation"
-import { useWebsocket } from "../hooks/useWebsocket"
 import { Loading } from "../components/Loading"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
@@ -32,7 +31,8 @@ export function MainMenu() {
 
     switch (lobby.state) {
       case Api.Enums.ELobbyState.Init:
-      case Api.Enums.ELobbyState.Configure:
+      case Api.Enums.ELobbyState.ConfigureUnlocked:
+      case Api.Enums.ELobbyState.ConfigureLocked:
         navigate("GameConfigure")
         return
       case Api.Enums.ELobbyState.Play:

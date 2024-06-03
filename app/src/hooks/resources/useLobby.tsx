@@ -15,13 +15,19 @@ type TLobbyContext = {
   createLobby: (lobbyId?: string) => Promise<void>
   joinLobby: (lobbyId: string) => Promise<void>
   leaveLobby: () => Promise<void>
+  lockLobby: () => Promise<void>
+  unlockLobby: () => Promise<void>
+  confirmLobby: () => Promise<void>
 }
 
 const LobbyContext = createContext<TLobbyContext>({
   lobby: null,
   async createLobby(lobbyId) {},
   async joinLobby(lobbyId) {},
-  async leaveLobby() {}
+  async leaveLobby() {},
+  async lockLobby() {},
+  async unlockLobby() {},
+  async confirmLobby() {}
 })
 export const useLobby = () => useContext(LobbyContext)
 
@@ -52,7 +58,7 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
     if (lobbyPutError) throw new Error("Lobby already exists")
 
     const [userPutError] = await api
-      .userPut(lobbyId, user.id)
+      .lobbyUserPut(lobbyId, user.id)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
@@ -65,7 +71,7 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
     if (!user) throw new Error("No user")
 
     const [userPutError] = await api
-      .userPut(lobbyId, user.id)
+      .lobbyUserPut(lobbyId, user.id)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
@@ -86,7 +92,7 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
     if (!lobby) throw new Error("No lobby")
 
     const [userDeleteError] = await api
-      .userDelete(lobby.id, user.id)
+      .lobbyUserDelete(lobby.id, user.id)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
@@ -95,8 +101,41 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
     setLobbyData(null)
   }
 
+  async function lockLobby() {
+    if (!lobby) throw new Error("No lobby")
+
+    const [err] = await api
+      .lobbyLock(lobby.id)
+      .then(([data]) => [null, data] as const)
+      .catch((err: Error) => [err, null] as const)
+
+    if (err) throw new Error("Failed to lock lobby")
+  }
+
+  async function unlockLobby() {
+    if (!lobby) throw new Error("No lobby")
+
+    const [err] = await api
+      .lobbyUnlock(lobby.id)
+      .then(([data]) => [null, data] as const)
+      .catch((err: Error) => [err, null] as const)
+
+    if (err) throw new Error("Failed to unlock lobby")
+  }
+
+  async function confirmLobby() {
+    if (!lobby) throw new Error("No lobby")
+
+    const [err] = await api
+      .lobbyConfirm(lobby.id)
+      .then(([data]) => [null, data] as const)
+      .catch((err: Error) => [err, null] as const)
+
+    if (err) throw new Error("Failed to confirm lobby")
+  }
+
   return (
-    <LobbyContext.Provider value={{ lobby, createLobby, joinLobby, leaveLobby }}>
+    <LobbyContext.Provider value={{ lobby, createLobby, joinLobby, leaveLobby, lockLobby, unlockLobby, confirmLobby }}>
       {props.children}
     </LobbyContext.Provider>
   )

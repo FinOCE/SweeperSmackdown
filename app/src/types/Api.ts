@@ -25,28 +25,16 @@ export namespace Api {
     lobbyId: string
   }
 
-  export type VoteSingle = {
-    lobbyId: string
-    userId: string
-    choice: string
-  }
-
-  export type VoteGroup = {
-    lobbyId: string
-    requiredVotes: number
-    choices: string[]
-    votes: Record<string, string[]>
-  }
-
   export type BoardDictionary = Record<string, string>
 
   export namespace Enums {
     export enum ELobbyState {
       Init = 0,
-      Configure = 1,
-      Play = 2,
-      Won = 3,
-      Celebrate = 4
+      ConfigureUnlocked = 1,
+      ConfigureLocked = 2,
+      Play = 3,
+      Won = 4,
+      Celebrate = 5
     }
   }
 
@@ -85,15 +73,9 @@ export namespace Api {
       bearerToken: string
     }
 
-    export type UserGet = User
+    export type LobbyUserGet = User
 
-    export type UserPut = User
-
-    export type VoteGetAll = VoteGroup
-
-    export type VoteGet = VoteSingle
-
-    export type VotePut = VoteSingle
+    export type LobbyUserPut = User
 
     export type BoardGet = BoardDictionary
 

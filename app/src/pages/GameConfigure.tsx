@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react"
 import "./GameConfigure.scss"
 import { useApi } from "../hooks/useApi"
 import { useNavigation } from "../hooks/useNavigation"
-import { useWebsocket } from "../hooks/useWebsocket"
 import { Api } from "../types/Api"
 import { SliderInput } from "../components/SliderInput"
 import { Loading } from "../components/Loading"
@@ -19,34 +18,23 @@ import { useLobby } from "../hooks/resources/useLobby"
 import { useSettings } from "../hooks/resources/useSettings"
 import { useWins } from "../hooks/resources/useWins"
 import { useScores } from "../hooks/resources/useScores"
-import { useVotes } from "../hooks/resources/useVotes"
 import { useMembers } from "../hooks/resources/useMembers"
+import { useWebsocket } from "../hooks/useWebsocket"
+import { isEvent } from "../utils/isEvent"
+import { Websocket } from "../types/Websocket"
+import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 
 export function GameConfigure() {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
-  const { lobby, leaveLobby } = useLobby()
+  const { ws } = useWebsocket()
+  const { lobby, leaveLobby, lockLobby, unlockLobby, confirmLobby } = useLobby()
   const { settings } = useSettings()
   const { wins } = useWins()
   const { scores } = useScores()
-  const { votes, requiredVotes, countdownExpiry, fetchVotes, clearCountdownExpiry } = useVotes()
   const { members } = useMembers()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => {
-    clearCountdownExpiry()
-    navigate("GameActive")
-  })
-
-  // Fetch current vote on load
-  useEffect(() => {
-    if (!user || !lobby) return
-
-    fetchVotes().catch((err: Error) => {
-      alert("Failed to join the party. Please try again later.")
-      console.error(err)
-      navigate("MainMenu")
-    })
-  }, [user, lobby?.id])
+  const { countdown, start, stop } = useCountdown(() => setCountdownExpiry(null))
 
   // Create function to handle translatin between game settings and payloads
   type LocalSettings = Required<Omit<Api.Request.LobbyPatch, "hostId">>
@@ -83,7 +71,7 @@ export function GameConfigure() {
   // Setup local state
   const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(settings))
   const [changes, setChanges] = useState<Api.Request.LobbyPatch>({})
-  const [votePending, setVotePending] = useState(false)
+  const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
 
   // Update local state whenever server state changes
   useEffect(() => {
@@ -108,40 +96,64 @@ export function GameConfigure() {
 
   // Handle countdown timer
   useEffect(() => {
+    function onGameStarting(e: OnGroupDataMessageArgs) {
+      if (!lobby) return
+
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.GameStarting>("GAME_STARTING", data)) return
+
+      setCountdownExpiry(data.data)
+    }
+
+    ws.on("group-message", onGameStarting)
+    return () => ws.off("group-message", onGameStarting)
+  }, [ws, lobby])
+
+  useEffect(() => {
     if (!countdownExpiry) return
 
-    start(countdownExpiry - Date.now())
+    start(countdownExpiry.getTime() - Date.now())
     return () => stop()
   }, [countdownExpiry])
 
+  useEffect(() => {
+    if (!lobby) return
+
+    if (lobby.state === Api.Enums.ELobbyState.Play) navigate("GameActive")
+  }, [lobby])
+
   // Show loading if not ready
-  if (!participants || !user || !lobby || !settings || !votes || !wins || !scores) return <Loading />
+  if (!participants || !user || !lobby || !settings || !wins || !scores) return <Loading />
 
   // Setup UI functions
-  const isReady = votes?.READY?.includes(user.id) ?? false
+  async function lock() {
+    if (!lobby) return
 
-  async function voteStart() {
-    if (!lobby || !user) return
-
-    setVotePending(true)
-    await api.votePut(lobby.id, user.id, "READY").catch(() => {})
-    setVotePending(false)
+    try {
+      await lockLobby()
+    } catch (err) {
+      // TODO: Handle error
+    }
   }
 
-  async function voteCancel() {
-    if (!lobby || !user) return
+  async function unlock() {
+    if (!lobby) return
 
-    setVotePending(true)
-    await api.voteDelete(lobby.id, user.id, lobby.hostId === user.id).catch(() => {})
-    setVotePending(false)
+    try {
+      await unlockLobby()
+    } catch (err) {
+      // TODO: Handle error
+    }
   }
 
-  async function voteForce() {
-    if (!lobby || !user) return
+  async function confirm() {
+    if (!lobby) return
 
-    setVotePending(true)
-    await api.votePut(lobby.id, user.id, "READY", true).catch(() => {})
-    setVotePending(false)
+    try {
+      await confirmLobby()
+    } catch (err) {
+      // TODO: Handle error
+    }
   }
 
   async function leave() {
@@ -293,23 +305,31 @@ export function GameConfigure() {
       <br />
 
       <ButtonList>
-        <div className="game-configure-countdown-container">
-          <Text type="title">{countdown ? `Starting in ${countdown}` : " "}</Text>
-        </div>
+        {countdown ? (
+          <div className="game-configure-countdown-container">
+            <Text type="title">Starting in {countdown}</Text>
+          </div>
+        ) : lobby.hostId === user.id ? (
+          <>
+            <Box onClick={lock} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureUnlocked}>
+              <Text type="big">Ready</Text>
+            </Box>
 
-        <Box onClick={isReady ? voteCancel : voteStart} disabled={votePending}>
-          <Text type="big">
-            {isReady
-              ? `Cancel Vote (${votes.READY.length}/${requiredVotes})`
-              : `Vote Start (${votes.READY.length}/${requiredVotes})`}
-          </Text>
-        </Box>
-        {/* {isReady && (
-          <Box onClick={voteForce} disabled={user.id !== lobby.hostId}>
-            <Text type="big">Force Countdown</Text>
-          </Box>
-        )} */}
-        {/* Temporarily disabled force countdown due to being very buggy */}
+            <Box onClick={unlock} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureLocked}>
+              <Text type="big">Unready</Text>
+            </Box>
+
+            <Box onClick={confirm} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureLocked}>
+              <Text type="big">Confirm</Text>
+            </Box>
+
+            {/* TODO: Clean up above to only show when needed and neater */}
+          </>
+        ) : (
+          <Text type="title">Waiting for host to start...</Text>
+
+          /* TODO: Add fun button to tell host to hurry up! */
+        )}
       </ButtonList>
 
       <Settings>

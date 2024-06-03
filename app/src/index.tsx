@@ -10,12 +10,10 @@ import { DevPreview } from "./pages/DevPreview"
 import { RollingBackground } from "./components/ui/RollingBackground"
 import { Page } from "./components/ui/Page"
 import { LobbyDataProvider } from "./hooks/data/useLobbyData"
-import { VoteDataProvider } from "./hooks/data/useVoteData"
 import { LobbyProvider } from "./hooks/resources/useLobby"
 import { MemberProvider } from "./hooks/resources/useMembers"
 import { ScoreProvider } from "./hooks/resources/useScores"
 import { SettingsProvider } from "./hooks/resources/useSettings"
-import { VoteProvider } from "./hooks/resources/useVotes"
 import { WinProvider } from "./hooks/resources/useWins"
 
 function App() {
@@ -31,21 +29,17 @@ function App() {
             <EmbeddedAppSdkProvider>
               <WebsocketProvider>
                 <LobbyDataProvider>
-                  <VoteDataProvider>
-                    <LobbyProvider>
-                      <MemberProvider>
-                        <ScoreProvider>
-                          <SettingsProvider>
-                            <VoteProvider>
-                              <WinProvider>
-                                <NavigationProvider />
-                              </WinProvider>
-                            </VoteProvider>
-                          </SettingsProvider>
-                        </ScoreProvider>
-                      </MemberProvider>
-                    </LobbyProvider>
-                  </VoteDataProvider>
+                  <LobbyProvider>
+                    <MemberProvider>
+                      <ScoreProvider>
+                        <SettingsProvider>
+                          <WinProvider>
+                            <NavigationProvider />
+                          </WinProvider>
+                        </SettingsProvider>
+                      </ScoreProvider>
+                    </MemberProvider>
+                  </LobbyProvider>
                 </LobbyDataProvider>
               </WebsocketProvider>
             </EmbeddedAppSdkProvider>

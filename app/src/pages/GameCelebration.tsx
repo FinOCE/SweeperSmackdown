@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import "./GameCelebration.scss"
 import { useWebsocket } from "../hooks/useWebsocket"
 import { Loading } from "../components/Loading"
@@ -16,29 +16,47 @@ import { useLobby } from "../hooks/resources/useLobby"
 import { useWins } from "../hooks/resources/useWins"
 import { useScores } from "../hooks/resources/useScores"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
+import { useCountdown } from "../hooks/useCountdown"
+import { Api } from "../types/Api"
 
 export function GameCelebration() {
   const { user, participants } = useEmbeddedAppSdk()
-  const { leaveLobby } = useLobby()
+  const { lobby, leaveLobby } = useLobby()
   const { wins } = useWins()
   const { scores } = useScores()
   const { ws } = useWebsocket()
   const { navigate } = useNavigation()
+  const { countdown, start, stop } = useCountdown(() => {})
 
+  const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
+
+  // Handle countdown timer
   useEffect(() => {
-    if (!ws) return
-
-    function onLobbyStart(e: OnGroupDataMessageArgs) {
+    function onGameCelebrationStarting(e: OnGroupDataMessageArgs) {
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyStart>("LOBBY_START", data)) return
+      if (!isEvent<Websocket.Response.GameCelebrationStarting>("GAME_CELEBRATION_STARTING", data)) return
 
-      navigate("GameConfigure")
+      setCountdownExpiry(data.data)
     }
 
-    ws.on("group-message", onLobbyStart)
-    return () => ws.off("group-message", onLobbyStart)
+    ws.on("group-message", onGameCelebrationStarting)
+    return () => ws.off("group-message", onGameCelebrationStarting)
   }, [ws])
 
+  useEffect(() => {
+    if (!countdownExpiry) return
+
+    start(countdownExpiry.getTime() - Date.now())
+    return () => stop()
+  }, [countdownExpiry])
+
+  useEffect(() => {
+    if (!lobby) return
+
+    if (lobby.state !== Api.Enums.ELobbyState.Celebrate) navigate("GameConfigure")
+  }, [lobby])
+
+  // Load page until ready
   if (!user || !participants || !wins || !scores) return <Loading hide />
 
   const leaderboard = Object.entries({ ...wins })
@@ -107,10 +125,11 @@ export function GameCelebration() {
         </table>
       </div>
 
-      <div className="game-celebration-countdown-container">
-        <Text type="normal">Next round will begin in a moment...</Text>
-        {/* TODO: Change to proper countdown */}
-      </div>
+      {countdown && (
+        <div className="game-celebration-countdown-container">
+          <Text type="normal">Next round will begin in {countdown}</Text>
+        </div>
+      )}
 
       <Settings>
         <ButtonList>
