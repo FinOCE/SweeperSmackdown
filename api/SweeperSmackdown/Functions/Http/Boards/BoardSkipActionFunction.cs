@@ -39,6 +39,13 @@ public static class BoardSkipActionFunction
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             BoardEntityMap? boardEntityMap,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "CosmosDbConnectionString",
+            Id = "{userId}",
+            PartitionKey = "{lobbyId}")]
+            Player? player,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         HttpRequest req,
@@ -56,7 +63,7 @@ public static class BoardSkipActionFunction
             return new NotFoundResult();
 
         // Check if requester is the user
-        if (!lobby.UserIds.Contains(requesterId) || requesterId != userId)
+        if (player is null || requesterId != userId)
             return new StatusCodeResult(403);
 
         // Check if lobby allows skips (seed existing means sharing boards enabled)

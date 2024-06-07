@@ -6,20 +6,35 @@ namespace SweeperSmackdown.DTOs;
 
 public class LobbyUserResponseDto
 {
+    [JsonProperty("id")]
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
+
     [JsonProperty("lobbyId")]
     [JsonPropertyName("lobbyId")]
     public string LobbyId { get; set; }
 
-    [JsonProperty("userId")]
-    [JsonPropertyName("userId")]
-    public string UserId { get; set; }
+    [JsonProperty("active")]
+    [JsonPropertyName("active")]
+    public bool Active { get; set; }
 
-    public LobbyUserResponseDto(string lobbyId, string userId)
+    [JsonProperty("score")]
+    [JsonPropertyName("score")]
+    public int Score { get; set; }
+
+    [JsonProperty("wins")]
+    [JsonPropertyName("wins")]
+    public int Wins { get; set; }
+
+    public LobbyUserResponseDto(string id, string lobbyId, bool active, int score, int wins)
     {
+        Id = id;
         LobbyId = lobbyId;
-        UserId = userId;
+        Active = active;
+        Score = score;
+        Wins = wins;
     }
 
-    public static LobbyUserResponseDto FromModel(Lobby lobby, string userId) =>
-        new(lobby.Id, userId);
+    public static LobbyUserResponseDto FromModel(Player player) =>
+        new(player.Id, player.LobbyId, player.Active, player.Score, player.Wins);
 }

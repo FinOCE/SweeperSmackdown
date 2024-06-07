@@ -37,15 +37,19 @@ public static class GameActiveFunction
             nameof(LobbyFetchActivityFunction),
             new LobbyFetchActivityFunctionProps(lobbyId));
 
+        var players = await ctx.CallActivityAsync<IEnumerable<Player>>(
+            nameof(LobbyPlayersFetchActivityFunction),
+            new LobbyPlayersFetchActivityFunctionProps(lobbyId));
+
         await ctx.CallActivityAsync<BoardEntityMap>(
             nameof(BoardEntityMapCreateActivityFunction),
             new BoardEntityMapCreateActivityFunctionProps(lobbyId));
         
-        foreach (var userId in lobby.UserIds)
+        foreach (var player in players)
             _ = ctx.StartNewOrchestration(
                 nameof(BoardManagerOrchestratorFunction),
                 new BoardManagerOrchestratorFunctionProps(props.Settings),
-                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, userId));
+                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, player.Id));
 
         // TODO: Ensure all players have a board created before starting
 

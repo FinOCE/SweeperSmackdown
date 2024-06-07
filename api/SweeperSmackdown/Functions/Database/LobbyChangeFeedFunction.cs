@@ -37,67 +37,12 @@ public static class LobbyChangeFeedFunction
             try
             {
                 var initialLobby = lobby;
-                
-                await ws.AddAsync(ActionFactory.UpdateLobby(lobby.Id, LobbyResponseDto.FromModel(lobby)));
 
-                var unaddedUsers = lobby.UserIds
-                    .Where(id => !lobby.AddedUserIds.Contains(id))
-                    .ToArray();
-
-                var removedUsers = lobby.AddedUserIds
-                    .Where(id => !lobby.UserIds.Contains(id))
-                    .ToArray();
-
-                // Add users to websocket and notify
-                foreach (var id in unaddedUsers)
-                {
-                    lobby.AddedUserIds = lobby.AddedUserIds.Append(id).Distinct().ToArray();
-
-                    await ws.AddAsync(ActionFactory.AddUser(id, lobby.Id));
-                    await ws.AddAsync(ActionFactory.AddUserToLobby(id, lobby.Id));
-                }
-
-                // Remove users from websocket and notify
-                foreach (var id in removedUsers)
-                {
-                    lobby.AddedUserIds = lobby.AddedUserIds.Where(userId => userId != id).ToArray();
-
-                    await ws.AddAsync(ActionFactory.RemoveUser(id, lobby.Id));
-                    await ws.AddAsync(ActionFactory.RemoveUserFromLobby(id, lobby.Id));
-                }
-
-                // Create boards for players joining mid-game
-                if (lobby.State == ELobbyState.Play)
-                {
-                    foreach (var id in unaddedUsers)
-                    {
-                        var boardManagerStatus = await orchestrationClient.GetStatusAsync(
-                            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id));
-
-                        if (boardManagerStatus.IsInactive())
-                            await orchestrationClient.StartNewAsync(
-                                nameof(BoardManagerOrchestratorFunction),
-                                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id),
-                                new BoardManagerOrchestratorFunctionProps(lobby.Settings));
-                    }
-                }
-
-                // Update user ID lists
-                if (unaddedUsers.Length > 0 || removedUsers.Length > 0)
-                {
-                    if (!lobby.UserIds.Contains(lobby.HostId) && lobby.UserIds.Length > 0)
-                        lobby.HostId = lobby.UserIds.First();
-
-                    await cosmosClient.GetLobbyContainer().PatchItemAsync<Lobby>(lobby.Id, new(lobby.Id), new[]
-                    {
-                        PatchOperation.Set("/hostId", lobby.HostId),
-                        PatchOperation.Set("/userIds", lobby.UserIds),
-                        PatchOperation.Set("/addedUserIds", lobby.AddedUserIds)
-                    });
-                }
+                var players = await cosmosClient.GetAllPlayersInLobbyAsync(lobby.Id);
+                await ws.AddAsync(ActionFactory.UpdateLobby(lobby.Id, LobbyResponseDto.FromModel(lobby, players)));
 
                 // Delete lobby if empty
-                if (lobby.UserIds.Length == 0)
+                if (!players.Any())
                 {
                     var lobbyContainer = cosmosClient.GetLobbyContainer();
                     var boardContainer = cosmosClient.GetBoardContainer();

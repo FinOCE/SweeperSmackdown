@@ -39,6 +39,13 @@ public static class BoardResetActionFunction
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             BoardEntityMap? boardEntityMap,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "CosmosDbConnectionString",
+            Id = "{userId}",
+            PartitionKey = "{lobbyId}")]
+            Player? player,
         [DurableClient] IDurableEntityClient entityClient,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string userId)
@@ -54,7 +61,7 @@ public static class BoardResetActionFunction
             return new NotFoundResult();
 
         // Check if requester is the user
-        if (!lobby.UserIds.Contains(requesterId) || requesterId != userId)
+        if (player is null || requesterId != userId)
             return new StatusCodeResult(403);
 
         // Check if board exists

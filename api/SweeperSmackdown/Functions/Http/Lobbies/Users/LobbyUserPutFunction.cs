@@ -6,8 +6,6 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
@@ -25,10 +23,17 @@ public static class LobbyUserPutFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "CosmosDbConnectionString",
+            Id = "{userId}",
+            PartitionKey = "{lobbyId}")]
+            Player? player,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
-            IAsyncCollector<Lobby> lobbyDb,
+            IAsyncCollector<Player> playerDb,
         string lobbyId,
         string userId)
     {
@@ -46,16 +51,17 @@ public static class LobbyUserPutFunction
         if (requesterId != userId)
             return new StatusCodeResult(403);
 
+        // Short circuit if already in lobby
+        if (player is not null)
+            return new OkObjectResult(LobbyUserResponseDto.FromModel(player));
+
         // Add to lobby
-        var alreadyInLobby = lobby.UserIds.Contains(userId);
-        lobby.UserIds = lobby.UserIds.Append(userId).Distinct().ToArray();
-        await lobbyDb.AddAsync(lobby);
+        player = new Player(userId, lobbyId, true, 0, 0);
+        await playerDb.AddAsync(player);
 
         // Respond to request
-        return alreadyInLobby
-            ? new OkObjectResult(LobbyUserResponseDto.FromModel(lobby, userId))
-            : new CreatedResult(
-                $"/lobbies/{lobbyId}/users/{userId}",
-                LobbyUserResponseDto.FromModel(lobby, userId));
+        return new CreatedResult(
+            $"/lobbies/{lobbyId}/users/{userId}",
+            LobbyUserResponseDto.FromModel(player));
     }
 }

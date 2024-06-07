@@ -34,6 +34,12 @@ public static class BoardGetFunction
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             BoardEntityMap? boardEntityMap,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
         [DurableClient] IDurableEntityClient entityClient,
         string userId)
     {
@@ -48,7 +54,7 @@ public static class BoardGetFunction
             return new NotFoundResult();
 
         // Check if requester is a lobby member
-        if (!lobby.UserIds.Contains(requesterId))
+        if (!players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
         // Check if board exists
