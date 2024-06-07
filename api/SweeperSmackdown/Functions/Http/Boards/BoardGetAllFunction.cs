@@ -28,13 +28,6 @@ public static class BoardGetAllFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.BOARD_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            BoardEntityMap? boardEntityMap,
-        [CosmosDB(
             containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
@@ -48,8 +41,8 @@ public static class BoardGetAllFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobbby and board exists
-        if (lobby == null || boardEntityMap == null)
+        // Check if lobby and exists
+        if (lobby == null)
             return new NotFoundResult();
 
         // Check if requester is a lobby member
@@ -57,8 +50,9 @@ public static class BoardGetAllFunction
             return new StatusCodeResult(403);
 
         // Check if board exists
-        var entityTasks = boardEntityMap.BoardIds
-            .Select(userId => KeyValuePair.Create(userId, entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId))));
+        var entityTasks = players.Select(p => KeyValuePair.Create(
+            p.Id,
+            entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(p.Id))));
 
         await Task.WhenAll(entityTasks.Select(kvp => kvp.Value));
 

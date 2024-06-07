@@ -17,16 +17,6 @@ public static class CosmosClientExtensions
     /// <returns>The sweeper smackdown database</returns>
     public static Database GetSmackdownDatabase(this CosmosClient cosmosClient) =>
         cosmosClient.GetDatabase(DatabaseConstants.DATABASE_NAME);
-
-    /// <summary>
-    /// Get the container holding board entity maps.
-    /// </summary>
-    /// <param name="cosmosClient">The CosmosClient</param>
-    /// <returns>The board container</returns>
-    public static Container GetBoardContainer(this CosmosClient cosmosClient) =>
-        cosmosClient.GetContainer(
-            DatabaseConstants.DATABASE_NAME,
-            DatabaseConstants.BOARD_CONTAINER_NAME);
             
     /// <summary>
     /// Get the container holding lobbies.

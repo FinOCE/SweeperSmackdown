@@ -42,16 +42,11 @@ public static class LobbyChangeFeedFunction
                 await ws.AddAsync(ActionFactory.UpdateLobby(lobby.Id, LobbyResponseDto.FromModel(lobby, players)));
 
                 // Delete lobby if empty
-                if (!players.Any())
+                if (!players.Any(p => p.Active))
                 {
                     var lobbyContainer = cosmosClient.GetLobbyContainer();
-                    var boardContainer = cosmosClient.GetBoardContainer();
 
                     await lobbyContainer.DeleteItemAsync<Lobby>(lobby.Id, new(lobby.Id));
-
-                    BoardEntityMap boardEntityMap = await boardContainer.ReadItemAsync<BoardEntityMap>(
-                        lobby.Id,
-                        new(lobby.Id));
 
                     List<string> orchestrationIds = new()
                     {
@@ -62,12 +57,12 @@ public static class LobbyChangeFeedFunction
                         Id.ForInstance(nameof(GameConfigureFunction), lobby.Id)
                     };
 
-                    orchestrationIds.AddRange(boardEntityMap.BoardIds.Select(id =>
-                        Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, id)));
+                    orchestrationIds.AddRange(players.Select(player =>
+                        Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, player.Id)));
 
-                    var tasks = boardEntityMap.BoardIds.Select(id =>
+                    var tasks = players.Select(player =>
                         entityClient.SignalEntityAsync<IBoard>(
-                            Id.For<Board>(id),
+                            Id.For<Board>(player.Id),
                             board => board.Delete()));
 
                     await Task.WhenAll(tasks);
@@ -84,7 +79,10 @@ public static class LobbyChangeFeedFunction
                             Console.WriteLine("Failed to terminate a board manager orchestration (DOES THIS EVER OCCUR?)");
                         }
 
-                    await boardContainer.DeleteItemAsync<BoardEntityMap>(lobby.Id, new(lobby.Id));
+                    await Task.WhenAll(
+                        players.Select(p => cosmosClient
+                            .GetPlayerContainer()
+                            .DeleteItemAsync<Player>(p.Id, new(p.LobbyId))));
                 }
             }
             catch (Exception)

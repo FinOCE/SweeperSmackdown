@@ -40,10 +40,6 @@ public static class GameActiveFunction
         var players = await ctx.CallActivityAsync<IEnumerable<Player>>(
             nameof(LobbyPlayersFetchActivityFunction),
             new LobbyPlayersFetchActivityFunctionProps(lobbyId));
-
-        await ctx.CallActivityAsync<BoardEntityMap>(
-            nameof(BoardEntityMapCreateActivityFunction),
-            new BoardEntityMapCreateActivityFunctionProps(lobbyId));
         
         foreach (var player in players)
             _ = ctx.StartNewOrchestration(

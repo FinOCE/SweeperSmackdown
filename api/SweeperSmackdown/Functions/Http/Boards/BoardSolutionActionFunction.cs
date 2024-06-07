@@ -33,13 +33,6 @@ public static class BoardSolutionActionFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.BOARD_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            BoardEntityMap? boardEntityMap,
-        [CosmosDB(
             containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString",
@@ -58,8 +51,8 @@ public static class BoardSolutionActionFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobbby and board exist
-        if (lobby == null || boardEntityMap == null || !boardEntityMap.BoardIds.Contains(userId))
+        // Check if lobby exists
+        if (lobby == null)
             return new NotFoundResult();
 
         // Check if requester is the user

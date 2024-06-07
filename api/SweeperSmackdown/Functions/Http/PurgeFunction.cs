@@ -76,17 +76,17 @@ public static class PurgeFunction
 
         Console.WriteLine("Lobby container deleted and recreated");
 
-        // Delete all board entity maps
-        var boardContainer = cosmosClient.GetBoardContainer();
+        // Delete all players
+        var boardContainer = cosmosClient.GetPlayerContainer();
         await boardContainer.DeleteContainerAsync();
 
         await database.CreateContainerAsync(new()
         {
-            Id = DatabaseConstants.BOARD_CONTAINER_NAME,
-            PartitionKeyPath = "/id"
+            Id = DatabaseConstants.PLAYER_CONTAINER_NAME,
+            PartitionKeyPath = "/lobbyId"
         });
 
-        Console.WriteLine("Board container deleted and recreated");
+        Console.WriteLine("Player container deleted and recreated");
 
         return new NoContentResult();
     }
