@@ -21,8 +21,11 @@ export namespace Api {
   }
 
   export type User = {
-    userId: string
+    id: string
     lobbyId: string
+    active: boolean
+    score: number
+    wins: number
   }
 
   export type BoardDictionary = Record<string, string>

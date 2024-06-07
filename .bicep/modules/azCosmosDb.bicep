@@ -52,30 +52,15 @@ resource azCosmosDbContainerLobbies 'Microsoft.DocumentDB/databaseAccounts/sqlDa
   }
 }
 
-resource azCosmosDbContainerVotes 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
+resource azCosmosDbContainerPlayers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
   parent: azCosmosDbDatabase
-  name: 'votes'
+  name: 'players'
   location: location
   properties: {
     resource: {
-      id: 'votes'
+      id: 'players'
       partitionKey: {
-        paths: ['/id']
-        kind: 'Hash'
-      }
-    }
-  }
-}
-
-resource azCosmosDbContainerBoards 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
-  parent: azCosmosDbDatabase
-  name: 'boards'
-  location: location
-  properties: {
-    resource: {
-      id: 'boards'
-      partitionKey: {
-        paths: ['/id']
+        paths: ['/lobbyId']
         kind: 'Hash'
       }
     }
