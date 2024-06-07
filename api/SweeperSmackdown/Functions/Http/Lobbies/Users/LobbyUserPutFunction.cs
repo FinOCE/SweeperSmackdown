@@ -1,11 +1,16 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.Factories;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
+using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
@@ -34,6 +39,8 @@ public static class LobbyUserPutFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Player> playerDb,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId,
         string userId)
     {
@@ -58,6 +65,22 @@ public static class LobbyUserPutFunction
         // Add to lobby
         player = new Player(userId, lobbyId, true, 0, 0);
         await playerDb.AddAsync(player);
+
+        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+
+        // Create board for new user if game is in progress
+        if (lobby.State == ELobbyState.Play)
+        {
+            var boardManagerStatus = await orchestrationClient.GetStatusAsync(
+                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId));
+
+            if (boardManagerStatus.IsInactive())
+                await orchestrationClient.StartNewAsync(
+                nameof(BoardManagerOrchestratorFunction),
+                    Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId),
+                    new BoardManagerOrchestratorFunctionProps(lobby.Settings));
+        }
 
         // Respond to request
         return new CreatedResult(

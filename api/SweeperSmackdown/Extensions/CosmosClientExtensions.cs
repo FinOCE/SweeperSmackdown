@@ -63,4 +63,36 @@ public static class CosmosClientExtensions
             .ToFeedIterator()
             .ReadAllAsync();
     }
+
+    public static async Task<IEnumerable<Lobby>> ChangeHostAsync(this CosmosClient cosmosClient, string userId)
+    {
+        var lobbies = await cosmosClient
+            .GetPlayerContainer()
+            .GetItemLinqQueryable<Lobby>()
+                .Where(l => l.HostId == userId)
+            .ToFeedIterator()
+            .ReadAllAsync();
+
+        var updatedLobbies = await Task.WhenAll(
+            lobbies.Select(lobby => Task.Run(async () => {
+                var players = await cosmosClient.GetAllPlayersInLobbyAsync(lobby.Id);
+
+                if (players.Any())
+                {
+                    var hostId = players.First().Id;
+
+                    await cosmosClient.GetLobbyContainer().PatchItemAsync<Lobby>(lobby.Id, new(lobby.Id), new[]
+                    {
+                        PatchOperation.Set("/hostId", hostId)
+                    });
+                    lobby.HostId = hostId;
+
+                    return lobby;
+                }
+
+                return null;
+            })));
+
+        return updatedLobbies.Where(l => l is not null) as IEnumerable<Lobby>;
+    }
 }

@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
@@ -46,6 +48,7 @@ public static class LobbyPutFunction
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Player> playerDb,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -71,6 +74,9 @@ public static class LobbyPutFunction
 
         await playerDb.AddAsync(player);
         players = players.Append(player);
+
+        await ws.AddAsync(ActionFactory.AddUser(requesterId, lobbyId));
+        await ws.AddAsync(ActionFactory.AddUserToLobby(requesterId, lobbyId));
 
         // Start orchestrator
         await orchestrationClient.StartNewAsync(
