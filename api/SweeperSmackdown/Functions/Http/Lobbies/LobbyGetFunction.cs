@@ -6,6 +6,7 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
@@ -21,7 +22,13 @@ public static class LobbyGetFunction
             Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
-            Lobby? lobby)
+            Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();
@@ -34,10 +41,10 @@ public static class LobbyGetFunction
             return new NotFoundResult();
 
         // Check if user is in lobby
-        if (!lobby.UserIds.Contains(requesterId))
+        if (!players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
         // Respond to request
-        return new OkObjectResult(LobbyResponseDto.FromModel(lobby));
+        return new OkObjectResult(LobbyResponseDto.FromModel(lobby, players));
     }
 }

@@ -1,15 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
-using SweeperSmackdown.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,7 +19,6 @@ public static class LobbyPatchFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequestDto payload,
         HttpRequest req,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -34,6 +31,12 @@ public static class LobbyPatchFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> db,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -50,11 +53,11 @@ public static class LobbyPatchFunction
         if (lobby == null)
             return new NotFoundResult();
 
-        if (lobby.State != ELobbyState.Configure)
+        if (lobby.State != ELobbyState.ConfigureUnlocked)
             return new ConflictResult();
 
         // Only allow lobby members to modify
-        if (!lobby.UserIds.Contains(requesterId))
+        if (!players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
         // Confirm user is allowed to change host ID if attempted
@@ -63,13 +66,6 @@ public static class LobbyPatchFunction
             {
                 "Cannot change host ID because you are not the current host"
             });
-
-        // Check if the configure countdown has already started
-        var timerStatus = await orchestrationClient.GetStatusAsync(
-            Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId));
-
-        if (timerStatus != null && Enum.Parse<ETimerStatus>(timerStatus.CustomStatus.ToString()) != ETimerStatus.NotStarted)
-            return new ConflictResult();
         
         // Update lobby settings
         int? seed = null;
@@ -105,6 +101,6 @@ public static class LobbyPatchFunction
         await db.AddAsync(lobby);
 
         // Respond to request
-        return new OkObjectResult(LobbyResponseDto.FromModel(lobby));
+        return new OkObjectResult(LobbyResponseDto.FromModel(lobby, players));
     }
 }

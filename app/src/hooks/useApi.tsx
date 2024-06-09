@@ -101,7 +101,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           .then(accept(200))
           .then(res => result(true)<Api.Response.Login>(res)),
 
-      userDelete: (lobbyId: string, userId: string) =>
+      lobbyUserDelete: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` }
@@ -109,55 +109,21 @@ function getApi(baseUrl: string | null, token: string | null) {
           .then(accept(204, 404))
           .then(result()),
 
-      userGet: (lobbyId: string, userId: string) =>
+      lobbyUserGet: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => result(true)<Api.Response.UserGet>(res)),
+          .then(res => result(true)<Api.Response.LobbyUserGet>(res)),
 
-      userPut: (lobbyId: string, userId: string) =>
+      lobbyUserPut: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200, 201))
-          .then(res => result(true)<Api.Response.UserPut>(res)),
-
-      voteDelete: (lobbyId: string, userId: string, force?: boolean) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
-          method: "DELETE",
-          body: JSON.stringify({ force }),
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-        })
-          .then(accept(204, 404))
-          .then(result()),
-
-      voteGetAll: (lobbyId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/votes`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.VoteGetAll>(res)),
-
-      voteGet: (lobbyId: string, userId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.VoteGet>(res)),
-
-      votePut: (lobbyId: string, userId: string, choice: string, force?: boolean) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/votes/${userId}`, {
-          method: "PUT",
-          body: JSON.stringify({ choice, force }),
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-        })
-          .then(accept(200, 201))
-          .then(res => result(true)<Api.Response.VotePut>(res)),
+          .then(res => result(true)<Api.Response.LobbyUserPut>(res)),
 
       boardGet: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}`, {
@@ -196,6 +162,30 @@ function getApi(baseUrl: string | null, token: string | null) {
           method: "POST",
           body: JSON.stringify({ gameState: new TextDecoder("utf-8").decode(gameState) }),
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+        })
+          .then(accept(204))
+          .then(result()),
+
+      lobbyLock: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/lock`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(204))
+          .then(result()),
+
+      lobbyUnlock: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/unlock`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(204))
+          .then(result()),
+
+      lobbyConfirm: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/confirm`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(204))
           .then(result())

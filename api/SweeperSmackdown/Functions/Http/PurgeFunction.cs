@@ -76,29 +76,17 @@ public static class PurgeFunction
 
         Console.WriteLine("Lobby container deleted and recreated");
 
-        // Delete all votes
-        var voteContainer = cosmosClient.GetVoteContainer();
-        await voteContainer.DeleteContainerAsync();
+        // Delete all players
+        var playerContainer = cosmosClient.GetPlayerContainer();
+        await playerContainer.DeleteContainerAsync();
 
         await database.CreateContainerAsync(new()
         {
-            Id = DatabaseConstants.VOTE_CONTAINER_NAME,
-            PartitionKeyPath = "/id"
+            Id = DatabaseConstants.PLAYER_CONTAINER_NAME,
+            PartitionKeyPath = "/lobbyId"
         });
 
-        Console.WriteLine("Vote container deleted and recreated");
-
-        // Delete all board entity maps
-        var boardContainer = cosmosClient.GetBoardContainer();
-        await boardContainer.DeleteContainerAsync();
-
-        await database.CreateContainerAsync(new()
-        {
-            Id = DatabaseConstants.BOARD_CONTAINER_NAME,
-            PartitionKeyPath = "/id"
-        });
-
-        Console.WriteLine("Board container deleted and recreated");
+        Console.WriteLine("Player container deleted and recreated");
 
         return new NoContentResult();
     }

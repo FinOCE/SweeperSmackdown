@@ -6,7 +6,5 @@ public static class DatabaseConstants
 
     public const string LOBBY_CONTAINER_NAME = "lobbies";
 
-    public const string VOTE_CONTAINER_NAME = "votes";
-
-    public const string BOARD_CONTAINER_NAME = "boards";
+    public const string PLAYER_CONTAINER_NAME = "players";
 }

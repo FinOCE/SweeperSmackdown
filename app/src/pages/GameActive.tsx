@@ -13,7 +13,6 @@ import { useNavigation } from "../hooks/useNavigation"
 import { Board } from "../components/gameplay/Board"
 import { BoardPreview } from "../components/gameplay/BoardPreview"
 import { useCountdown } from "../hooks/useCountdown"
-import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { Settings } from "../components/ui/controls/Settings"
 import { useLobby } from "../hooks/resources/useLobby"
 import { useSettings } from "../hooks/resources/useSettings"
@@ -21,9 +20,13 @@ import { useScores } from "../hooks/resources/useScores"
 import { useWins } from "../hooks/resources/useWins"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 
-export function GameActive() {
+type GameActiveProps = {
+  lobbyId: string
+  userId: string
+}
+
+export function GameActive({ lobbyId, userId }: GameActiveProps) {
   const { api } = useApi()
-  const { user } = useEmbeddedAppSdk()
   const { lobby, leaveLobby } = useLobby()
   const { settings } = useSettings()
   const { wins } = useWins()
@@ -45,10 +48,10 @@ export function GameActive() {
 
   // Load competitor boards if not already loaded
   useEffect(() => {
-    if (!lobby || !user) return // TODO: Move below into a resource hook
+    // TODO: Move below into a resource hook
     ;(async () => {
       const [err, boards] = await api
-        .boardGetAll(lobby.id)
+        .boardGetAll(lobbyId)
         .then(([data]) => [null, data] as const)
         .catch((err: Error) => [err, null] as const)
 
@@ -56,18 +59,18 @@ export function GameActive() {
 
       if (Object.keys(boards).length > 0) {
         const states = Object.entries(boards)
-          .map(([userId, gameState]) => ({
-            userId,
+          .map(([id, gameState]) => ({
+            userId: id,
             gameState: new TextEncoder().encode(gameState)
           }))
-          .filter(({ userId }) => userId !== user.id)
+          .filter(({ userId: id }) => id !== userId)
           .reduce((pre, cur) => ({ ...pre, [cur.userId]: cur.gameState }), {} as Record<string, Uint8Array>)
 
         setCompetitionState(prev => ({ ...prev, ...states }))
       }
 
-      if (user.id in boards) {
-        const gameState = new TextEncoder().encode(boards[user.id])
+      if (userId in boards) {
+        const gameState = new TextEncoder().encode(boards[userId])
         setInitialGameState(gameState.map(v => State.unreveal(v)))
         setLocalGameState(gameState)
         // TODO: Handle lost/won states
@@ -96,27 +99,27 @@ export function GameActive() {
 
   // Send solution to server if game has been won
   useEffect(() => {
-    if (!won || !lobby || !user) return
+    if (!won || !localGameState) return
 
-    api.boardSolution(lobby.id, user.id, localGameState!)
-  }, [won, lobby, user])
+    api.boardSolution(lobbyId, userId, localGameState)
+  }, [won, localGameState])
 
   // Apply pending competitor moves
   useEffect(() => {
     if (!pendingCompetitionMoves || !competitionState) return
     if (Object.keys(pendingCompetitionMoves).length === 0) return
 
-    for (const userId in pendingCompetitionMoves) {
-      if (!competitionState[userId]) continue
+    for (const id in pendingCompetitionMoves) {
+      if (!competitionState[id]) continue
 
-      const state = competitionState[userId]
-      const { reveals, flagAdd, flagRemove } = pendingCompetitionMoves[userId]
+      const state = competitionState[id]
+      const { reveals, flagAdd, flagRemove } = pendingCompetitionMoves[id]
 
       if (reveals) for (const i of reveals) state[i] = State.reveal(state[i])
       if (flagAdd) for (const i of flagAdd) state[i] = State.flag(state[i])
       if (flagRemove) for (const i of flagRemove) state[i] = State.removeFlag(state[i])
 
-      setCompetitionState(prev => ({ ...prev, [userId]: state }))
+      setCompetitionState(prev => ({ ...prev, [id]: state }))
     }
 
     setPendingCompetitionMoves({})
@@ -147,12 +150,10 @@ export function GameActive() {
     if (!ws) return
 
     function onBoardCreate(e: OnGroupDataMessageArgs) {
-      if (!user) return
-
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
 
-      if (data.userId === user.id) {
+      if (data.userId === userId) {
         if (data.data.reset) return
 
         const gameState = new TextEncoder().encode(data.data.gameState)
@@ -166,12 +167,10 @@ export function GameActive() {
     }
 
     function onMoveAdd(e: OnGroupDataMessageArgs) {
-      if (!user) return
-
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.MoveAdd>("MOVE_ADD", data)) return
 
-      if (data.userId === user.id) return
+      if (data.userId === userId) return
 
       if (isReveals(data.data)) {
         const { reveals } = data.data
@@ -198,19 +197,19 @@ export function GameActive() {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
 
-      navigate("GameCelebration")
+      navigate("GameCelebration", { lobbyId })
 
       // TODO: Change to stop control and tell everyone the game is over on a countdown
     }
 
     function onUserJoin(e: OnGroupDataMessageArgs) {
-      if (!lobby || !competitionState) return
+      if (!competitionState) return
 
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.UserJoin>("USER_JOIN", data)) return // TODO: Move below into a resource hook
       ;(async () => {
         const [err, boards] = await api
-          .boardGet(lobby.id, data.userId)
+          .boardGet(lobbyId, data.userId)
           .then(([data]) => [null, data] as const)
           .catch((err: Error) => [err, null] as const)
 
@@ -247,20 +246,20 @@ export function GameActive() {
       ws.off("group-message", onUserJoin)
       ws.off("group-message", onUserLeave)
     }
-  }, [ws, user, lobby, competitionState])
+  }, [ws, competitionState])
 
   // Only render once all dependencies are loaded
-  if (!user || !lobby || !settings || !wins || !scores) return <Loading />
+  if (!lobby || !settings || !wins || !scores) return <Loading />
 
   function notifyMoveAdd(data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) {
-    if (!ws || !user || !lobby) return
+    if (!ws) return
 
     ws.sendEvent(
       "MOVE_ADD",
       {
         eventName: "MOVE_ADD",
-        userId: user.id,
-        data: { ...data, lobbyId: lobby.id }
+        userId: userId,
+        data: { ...data, lobbyId: lobbyId }
       },
       "json",
       { fireAndForget: true }
@@ -268,21 +267,17 @@ export function GameActive() {
   }
 
   async function reset() {
-    if (!lobby || !user) return
-
     setLocalGameState(initialGameState)
-    await api.boardReset(lobby.id, user.id)
+    await api.boardReset(lobbyId, userId)
   }
 
   async function skip() {
-    if (!lobby || !user) return
-
-    await api.boardSkip(lobby.id, user.id)
+    await api.boardSkip(lobbyId, userId)
   }
 
   async function leave() {
     await leaveLobby()
-    navigate("MainMenu")
+    navigate("MainMenu", {})
   }
 
   if (!localGameState) return <Loading />

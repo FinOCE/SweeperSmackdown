@@ -1,18 +1,20 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
@@ -28,50 +30,53 @@ public static class LobbyPutFunction
             Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
-            Lobby? existing,
+            Lobby? lobby,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
-            IAsyncCollector<Lobby> db,
-        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
+            IAsyncCollector<Lobby> lobbyDb,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            Connection = "CosmosDbConnectionString")]
+            IAsyncCollector<Player> playerDb,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();
 
-        if (requesterId == null)
+        if (requesterId is null)
             return new StatusCodeResult(401);
 
         // Return existing lobby if already exists
-        if (existing != null)
-            return new OkObjectResult(LobbyResponseDto.FromModel(existing));
+        if (lobby is not null)
+            return new OkObjectResult(LobbyResponseDto.FromModel(lobby, players));
 
         // Create lobby
-        var lobby = new Lobby(
+        lobby = new Lobby(
             lobbyId,
             requesterId,
-            new[] { requesterId },
-            new Dictionary<string, int>(),
-            new Dictionary<string, int>(),
             new GameSettings(Guid.NewGuid().GetHashCode()));
 
-        await db.AddAsync(lobby);
+        await lobbyDb.AddAsync(lobby);
 
-        // Create vote synchronously (duplicate of VoteCreateActivityFunction - fixes not being available instantly)
-        await cosmosClient
-            .GetVoteContainer()
-            .UpsertItemAsync(
-                new Vote(
-                    lobby.Id,
-                    new Dictionary<string, string[]>()
-                    {
-                        { "READY", Array.Empty<string>() }
-                    },
-                    VoteUtils.CalculateRequiredVotes(lobby.UserIds.Length),
-                new[] { "READY" }),
-                new(lobby.Id));
+        // Create host player
+        var player = new Player(requesterId, lobbyId, true, 0, 0);
+
+        await playerDb.AddAsync(player);
+        players = players.Append(player);
+
+        await ws.AddAsync(ActionFactory.AddUser(requesterId, lobbyId));
+        await ws.AddAsync(ActionFactory.AddUserToLobby(requesterId, lobbyId));
 
         // Start orchestrator
         await orchestrationClient.StartNewAsync(
@@ -79,6 +84,6 @@ public static class LobbyPutFunction
             Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
 
         // Return created lobby
-        return new CreatedResult($"/lobbies/{lobbyId}", LobbyResponseDto.FromModel(lobby));
+        return new CreatedResult($"/lobbies/{lobbyId}", LobbyResponseDto.FromModel(lobby, players));
     }
 }

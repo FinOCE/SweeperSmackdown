@@ -2,6 +2,7 @@
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;
@@ -18,7 +19,7 @@ public class LobbyResponseDto
     
     [JsonProperty("userIds")]
     [JsonPropertyName("userIds")]
-    public string[] UserIds { get; set; }
+    public IEnumerable<string> UserIds { get; set; }
 
     [JsonProperty("scores")]
     [JsonPropertyName("scores")]
@@ -39,7 +40,7 @@ public class LobbyResponseDto
     public LobbyResponseDto(
         string lobbyId,
         string hostId,
-        string[] userIds,
+        IEnumerable<string> userIds,
         IDictionary<string, int> scores,
         IDictionary<string, int> wins,
         ELobbyState state,
@@ -54,13 +55,15 @@ public class LobbyResponseDto
         Settings = settings;
     }
 
-    public static LobbyResponseDto FromModel(Lobby lobby) =>
-        new(
+    public static LobbyResponseDto FromModel(Lobby lobby, IEnumerable<Player> players)
+    {
+        return new(
             lobby.Id,
             lobby.HostId,
-            lobby.UserIds,
-            lobby.Scores,
-            lobby.Wins,
+            players.Select(p => p.Id),
+            players.ToDictionary(p => p.Id, p => p.Score),
+            players.ToDictionary(p => p.Id, p => p.Wins),
             lobby.State,
             lobby.Settings);
+    }
 }

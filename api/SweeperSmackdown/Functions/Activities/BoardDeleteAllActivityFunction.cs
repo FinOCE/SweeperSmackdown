@@ -3,7 +3,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System.Linq;
 using System.Threading.Tasks;
@@ -30,19 +29,13 @@ public static class BoardDeleteAllActivityFunction
     {
         var props = ctx.GetInput<BoardDeleteAllActivityFunctionProps>();
 
-        var container = cosmosClient.GetBoardContainer();
-        
-        BoardEntityMap boardEntityMap = await container.ReadItemAsync<BoardEntityMap>(
-            props.LobbyId,
-            new(props.LobbyId));
+        var players = await cosmosClient.GetAllPlayersInLobbyAsync(props.LobbyId);
 
-        var tasks = boardEntityMap.BoardIds.Select(boardId =>
+        var tasks = players.Select(p =>
             entityClient.SignalEntityAsync<IBoard>(
-                Id.For<Board>(boardId),
+                Id.For<Board>(p.Id),
                 board => board.Delete()));
 
         await Task.WhenAll(tasks);
-
-        await container.DeleteItemAsync<BoardEntityMap>(props.LobbyId, new(props.LobbyId));
     }
 }

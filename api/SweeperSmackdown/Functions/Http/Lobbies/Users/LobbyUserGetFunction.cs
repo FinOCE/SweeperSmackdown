@@ -6,16 +6,16 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
-using System;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace SweeperSmackdown.Functions.Http.Votes;
+namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
 
-public static class VoteGetFunction
+public static class LobbyUserGetFunction
 {
-    [FunctionName(nameof(VoteGetFunction))]
+    [FunctionName(nameof(LobbyUserGetFunction))]
     public static IActionResult Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/votes/{userId}")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -24,12 +24,11 @@ public static class VoteGetFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.VOTE_CONTAINER_NAME,
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Vote? vote,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
         string userId)
     {
         // Only allow if user is logged in
@@ -38,15 +37,19 @@ public static class VoteGetFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobby and vote exist
-        if (vote == null || lobby == null)
+        // Check if lobby exists
+        if (lobby == null)
             return new NotFoundResult();
 
-        // Check the user is in the lobby
-        if (!lobby.UserIds.Contains(requesterId))
+        // Check if user is in lobby
+        if (!players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
+        // Check if player exists
+        if (!players.Any(p => p.Id == userId))
+            return new NotFoundResult();
+
         // Respond to request
-        return new OkObjectResult(VoteSingleResponseDto.FromModel(vote, userId));
+        return new OkObjectResult(LobbyUserResponseDto.FromModel(players.First(p => p.Id == userId)));
     }
 }

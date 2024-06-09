@@ -31,32 +31,6 @@ export namespace Websocket {
       userId: "SYSTEM"
     }
 
-    export type VoteStateUpdate = {
-      eventName: "VOTE_STATE_UPDATE"
-      userId: string
-
-      /** Updated vote state */
-      data: Api.VoteGroup
-    }
-
-    export type TimerStart = {
-      eventName: "TIMER_START"
-      userId: "SYSTEM"
-
-      /** Expiry for the timer as unix time milliseconds */
-      data: { expiry: number }
-    }
-
-    export type TimerReset = {
-      eventName: "TIMER_RESET"
-      userId: "SYSTEM"
-    }
-
-    export type TimerClear = {
-      eventName: "TIMER_CLEAR"
-      userId: "SYSTEM"
-    }
-
     export type BoardCreate = {
       eventName: "BOARD_CREATE"
       userId: string
@@ -76,6 +50,22 @@ export namespace Websocket {
     export type GameWon = {
       eventName: "GAME_WON"
       userId: string
+    }
+
+    export type GameStarting = {
+      eventName: "GAME_STARTING"
+      userId: "SYSTEM"
+
+      /** The time the game will start as an ISO string */
+      data: string
+    }
+
+    export type GameCelebrationStarting = {
+      eventName: "GAME_CELEBRATION_STARTING"
+      userId: "SYSTEM"
+
+      /** The time the game celebration will complete */
+      data: Date
     }
   }
 }

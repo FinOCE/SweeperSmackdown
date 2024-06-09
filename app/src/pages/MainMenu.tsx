@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import "./MainMenu.scss"
 import { useNavigation } from "../hooks/useNavigation"
-import { useWebsocket } from "../hooks/useWebsocket"
 import { Loading } from "../components/Loading"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
@@ -11,7 +10,9 @@ import { ButtonList } from "../components/ui/ButtonList"
 import { useLobby } from "../hooks/resources/useLobby"
 import { Api } from "../types/Api"
 
-export function MainMenu() {
+type MainMenuProps = {}
+
+export function MainMenu(props: MainMenuProps) {
   const { origin } = useOrigin()
   const { sdk, user } = useEmbeddedAppSdk()
   const { lobby, createLobby, joinLobby } = useLobby()
@@ -28,22 +29,22 @@ export function MainMenu() {
 
   // Go to lobby if already in one
   useEffect(() => {
-    if (!redirecting || !lobby) return
+    if (!redirecting || !lobby || !user) return
 
     switch (lobby.state) {
-      case Api.Enums.ELobbyState.Init:
-      case Api.Enums.ELobbyState.Configure:
-        navigate("GameConfigure")
+      case Api.Enums.ELobbyState.ConfigureUnlocked:
+      case Api.Enums.ELobbyState.ConfigureLocked:
+        navigate("GameConfigure", { lobbyId: lobby.id })
         return
       case Api.Enums.ELobbyState.Play:
-        navigate("GameActive")
+        navigate("GameActive", { lobbyId: lobby.id, userId: user.id })
         return
       case Api.Enums.ELobbyState.Won:
       case Api.Enums.ELobbyState.Celebrate:
-        navigate("GameCelebration")
+        navigate("GameCelebration", { lobbyId: lobby.id })
         return
     }
-  }, [lobby, redirecting])
+  }, [redirecting, lobby, user])
 
   async function joinOrCreate(id: string) {
     try {

@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardSolutionPostFunction
+public static class BoardSolutionActionFunction
 {
-    [FunctionName(nameof(BoardSolutionPostFunction))]
+    [FunctionName(nameof(BoardSolutionActionFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -33,12 +33,12 @@ public static class BoardSolutionPostFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.BOARD_CONTAINER_NAME,
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
+            Id = "{userId}",
             PartitionKey = "{lobbyId}")]
-            BoardEntityMap? boardEntityMap,
+            Player? player,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         HttpRequest req,
@@ -51,12 +51,12 @@ public static class BoardSolutionPostFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobbby and board exist
-        if (lobby == null || boardEntityMap == null || !boardEntityMap.BoardIds.Contains(userId))
+        // Check if lobby exists
+        if (lobby == null)
             return new NotFoundResult();
 
         // Check if requester is the user
-        if (!lobby.UserIds.Contains(requesterId) || requesterId != userId)
+        if (player is null || requesterId != userId)
             return new StatusCodeResult(403);
 
         // Check if board exists
@@ -83,7 +83,7 @@ public static class BoardSolutionPostFunction
 
         // Notify orchestrator
         await orchestrationClient.RaiseEventAsync(
-            Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId),
+            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, userId),
             DurableEvents.BOARD_COMPLETED);
 
         // Respond to request

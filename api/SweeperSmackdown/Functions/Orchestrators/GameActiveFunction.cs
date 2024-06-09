@@ -6,6 +6,7 @@ using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Orchestrators;
@@ -36,27 +37,27 @@ public static class GameActiveFunction
             nameof(LobbyFetchActivityFunction),
             new LobbyFetchActivityFunctionProps(lobbyId));
 
-        await ctx.CallActivityAsync<BoardEntityMap>(
-            nameof(BoardEntityMapCreateActivityFunction),
-            new BoardEntityMapCreateActivityFunctionProps(lobbyId));
+        var players = await ctx.CallActivityAsync<IEnumerable<Player>>(
+            nameof(LobbyPlayersFetchActivityFunction),
+            new LobbyPlayersFetchActivityFunctionProps(lobbyId));
         
-        foreach (var userId in lobby.UserIds)
+        foreach (var player in players)
             _ = ctx.StartNewOrchestration(
-                nameof(BoardManagerOrchestrationFunction),
-                new BoardManagerOrchestrationFunctionProps(props.Settings),
-                Id.ForInstance(nameof(BoardManagerOrchestrationFunction), lobbyId, userId));
+                nameof(BoardManagerOrchestratorFunction),
+                new BoardManagerOrchestratorFunctionProps(props.Settings),
+                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, player.Id));
 
         // TODO: Ensure all players have a board created before starting
 
         // Setup timer if needed
+        using var timeoutCts = new CancellationTokenSource();
+        
         if (props.Settings.TimeLimit != 0)
         {
-            _ = ctx.StartNewOrchestration(
-                nameof(TimerOrchestratorFunction),
-                new TimerOrchestratorFunctionProps(props.Settings.TimeLimit, ctx.InstanceId),
-                Id.ForInstance(nameof(TimerOrchestratorFunction), lobbyId));
+            var timerTask = ctx.CreateTimer(
+                ctx.CurrentUtcDateTime.AddSeconds(props.Settings.TimeLimit),
+                timeoutCts.Token);
 
-            var timerTask = ctx.WaitForExternalEvent(DurableEvents.TIMER_COMPLETED);
             tasks.Add(timerTask);
         }
 
@@ -71,6 +72,9 @@ public static class GameActiveFunction
         
         // Determine the winner
         var winner = await Task.WhenAny(tasks);
+
+        if (winner == winnerTask)
+            timeoutCts.Cancel();
 
         // Update state to won
         await ctx.CallActivityAsync(

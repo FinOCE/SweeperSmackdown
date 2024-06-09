@@ -3,28 +3,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
 
-public static class BoardResetPostFunction
+public static class BoardSkipActionFunction
 {
-    [FunctionName(nameof(BoardResetPostFunction))]
+    [FunctionName(nameof(BoardSkipActionFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
             "post",
-            Route = "lobbies/{lobbyId}/boards/{userId}/reset")]
-            HttpRequest req,
+            Route = "lobbies/{lobbyId}/boards/{userId}/skip")]
+            BoardSolutionPostRequestDto payload,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -33,14 +31,16 @@ public static class BoardResetPostFunction
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
         [CosmosDB(
-            containerName: DatabaseConstants.BOARD_CONTAINER_NAME,
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
+            Id = "{userId}",
             PartitionKey = "{lobbyId}")]
-            BoardEntityMap? boardEntityMap,
+            Player? player,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
+        HttpRequest req,
+        string lobbyId,
         string userId)
     {
         // Ensure request is from logged in user
@@ -49,13 +49,17 @@ public static class BoardResetPostFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobbby and board exist
-        if (lobby == null || boardEntityMap == null || !boardEntityMap.BoardIds.Contains(userId))
+        // Check if lobby exists
+        if (lobby == null)
             return new NotFoundResult();
 
         // Check if requester is the user
-        if (!lobby.UserIds.Contains(requesterId) || requesterId != userId)
+        if (player is null || requesterId != userId)
             return new StatusCodeResult(403);
+
+        // Check if lobby allows skips (seed existing means sharing boards enabled)
+        if (lobby.Settings.Seed != 0)
+            return new ConflictResult();
 
         // Check if board exists
         var entity = await entityClient.ReadEntityStateAsync<Board>(Id.For<Board>(userId));
@@ -63,12 +67,10 @@ public static class BoardResetPostFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
-        // Reset board
-        await entityClient.SignalEntityAsync<IBoard>(
-            Id.For<Board>(userId),
-            board => board.Reset());
-
-        await ws.AddAsync(ActionFactory.CreateBoard(userId, lobby.Id, entity.EntityState.InitialState, true));
+        // Notify orchestrator
+        await orchestrationClient.RaiseEventAsync(
+            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, userId),
+            DurableEvents.BOARD_SKIPPED);
 
         // Respond to request
         return new NoContentResult();
