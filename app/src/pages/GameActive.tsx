@@ -19,10 +19,13 @@ import { useSettings } from "../hooks/resources/useSettings"
 import { useScores } from "../hooks/resources/useScores"
 import { useWins } from "../hooks/resources/useWins"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
-import { GameCelebration } from "./GameCelebration"
-import { MainMenu } from "./MainMenu"
 
-export function GameActive(lobbyId: string, userId: string) {
+type GameActiveProps = {
+  lobbyId: string
+  userId: string
+}
+
+export function GameActive({ lobbyId, userId }: GameActiveProps) {
   const { api } = useApi()
   const { lobby, leaveLobby } = useLobby()
   const { settings } = useSettings()
@@ -194,7 +197,7 @@ export function GameActive(lobbyId: string, userId: string) {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
 
-      navigate(GameCelebration, lobbyId)
+      navigate("GameCelebration", { lobbyId })
 
       // TODO: Change to stop control and tell everyone the game is over on a countdown
     }
@@ -274,7 +277,7 @@ export function GameActive(lobbyId: string, userId: string) {
 
   async function leave() {
     await leaveLobby()
-    navigate(MainMenu)
+    navigate("MainMenu", {})
   }
 
   if (!localGameState) return <Loading />

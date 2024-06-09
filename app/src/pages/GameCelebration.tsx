@@ -18,10 +18,12 @@ import { useScores } from "../hooks/resources/useScores"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 import { useCountdown } from "../hooks/useCountdown"
 import { Api } from "../types/Api"
-import { MainMenu } from "./MainMenu"
-import { GameConfigure } from "./GameConfigure"
 
-export function GameCelebration(lobbyId: string) {
+type GameCelebrationProps = {
+  lobbyId: string
+}
+
+export function GameCelebration({ lobbyId }: GameCelebrationProps) {
   const { user, participants } = useEmbeddedAppSdk()
   const { lobby, leaveLobby } = useLobby()
   const { wins } = useWins()
@@ -57,7 +59,7 @@ export function GameCelebration(lobbyId: string) {
   useEffect(() => {
     if (!lobby) return
 
-    if (lobby.state !== Api.Enums.ELobbyState.Celebrate) navigate(GameConfigure, lobbyId)
+    if (lobby.state !== Api.Enums.ELobbyState.Celebrate) navigate("GameConfigure", { lobbyId })
   }, [lobby])
 
   // Load page until ready
@@ -69,7 +71,7 @@ export function GameCelebration(lobbyId: string) {
 
   async function leave() {
     await leaveLobby()
-    navigate(MainMenu)
+    navigate("MainMenu", {})
   }
 
   return (

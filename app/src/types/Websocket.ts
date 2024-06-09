@@ -56,8 +56,8 @@ export namespace Websocket {
       eventName: "GAME_STARTING"
       userId: "SYSTEM"
 
-      /** The time the game will start */
-      data: Date
+      /** The time the game will start as an ISO string */
+      data: string
     }
 
     export type GameCelebrationStarting = {

@@ -24,10 +24,12 @@ import { isEvent } from "../utils/isEvent"
 import { Websocket } from "../types/Websocket"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 import { useDelay } from "../hooks/useDelay"
-import { GameActive } from "./GameActive"
-import { MainMenu } from "./MainMenu"
 
-export function GameConfigure(lobbyId: string) {
+type GameConfigureProps = {
+  lobbyId: string
+}
+
+export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
   const { ws } = useWebsocket()
@@ -103,7 +105,7 @@ export function GameConfigure(lobbyId: string) {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameStarting>("GAME_STARTING", data)) return
 
-      setCountdownExpiry(data.data)
+      setCountdownExpiry(new Date(data.data))
     }
 
     ws.on("group-message", onGameStarting)
@@ -120,7 +122,7 @@ export function GameConfigure(lobbyId: string) {
   useEffect(() => {
     if (!lobby || !user) return
 
-    if (lobby.state === Api.Enums.ELobbyState.Play) navigate(GameActive, lobbyId, user.id)
+    if (lobby.state === Api.Enums.ELobbyState.Play) navigate("GameActive", { lobbyId, userId: user.id })
   }, [lobby])
 
   // Show loading if not ready
@@ -153,7 +155,7 @@ export function GameConfigure(lobbyId: string) {
 
   async function leave() {
     await leaveLobby()
-    navigate(MainMenu)
+    navigate("MainMenu", {})
   }
 
   // Render page
