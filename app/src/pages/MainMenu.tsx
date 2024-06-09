@@ -12,7 +12,7 @@ import { Api } from "../types/Api"
 
 type MainMenuProps = {}
 
-export function MainMenu(props: MainMenuProps) {
+export function MainMenu({}: MainMenuProps) {
   const { origin } = useOrigin()
   const { sdk, user } = useEmbeddedAppSdk()
   const { lobby, createLobby, joinLobby } = useLobby()
@@ -61,9 +61,9 @@ export function MainMenu(props: MainMenuProps) {
     setRedirecting(true)
   }
 
-  async function create(id: string) {
+  async function create() {
     try {
-      await createLobby(id)
+      await createLobby()
       setRedirecting(true)
     } catch (err) {
       setError("Failed to create a lobby. Please try again later.")
@@ -101,7 +101,7 @@ export function MainMenu(props: MainMenuProps) {
           </>
         )}
 
-        <Box onClick={() => create(Math.floor(Math.random() * 100000).toString())}>
+        <Box onClick={() => create()}>
           <Text type="big">Create Party</Text>
         </Box>
         <div className="main-menu-join-container">
