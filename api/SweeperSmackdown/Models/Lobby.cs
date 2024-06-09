@@ -28,13 +28,12 @@ public class Lobby
         Id = id;
         HostId = hostId;
         Settings = settings;
-        State = ELobbyState.Init;
+        State = ELobbyState.ConfigureUnlocked;
     }
 }
 
 public enum ELobbyState
 {
-    Init,
     ConfigureUnlocked,
     ConfigureLocked,
     Play,

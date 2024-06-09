@@ -32,7 +32,6 @@ export function MainMenu(props: MainMenuProps) {
     if (!redirecting || !lobby || !user) return
 
     switch (lobby.state) {
-      case Api.Enums.ELobbyState.Init:
       case Api.Enums.ELobbyState.ConfigureUnlocked:
       case Api.Enums.ELobbyState.ConfigureLocked:
         navigate("GameConfigure", { lobbyId: lobby.id })

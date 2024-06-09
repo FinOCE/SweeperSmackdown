@@ -32,12 +32,11 @@ export namespace Api {
 
   export namespace Enums {
     export enum ELobbyState {
-      Init = 0,
-      ConfigureUnlocked = 1,
-      ConfigureLocked = 2,
-      Play = 3,
-      Won = 4,
-      Celebrate = 5
+      ConfigureUnlocked,
+      ConfigureLocked,
+      Play,
+      Won,
+      Celebrate
     }
   }
 
