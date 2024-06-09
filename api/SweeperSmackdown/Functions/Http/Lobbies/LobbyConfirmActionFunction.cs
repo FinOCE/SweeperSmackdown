@@ -16,7 +16,7 @@ public static class LobbyConfirmActionFunction
 {
     [FunctionName(nameof(LobbyConfirmActionFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", "lobbies/{lobbyId}/confirm")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "lobbies/{lobbyId}/confirm")] HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
@@ -24,7 +24,8 @@ public static class LobbyConfirmActionFunction
             Connection = "CosmosDbConnectionString",
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
-            Lobby? lobby)
+            Lobby? lobby,
+        string lobbyId)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();

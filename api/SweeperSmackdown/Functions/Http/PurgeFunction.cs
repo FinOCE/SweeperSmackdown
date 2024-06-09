@@ -77,8 +77,8 @@ public static class PurgeFunction
         Console.WriteLine("Lobby container deleted and recreated");
 
         // Delete all players
-        var boardContainer = cosmosClient.GetPlayerContainer();
-        await boardContainer.DeleteContainerAsync();
+        var playerContainer = cosmosClient.GetPlayerContainer();
+        await playerContainer.DeleteContainerAsync();
 
         await database.CreateContainerAsync(new()
         {
