@@ -61,6 +61,8 @@ export namespace Api {
 
     export type LobbyPut = Lobby
 
+    export type LobbyPost = Lobby
+
     export type Negotiate = {
       baseUrl: string
       url: string

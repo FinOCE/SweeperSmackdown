@@ -75,6 +75,14 @@ function getApi(baseUrl: string | null, token: string | null) {
           .then(accept(200, 201))
           .then(res => result(true)<Api.Response.LobbyPut>(res)),
 
+      lobbyPost: () =>
+        fetch(baseUrl + "/lobbies", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(201))
+          .then(res => result(true)<Api.Response.LobbyPost>(res)),
+
       negotiate: async (userId: string) =>
         await fetch(baseUrl + `/negotiate?userId=${userId}`, {
           method: "POST",

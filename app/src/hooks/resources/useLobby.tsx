@@ -44,21 +44,32 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
 
   async function createLobby(lobbyId?: string) {
     if (!user) throw new Error("No user")
-    if (!lobbyId) throw new Error("Cannot create lobby without an ID") // TODO
 
-    const [lobbyPutError, lobby] = await api
-      .lobbyPut(lobbyId)
-      .then(([data, status]) => {
-        if (status === 200) throw "200"
-        else return data
-      })
-      .then(data => [null, data] as const)
-      .catch((err: Error) => [err, null] as const)
+    let lobby: Api.Lobby
+    if (lobbyId) {
+      const [lobbyPutError, lobbyRes] = await api
+        .lobbyPut(lobbyId)
+        .then(([data, status]) => {
+          if (status === 200) throw "200"
+          else return data
+        })
+        .then(data => [null, data] as const)
+        .catch((err: Error) => [err, null] as const)
 
-    if (lobbyPutError) throw new Error("Lobby already exists")
+      if (lobbyPutError) throw new Error("Lobby already exists")
+      lobby = lobbyRes
+    } else {
+      const [lobbyPutError, lobbyRes] = await api
+        .lobbyPost()
+        .then(([data]) => [null, data] as const)
+        .catch((err: Error) => [err, null] as const)
+
+      if (lobbyPutError) throw new Error("Failed to create lobby")
+      lobby = lobbyRes
+    }
 
     const [userPutError] = await api
-      .lobbyUserPut(lobbyId, user.id)
+      .lobbyUserPut(lobby.lobbyId, user.id)
       .then(([data]) => [null, data] as const)
       .catch((err: Error) => [err, null] as const)
 
