@@ -19,16 +19,18 @@ public static class CleanupTimerFunction
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
-        var lobbies = await cosmosClient.GetLobbyContainer()
-            .GetItemLinqQueryable<Lobby>()
-            .Where(lobby => lobby.UpdatedAt > 3600) // Not changed in past hour (inactive)
+        var players = await cosmosClient.GetPlayerContainer()
+            .GetItemLinqQueryable<Player>()
             .ToFeedIterator()
             .ReadAllAsync();
 
         await Task.WhenAll(
-            lobbies.Select(lobby => orchestrationClient
-                .StartNewAsync(
-                    nameof(LobbyDeleteOrchestratorFunction),
-                    Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), lobby.Id))));
+            players
+                .GroupBy(p => p.LobbyId)
+                .Where(g => g.All(p => p.UpdatedAt > 3600))
+                .Select(g => orchestrationClient
+                    .StartNewAsync(
+                        nameof(LobbyDeleteOrchestratorFunction),
+                        Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), g.Key))));
     }
 }
