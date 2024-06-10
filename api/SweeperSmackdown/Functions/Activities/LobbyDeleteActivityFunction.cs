@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 using SweeperSmackdown.Extensions;
 using System.Linq;
 using SweeperSmackdown.Functions.Entities;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
+using SweeperSmackdown.Assets;
+using SweeperSmackdown.Factories;
 
 namespace SweeperSmackdown.Functions.Activities;
 
@@ -30,13 +33,15 @@ public static class LobbyDeleteActivityFunction
         [ActivityTrigger] IDurableActivityContext ctx,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
-        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
     {
         var props = ctx.GetInput<LobbyDeleteActivityFunctionProps>();
 
         var players = await cosmosClient.GetAllPlayersInLobbyAsync(props.LobbyId);
 
-        // TODO: Send WS event telling players the lobby is being deleted in case AFK
+        // Notify AFK players to kick
+        await ws.AddAsync(ActionFactory.DeleteLobby(props.LobbyId));
 
         // Delete lobby db entry
         await cosmosClient

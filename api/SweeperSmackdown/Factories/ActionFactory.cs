@@ -69,4 +69,9 @@ public static class ActionFactory
             lobbyId,
             MessageFactory.Create(PubSubEvents.GAME_CELEBRATION_STARTING, "SYSTEM", expiry),
             WebPubSubDataType.Json);
+
+    public static WebPubSubAction DeleteLobby(string lobbyId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.LOBBY_DELETE, "SYSTEM", ""));
 }

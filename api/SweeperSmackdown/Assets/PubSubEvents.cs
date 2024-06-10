@@ -21,4 +21,6 @@ public static class PubSubEvents
     public const string GAME_STARTING = "GAME_STARTING";
 
     public const string GAME_CELEBRATION_STARTING = "GAME_CELEBRATION_STARTING";
+
+    public const string LOBBY_DELETE = "LOBBY_DELETE";
 }

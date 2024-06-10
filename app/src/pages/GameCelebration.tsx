@@ -45,8 +45,21 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
       setCountdownExpiry(data.data)
     }
 
+    function onLobbyDelete(e: OnGroupDataMessageArgs) {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.LobbyDelete>("LOBBY_DELETE", data)) return
+
+      alert("Your lobby has been closed due to inactivity") // TODO: Send proper alert (also shared in other game pages)
+      navigate("MainMenu", {})
+    }
+
     ws.on("group-message", onGameCelebrationStarting)
-    return () => ws.off("group-message", onGameCelebrationStarting)
+    ws.on("group-message", onLobbyDelete)
+
+    return () => {
+      ws.off("group-message", onGameCelebrationStarting)
+      ws.off("group-message", onLobbyDelete)
+    }
   }, [ws])
 
   useEffect(() => {

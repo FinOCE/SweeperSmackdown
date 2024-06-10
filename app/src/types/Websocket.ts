@@ -67,5 +67,10 @@ export namespace Websocket {
       /** The time the game celebration will complete */
       data: Date
     }
+
+    export type LobbyDelete = {
+      eventName: "LOBBY_DELETE"
+      userId: "SYSTEM"
+    }
   }
 }
