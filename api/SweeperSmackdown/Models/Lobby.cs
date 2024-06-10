@@ -20,6 +20,9 @@ public class Lobby
     [JsonProperty("state")]
     public ELobbyState State { get; set; }
 
+    [JsonProperty("_ts")]
+    public long UpdatedAt { get; set; }
+
     public Lobby(
         string id,
         string hostId,
