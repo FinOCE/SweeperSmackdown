@@ -38,8 +38,6 @@ resource azStorageAccountBot 'Microsoft.Storage/storageAccounts@2023-01-01' exis
   name: botStorageName
 }
 
-var azStorageAccountBotConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${botStorageName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountBot.listKeys().keys[0].value}'
-
 // Get database
 resource azCosmosDb 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
   name: cosmosDbName
@@ -156,36 +154,12 @@ resource azFunctionAppBot 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       appSettings: [
         {
-          name: 'AzureWebJobsStorage'
-          value: azStorageAccountBotConnectionString
-        }
-        {
-          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: azStorageAccountBotConnectionString
-        }
-        {
-          name: 'WEBSITE_CONTENTSHARE'
-          value: nameBot
-        }
-        {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
+          name: 'AzureWebJobsStorage__accountName'
+          value: azStorageAccountBot.name
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: botApplicationInsightsInstrumentationKey
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet-isolated'
-        }
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1'
-        }
-        {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'true'
         }
         {
           name: 'DISCORD_PUBLIC_KEY'
