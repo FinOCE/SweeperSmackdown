@@ -3,6 +3,8 @@ param nameApi string
 param nameBot string
 param location string
 
+param botStorageContainerName string
+
 // Create storage account api
 resource azStorageAccountApi 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: nameApi
@@ -29,7 +31,19 @@ resource azStorageAccountBot 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     accessTier: 'Hot'
     allowBlobPublicAccess: false
   }
+
+  resource azBlobServices 'blobServices' = {
+    name: 'default'
+
+    resource azStorageContainer 'containers' = {
+      name: botStorageContainerName
+      properties: {
+        publicAccess: 'None'
+      }
+    }
+  }
 }
+
 
 // Outputs
 output apiName string = azStorageAccountApi.name

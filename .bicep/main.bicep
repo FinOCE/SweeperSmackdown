@@ -100,6 +100,8 @@ module azStorageAccount 'modules/azStorageAccount.bicep' = {
     nameApi: storageAccountApi
     nameBot: storageAccountBot
     location: location
+    
+    botStorageContainerName: storageContainerNameBot
   }
 }
 
