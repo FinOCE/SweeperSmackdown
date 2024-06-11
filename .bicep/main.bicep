@@ -41,6 +41,9 @@ var functionAppApi = 'fa-${product}-${environment}'
 var functionAppBot = 'fa-sweeperbot-${environment}'
 var staticWebApp = 'swa-${product}-${environment}'
 
+var resourceToken = toLower(uniqueString(subscription().id, environment, location))
+var storageContainerNameBot = 'app-package-sweeperbot-${take(resourceToken, 7)}'
+
 // Create resource group
 resource azResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   name: resourceGroup
@@ -124,6 +127,7 @@ module azFunctionApp 'modules/azFunctionApp.bicep' = {
     botApplicationInsightsInstrumentationKey: azApplicationInsights.outputs.botInstrumentationKey
     botServerFarmId: azServerFarm.outputs.botId
     botStorageName: azStorageAccount.outputs.botName
+    botStorageContainerName: storageContainerNameBot
 
     discordPublicKey: discordPublicKey
   }

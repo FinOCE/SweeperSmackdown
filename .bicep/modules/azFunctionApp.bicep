@@ -9,6 +9,7 @@ param apiServerFarmId string
 param nameBot string
 param botStorageName string
 param botServerFarmId string
+param botStorageContainerName string
 
 @secure()
 param bearerTokenSecretKey string
@@ -37,7 +38,7 @@ resource azStorageAccountBot 'Microsoft.Storage/storageAccounts@2023-01-01' exis
   name: botStorageName
 }
 
-var azStorageAccountBotConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${apiStorageName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountBot.listKeys().keys[0].value}'
+var azStorageAccountBotConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${botStorageName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountBot.listKeys().keys[0].value}'
 
 // Get database
 resource azCosmosDb 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
@@ -141,6 +142,15 @@ resource azFunctionAppBot 'Microsoft.Web/sites@2023-12-01' = {
       runtime: { 
         name: 'dotnet-isolated'
         version: '8.0'
+      }
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${azStorageAccountBot.properties.primaryEndpoints.blob}${botStorageContainerName}'
+          authentication: {
+            type: 'SystemAssignedIdentity'
+          }
+        }
       }
     }
     siteConfig: {
