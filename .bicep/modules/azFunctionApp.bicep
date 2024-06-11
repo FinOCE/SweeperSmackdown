@@ -26,6 +26,8 @@ param apiApplicationInsightsInstrumentationKey string
 @secure()
 param botApplicationInsightsInstrumentationKey string
 
+var storageRoleDefinitionId = 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b' // Built-in blob storage role data owner role
+
 // Get storage account connection string api
 resource azStorageAccountApi 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: apiStorageName
@@ -128,7 +130,10 @@ resource azFunctionAppApi 'Microsoft.Web/sites@2022-09-01' = {
 resource azFunctionAppBot 'Microsoft.Web/sites@2023-12-01' = {
   name: nameBot
   location: location
-  kind: 'functionapp'
+  kind: 'functionapp,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: botServerFarmId
     httpsOnly: true
@@ -172,6 +177,17 @@ resource azFunctionAppBot 'Microsoft.Web/sites@2023-12-01' = {
         ]
       }
     }
+  }
+}
+
+// Add access to storage account for bot
+resource azRoleAssignmentBot 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(azStorageAccountBot.id, storageRoleDefinitionId)
+  scope: azStorageAccountBot
+  properties: {
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', storageRoleDefinitionId)
+    principalId: azFunctionAppBot.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
