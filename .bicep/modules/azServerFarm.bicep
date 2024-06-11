@@ -1,10 +1,11 @@
 // Parameters
-param name string
+param nameApi string
+param nameBot string
 param location string
 
-// Create server farm
-resource azServerFarm 'Microsoft.Web/serverfarms@2022-09-01' = {
-  name: name
+// Create server farm api
+resource azServerFarmApi 'Microsoft.Web/serverfarms@2022-09-01' = {
+  name: nameApi
   location: location
   sku: {
     name: 'Y1'
@@ -12,5 +13,20 @@ resource azServerFarm 'Microsoft.Web/serverfarms@2022-09-01' = {
   }
 }
 
+// Create server farm bot
+resource azServerFarmBot 'Microsoft.Web/serverfarms@2022-09-01' = {
+  name: nameBot
+  location: location
+  kind: 'functionapp'
+  sku: {
+    name: 'FC1'
+    tier: 'FlexConsumption'
+  }
+  properties: {
+    reserved: true
+  }
+}
+
 // Outputs
-output id string = azServerFarm.id
+output apiId string = azServerFarmApi.id
+output botId string = azServerFarmBot.id

@@ -1,0 +1,71 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SweeperSmackdown.Bot</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Discord\Enums\GuildNsfwLevel.fs" />
+    <Compile Include="Discord\Enums\GuildPremiumTier.fs" />
+    <Compile Include="Discord\Enums\GuildMfaLevel.fs" />
+    <Compile Include="Discord\Enums\GuildExplicitContentFilterLevel.fs" />
+    <Compile Include="Discord\Enums\GuildMessageNotificationLevel.fs" />
+    <Compile Include="Discord\Enums\GuildVerificationLevel.fs" />
+    <Compile Include="Discord\Enums\CommandInteractionDataOptionValue.fs" />
+    <Compile Include="Discord\Enums\ApplicationCommandType.fs" />
+    <Compile Include="Discord\Enums\InteractionContextType.fs" />
+    <Compile Include="Discord\Enums\ApplicationIntegrationType.fs" />
+    <Compile Include="Discord\Enums\InteractionType.fs" />
+    <Compile Include="Discord\Enums\InteractionCallbackType.fs" />
+    <Compile Include="Discord\Structures\WelcomeScreenChannel.fs" />
+    <Compile Include="Discord\Structures\WelcomeScreen.fs" />
+    <Compile Include="Discord\Structures\Sticker.fs" />
+    <Compile Include="Discord\Structures\Emoji.fs" />
+    <Compile Include="Discord\Structures\CommandInteractionDataOption.fs" />
+    <Compile Include="Discord\Structures\Attachment.fs" />
+    <Compile Include="Discord\Structures\Role.fs" />
+    <Compile Include="Discord\Structures\Channel.fs" />
+    <Compile Include="Discord\Structures\Entitlement.fs" />
+    <Compile Include="Discord\Structures\GuildMember.fs" />
+    <Compile Include="Discord\Structures\Message.fs" />
+    <Compile Include="Discord\Structures\User.fs" />
+    <Compile Include="Discord\Structures\Guild.fs" />
+    <Compile Include="Discord\Structures\ResolvedData.fs" />
+    <Compile Include="Discord\Structures\InteractionData.fs" />
+    <Compile Include="Discord\Structures\Interaction.fs" />
+    <Compile Include="Discord\DTOs\PingInteractionResponseDto.fs" />
+    <Compile Include="Functions\Http\InteractionPostFunction.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.2.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.17.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="local.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.100" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Utils\" />
+  </ItemGroup>
+</Project>
