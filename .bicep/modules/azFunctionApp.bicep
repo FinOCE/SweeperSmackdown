@@ -126,23 +126,23 @@ resource azFunctionAppApi 'Microsoft.Web/sites@2022-09-01' = {
 }
 
 // Create function app bot
-resource azFunctionAppBot 'Microsoft.Web/sites@2022-09-01' = {
+resource azFunctionAppBot 'Microsoft.Web/sites@2023-12-01' = {
   name: nameBot
   location: location
   kind: 'functionapp'
   properties: {
     serverFarmId: botServerFarmId
     httpsOnly: true
-    // functionAppConfig: {
-    //   scaleAndConcurrency: {
-    //     maximumInstanceCount: 100
-    //     instanceMemoryMB: 2048
-    //   }
-    //   runtime: { 
-    //     name: 'dotnet-isolated'
-    //     version: '8.0'
-    //   }
-    // }
+    functionAppConfig: {
+      scaleAndConcurrency: {
+        maximumInstanceCount: 100
+        instanceMemoryMB: 2048
+      }
+      runtime: { 
+        name: 'dotnet-isolated'
+        version: '8.0'
+      }
+    }
     siteConfig: {
       appSettings: [
         {

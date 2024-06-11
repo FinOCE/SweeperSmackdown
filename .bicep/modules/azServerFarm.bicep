@@ -19,12 +19,12 @@ resource azServerFarmBot 'Microsoft.Web/serverfarms@2022-09-01' = {
   location: location
   kind: 'functionapp'
   sku: {
-    name: 'Y1' // 'FC1'
-    tier: 'Dynamic' // 'FlexConsumption'
+    name: 'FC1'
+    tier: 'FlexConsumption'
   }
-  // properties: {
-  //   reserved: true
-  // }
+  properties: {
+    reserved: true
+  }
 }
 
 // Outputs
