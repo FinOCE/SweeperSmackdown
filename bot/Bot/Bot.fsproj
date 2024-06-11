@@ -8,6 +8,23 @@
     <RootNamespace>SweeperSmackdown.Bot</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Discord\Enums\CommandInteractionDataOptionValue.fs" />
+    <Compile Include="Discord\Enums\ApplicationCommandType.fs" />
+    <Compile Include="Discord\Enums\InteractionContextType.fs" />
+    <Compile Include="Discord\Enums\ApplicationIntegrationType.fs" />
+    <Compile Include="Discord\Enums\InteractionType.fs" />
+    <Compile Include="Discord\Structures\CommandInteractionDataOption.fs" />
+    <Compile Include="Discord\Structures\Attachment.fs" />
+    <Compile Include="Discord\Structures\Role.fs" />
+    <Compile Include="Discord\Structures\Channel.fs" />
+    <Compile Include="Discord\Structures\Entitlement.fs" />
+    <Compile Include="Discord\Structures\Guild.fs" />
+    <Compile Include="Discord\Structures\GuildMember.fs" />
+    <Compile Include="Discord\Structures\Message.fs" />
+    <Compile Include="Discord\Structures\User.fs" />
+    <Compile Include="Discord\Structures\ResolvedData.fs" />
+    <Compile Include="Discord\Structures\InteractionData.fs" />
+    <Compile Include="Discord\Structures\Interaction.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
