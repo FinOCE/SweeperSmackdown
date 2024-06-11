@@ -52,7 +52,7 @@ type Interaction =
     val GuildLocale: string option
     
     [<JsonPropertyName("entitlements")>]
-    val Entitlements: Entitlement[]
+    val Entitlements: Entitlement list
     
     [<JsonPropertyName("authorizing_integration_owners")>]
     val AuthorizingIntegrationOwners: ApplicationIntegrationType

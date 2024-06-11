@@ -13,7 +13,7 @@ type CommandInteractionDataOption =
     val Value: CommandInteractionDataOptionValue option
     
     [<JsonPropertyName("options")>]
-    val Options: CommandInteractionDataOption[] option
+    val Options: CommandInteractionDataOption list option
 
     [<JsonPropertyName("focused")>]
     val Focused: bool option

@@ -16,7 +16,7 @@ type InteractionData =
     val Resolved: ResolvedData option
 
     [<JsonPropertyName("options")>]
-    val Options: CommandInteractionDataOption[] option
+    val Options: CommandInteractionDataOption list option
     
     [<JsonPropertyName("guild_id")>]
     val GuildId: string option
