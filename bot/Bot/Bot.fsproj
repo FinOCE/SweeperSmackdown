@@ -19,6 +19,7 @@
     <Compile Include="Discord\Enums\InteractionContextType.fs" />
     <Compile Include="Discord\Enums\ApplicationIntegrationType.fs" />
     <Compile Include="Discord\Enums\InteractionType.fs" />
+    <Compile Include="Discord\Enums\InteractionCallbackType.fs" />
     <Compile Include="Discord\Structures\WelcomeScreenChannel.fs" />
     <Compile Include="Discord\Structures\WelcomeScreen.fs" />
     <Compile Include="Discord\Structures\Sticker.fs" />
@@ -35,6 +36,8 @@
     <Compile Include="Discord\Structures\ResolvedData.fs" />
     <Compile Include="Discord\Structures\InteractionData.fs" />
     <Compile Include="Discord\Structures\Interaction.fs" />
+    <Compile Include="Discord\DTOs\PingInteractionResponseDto.fs" />
+    <Compile Include="Functions\Http\InteractionPostFunction.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -45,6 +48,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.17.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -60,5 +64,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="8.0.100" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Utils\" />
   </ItemGroup>
 </Project>
