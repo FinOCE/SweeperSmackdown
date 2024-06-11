@@ -1,28 +1,43 @@
 // Parameters
-param name string
+param nameApi string
 param location string
 param cosmosDbName string
 param webPubsubName string
-param storageName string
-param serverFarmId string
+param apiStorageName string
+param apiServerFarmId string
+
+param nameBot string
+param botStorageName string
+param botServerFarmId string
 
 @secure()
 param bearerTokenSecretKey string
 
 param discordClientId string
+param discordPublicKey string
 
 @secure()
 param discordClientSecret string
 
 @secure()
-param applicationInsightsInstrumentationKey string
+param apiApplicationInsightsInstrumentationKey string
 
-// Get storage account connection string
-resource azStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageName
+@secure()
+param botApplicationInsightsInstrumentationKey string
+
+// Get storage account connection string api
+resource azStorageAccountApi 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: apiStorageName
 }
 
-var azStorageAccountConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccount.listKeys().keys[0].value}'
+var azStorageAccountApiConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${apiStorageName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountApi.listKeys().keys[0].value}'
+
+// Get storage account connection string bot
+resource azStorageAccountBot 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: botStorageName
+}
+
+var azStorageAccountBotConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${apiStorageName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountBot.listKeys().keys[0].value}'
 
 // Get database
 resource azCosmosDb 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
@@ -38,27 +53,27 @@ resource azWebPubsub 'Microsoft.SignalRService/webPubSub@2023-02-01' existing = 
 
 var webPubsubConnectionString = azWebPubsub.listKeys().primaryConnectionString
 
-// Create function app
-resource azFunctionApp 'Microsoft.Web/sites@2022-09-01' = {
-  name: name
+// Create function app api
+resource azFunctionAppApi 'Microsoft.Web/sites@2022-09-01' = {
+  name: nameApi
   location: location
   kind: 'functionapp'
   properties: {
-    serverFarmId: serverFarmId
+    serverFarmId: apiServerFarmId
     httpsOnly: true
     siteConfig: {
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: azStorageAccountConnectionString
+          value: azStorageAccountApiConnectionString
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: azStorageAccountConnectionString
+          value: azStorageAccountApiConnectionString
         }
         {
           name: 'WEBSITE_CONTENTSHARE'
-          value: name
+          value: nameApi
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -66,7 +81,7 @@ resource azFunctionApp 'Microsoft.Web/sites@2022-09-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: applicationInsightsInstrumentationKey
+          value: apiApplicationInsightsInstrumentationKey
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -110,6 +125,74 @@ resource azFunctionApp 'Microsoft.Web/sites@2022-09-01' = {
   }
 }
 
+// Create function app bot
+resource azFunctionAppBot 'Microsoft.Web/sites@2022-09-01' = {
+  name: nameBot
+  location: location
+  kind: 'functionapp'
+  properties: {
+    serverFarmId: botServerFarmId
+    httpsOnly: true
+    functionAppConfig: {
+      scaleAndConcurrency: {
+        maximumInstanceCount: 100
+        instanceMemoryMB: 2048
+      }
+      runtime: { 
+        name: 'dotnet-isolated'
+        version: '8.0'
+      }
+    }
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'AzureWebJobsStorage'
+          value: azStorageAccountBotConnectionString
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: azStorageAccountBotConnectionString
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: nameBot
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: botApplicationInsightsInstrumentationKey
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'dotnet-isolated'
+        }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'true'
+        }
+        {
+          name: 'DISCORD_PUBLIC_KEY'
+          value: discordPublicKey
+        }
+      ]
+      cors: {
+        allowedOrigins: [
+          '*'
+        ]
+      }
+    }
+  }
+}
+
 // Outputs
-output name string = azFunctionApp.name
-output defaultHostName string = azFunctionApp.properties.defaultHostName
+output apiName string = azFunctionAppApi.name
+output apiDefaultHostName string = azFunctionAppApi.properties.defaultHostName
+output botName string = azFunctionAppBot.name
+output botDefaultHostName string = azFunctionAppBot.properties.defaultHostName

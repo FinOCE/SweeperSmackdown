@@ -40,7 +40,7 @@ jobs:
         with:
           scope: "subscription"
           template: .bicep/main.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ secrets.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }}"
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ secrets.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
           failOnStdErr: false
           region: ${{ env.REGION }}
 
@@ -68,7 +68,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create zip and prepare for deployment
+      - name: Create API zip
         run: |
           cd ./api
           dotnet publish --configuration Release --output ./output --self-contained
@@ -79,7 +79,20 @@ jobs:
       - name: Deploy API through Azure CLI
         run: |
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.functionAppName }} --src ./api/deploy.zip
+          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.apiFunctionAppName }} --src ./api/deploy.zip
+
+      - name: Create bot zip
+        run: |
+          cd ./bot
+          dotnet publish --configuration Release --output ./output --self-contained
+          cd ./output
+          zip -r ../deploy.zip .
+          cd ../..
+
+      - name: Deploy bot through Azure CLI
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.botFunctionAppName }} --src ./bot/deploy.zip
 
       - name: Log out of Azure
         run: |

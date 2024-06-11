@@ -22,16 +22,23 @@ param discordClientId string
 @secure()
 param discordClientSecret string
 
+@description('The public key of the Discord application')
+param discordPublicKey string
+
 // Names
 var product = 'sweepersmackdown'
 
 var resourceGroup = 'rg-${product}-${environment}'
 var cosmosDb = 'db-${product}-${environment}'
 var webPubsub = 'ws-${product}-${environment}'
-var applicationInsights = 'ai-${product}-${environment}'
-var serverFarm = 'sf-${product}-${environment}'
-var storageAccount = 'sa${product}${environment}'
-var functionApp = 'fa-${product}-${environment}'
+var applicationInsightsApi = 'ai-${product}-${environment}'
+var applicationInsightsBot = 'ai-bot-${product}-${environment}'
+var serverFarmApi = 'sf-${product}-${environment}'
+var serverFarmBot = 'sf-bot-${environment}'
+var storageAccountApi = 'sa${product}${environment}'
+var storageAccountBot = 'sabot${environment}'
+var functionAppApi = 'fa-${product}-${environment}'
+var functionAppBot = 'fa-bot-${environment}'
 var staticWebApp = 'swa-${product}-${environment}'
 
 // Create resource group
@@ -65,7 +72,8 @@ module azApplicationInsights 'modules/azApplicationInsights.bicep' = {
   scope: azResourceGroup
   name: 'applicationInsights'
   params: {
-    name: applicationInsights
+    nameApi: applicationInsightsApi
+    nameBot: applicationInsightsBot
     location: location
   }
 }
@@ -75,7 +83,8 @@ module azServerFarm 'modules/azServerFarm.bicep' = {
   scope: azResourceGroup
   name: 'serverFarm'
   params: {
-    name: serverFarm
+    nameApi: serverFarmApi
+    nameBot: serverFarmBot
     location: location
   }
 }
@@ -85,7 +94,8 @@ module azStorageAccount 'modules/azStorageAccount.bicep' = {
   scope: azResourceGroup
   name: 'storageAccount'
   params: {
-    name: storageAccount
+    nameApi: storageAccountApi
+    nameBot: storageAccountBot
     location: location
   }
 }
@@ -95,21 +105,31 @@ module azFunctionApp 'modules/azFunctionApp.bicep' = {
   scope: azResourceGroup
   name: 'functionApp'
   params: {
-    name: functionApp
     location: location
+
+    // Api params
+    nameApi: functionAppApi
     cosmosDbName: azCosmosDb.outputs.name
     webPubsubName: azWebPubsub.outputs.name
-    applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
-    serverFarmId: azServerFarm.outputs.id
-    storageName: azStorageAccount.outputs.name
+    apiApplicationInsightsInstrumentationKey: azApplicationInsights.outputs.apiInstrumentationKey
+    apiServerFarmId: azServerFarm.outputs.apiId
+    apiStorageName: azStorageAccount.outputs.apiName
 
     bearerTokenSecretKey: bearerTokenSecretKey
     discordClientId: discordClientId
     discordClientSecret: discordClientSecret
+
+    // Bot params
+    nameBot: functionAppBot
+    botApplicationInsightsInstrumentationKey: azApplicationInsights.outputs.botInstrumentationKey
+    botServerFarmId: azServerFarm.outputs.botId
+    botStorageName: azStorageAccount.outputs.botName
+
+    discordPublicKey: discordPublicKey
   }
 }
 
-var azFunctionAppDefaultHostName = azFunctionApp.outputs.defaultHostName
+var azFunctionAppDefaultHostName = azFunctionApp.outputs.apiDefaultHostName
 
 // Create web pubsub hub
 module azWebPubsubHub 'modules/azWebPubsubHub.bicep' = {
@@ -118,7 +138,7 @@ module azWebPubsubHub 'modules/azWebPubsubHub.bicep' = {
   params: {
     webPubsubName: webPubsub
     eventHandlerAddress: 'https://${azFunctionAppDefaultHostName}/runtime/webhooks/webpubsub'
-    functionAppName: azFunctionApp.outputs.name
+    functionAppName: azFunctionApp.outputs.apiName
   }
 }
 
@@ -134,7 +154,9 @@ module azStaticWebApp 'modules/azStaticWebApp.bicep' = {
 
 // Outputs
 output resourceGroupName string = azResourceGroup.name
-output functionAppName string = azFunctionApp.outputs.name
-output functionAppDefaultHostName string = azFunctionApp.outputs.defaultHostName
+output apiFunctionAppName string = azFunctionApp.outputs.apiName
+output apiFunctionAppDefaultHostName string = azFunctionApp.outputs.apiDefaultHostName
+output botFunctionAppName string = azFunctionApp.outputs.botName
+output botFunctionAppDefaultHostName string = azFunctionApp.outputs.botDefaultHostName
 output staticWebAppName string = azStaticWebApp.outputs.name
 output staticWebAppDefaultHostName string = azStaticWebApp.outputs.defaultHostName
