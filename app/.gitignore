@@ -1,7 +1,3 @@
-.vscode
-.vs
-.idea
-
 node_modules
 dist
 .env

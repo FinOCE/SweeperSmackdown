@@ -32,7 +32,7 @@ var resourceGroup = 'rg-${product}-${environment}'
 var cosmosDb = 'db-${product}-${environment}'
 var webPubsub = 'ws-${product}-${environment}'
 var applicationInsightsApi = 'ai-${product}-${environment}'
-var applicationInsightsBot = 'ai-sweeperbot-${product}-${environment}'
+var applicationInsightsBot = 'ai-sweeperbot-${environment}'
 var serverFarmApi = 'sf-${product}-${environment}'
 var serverFarmBot = 'sf-sweeperbot-${environment}'
 var storageAccountApi = 'sa${product}${environment}'
@@ -100,7 +100,7 @@ module azStorageAccount 'modules/azStorageAccount.bicep' = {
     nameApi: storageAccountApi
     nameBot: storageAccountBot
     location: location
-    
+
     botStorageContainerName: storageContainerNameBot
   }
 }
