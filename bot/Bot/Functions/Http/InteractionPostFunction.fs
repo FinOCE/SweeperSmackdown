@@ -3,17 +3,19 @@
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Mvc
 open Microsoft.Azure.Functions.Worker
+open Microsoft.Extensions.Logging
+open Org.BouncyCastle.Crypto.Parameters
 open Org.BouncyCastle.Crypto.Signers
 open SweeperSmackdown.Bot.Discord
 open System
 open System.IO
 open System.Text
-open Org.BouncyCastle.Crypto.Parameters
 
-module InteractionPostFunction =
-    [<Function("InteractionPostFunction")>]
-    let Run
+type InteractionPostFunction(logger: ILogger<InteractionPostFunction>) =
+    [<Function(nameof InteractionPostFunction)>]
+    member _.Run
         ([<HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "interaction")>] req: HttpRequest)
+        (executionContext: FunctionContext)
         ([<FromBody>] interaction: Interaction)
         : IActionResult =
             // Get necessary contents of request and environment
