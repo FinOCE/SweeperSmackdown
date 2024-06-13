@@ -4,39 +4,37 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Mvc
 open Microsoft.Azure.Functions.Worker
 open Microsoft.Extensions.Logging
-open Org.BouncyCastle.Crypto.Parameters
-open Org.BouncyCastle.Crypto.Signers
 open SweeperSmackdown.Bot.Discord
-open System
+open SweeperSmackdown.Bot.Services
 open System.IO
-open System.Text
 
-type InteractionPostFunction(logger: ILogger<InteractionPostFunction>) =
+type InteractionPostFunction(
+    logger: ILogger<InteractionPostFunction>,
+    signingService: ISigningService,
+    configurationService: IConfigurationService
+) =
     [<Function(nameof InteractionPostFunction)>]
-    member _.Run
-        ([<HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "interaction")>] req: HttpRequest)
-        (executionContext: FunctionContext)
-        ([<FromBody>] interaction: Interaction)
-        : IActionResult =
-            // Get necessary contents of request and environment
-            let signature = req.Headers["X-Signature-Ed25519"] |> Seq.head |> Convert.FromHexString
-            let timestamp = req.Headers["X-Signature-Timestamp"] |> Seq.head
+    member _.Run(
+        [<HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "interaction")>] req: HttpRequest,
+        executionContext: FunctionContext,
+        [<FromBody>] interaction: Interaction
+    ): IActionResult =
+        // Get necessary contents of request and environment
+        let signature = req.Headers["X-Signature-Ed25519"] |> Seq.head
+        let timestamp = req.Headers["X-Signature-Timestamp"] |> Seq.head
+        let body = (new StreamReader(req.Body)).ReadToEnd()
 
-            let body = (new StreamReader(req.Body)).ReadToEnd()
-            let message = Encoding.UTF8.GetBytes(timestamp + body)
+        let publicKey = configurationService.ReadOrThrow "DISCORD_PUBLIC_KEY"
 
-            let publicKey = Environment.GetEnvironmentVariable("DISCORD_PUBLIC_KEY")
-
-            // Verify the request
-            let signer = Ed25519Signer()
-            signer.Init(false, new Ed25519PublicKeyParameters(Encoding.UTF8.GetBytes(publicKey), 0))
-            signer.BlockUpdate(message, 0, message.Length)
-            let verified = signer.VerifySignature(signature)
-
-            // Return appropriate response
-            if not verified then
-                StatusCodeResult(401)
-            else
-                match interaction.Type with
-                | InteractionType.PING -> OkObjectResult(PingInteractionResponseDto())
-                | _ -> StatusCodeResult(500)
+        // Verify the request
+        let verified = signingService.Verify(timestamp + body, signature, publicKey)
+        
+        // Return appropriate response
+        if not verified then
+            logger.LogInformation "Received an interaction without a valid signature"
+            StatusCodeResult 401
+        else
+            logger.LogInformation $"Received an valid interaction of type {interaction.Type}"
+            match interaction.Type with
+            | InteractionType.PING -> OkObjectResult PingInteractionResponseDto
+            | _ -> StatusCodeResult 500

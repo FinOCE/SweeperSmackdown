@@ -11,12 +11,12 @@ type InteractionPostFunctionTests() =
 
     [<TestMethod>]
     [<Ignore>]
-    member _.Run_InvalidSignature_ReturnsUnauthorizedResult() =
+    member _.Run_MissingEnvironmentVariable_ReturnsInternalErrorResult() =
         Assert.IsTrue(true) // TODO
 
     [<TestMethod>]
     [<Ignore>]
-    member _.Run_MissingEnvironmentVariable_ReturnsInternalErrorResult() =
+    member _.Run_InvalidSignature_ReturnsUnauthorizedResult() =
         Assert.IsTrue(true) // TODO
 
     [<TestMethod>]
