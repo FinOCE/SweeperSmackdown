@@ -2,60 +2,79 @@
 
 open System.Text.Json.Serialization
 
-type Interaction = 
+type Interaction() =
+    [<DefaultValue>]
     [<JsonPropertyName("id")>]
-    val Id: string
-
+    val mutable Id: string
+    
+    [<DefaultValue>]
     [<JsonPropertyName("application_id")>]
-    val ApplicationId: string
-
+    val mutable ApplicationId: string
+    
+    [<DefaultValue>]
     [<JsonPropertyName("type")>]
-    val Type: InteractionType
+    val mutable Type: InteractionType
     
+    [<DefaultValue>]
     [<JsonPropertyName("data")>]
-    val Data: InteractionData option
-
+    val mutable Data: InteractionData option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("guild")>]
-    val Guild: Guild option
-
+    val mutable Guild: Guild option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("guild_id")>]
-    val GuildId: string option
-
+    val mutable GuildId: string option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("channel")>]
-    val Channel: Channel option
-
+    val mutable Channel: Channel option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("channel_id")>]
-    val ChannelId: string option
+    val mutable ChannelId: string option
     
+    [<DefaultValue>]
     [<JsonPropertyName("member")>]
-    val Member: GuildMember option
-
+    val mutable Member: GuildMember option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("user")>]
-    val User: User option
-
+    val mutable User: User option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("token")>]
-    val Token: string
-
+    val mutable Token: string
+    
+    [<DefaultValue>]
     [<JsonPropertyName("version")>]
-    val Version: int
-
+    val mutable Version: int
+    
+    [<DefaultValue>]
     [<JsonPropertyName("message")>]
-    val Message: Message option
-
+    val mutable Message: Message option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("app_permissions")>]
-    val AppPermissions: string
-
+    val mutable AppPermissions: string
+    
+    [<DefaultValue>]
     [<JsonPropertyName("locale")>]
-    val Locale: string option
-
+    val mutable Locale: string option
+    
+    [<DefaultValue>]
     [<JsonPropertyName("guild_locale")>]
-    val GuildLocale: string option
+    val mutable GuildLocale: string option
     
+    [<DefaultValue>]
     [<JsonPropertyName("entitlements")>]
-    val Entitlements: Entitlement list
+    val mutable Entitlements: Entitlement list
     
+    [<DefaultValue>]
     [<JsonPropertyName("authorizing_integration_owners")>]
-    val AuthorizingIntegrationOwners: ApplicationIntegrationType
+    val mutable AuthorizingIntegrationOwners: ApplicationIntegrationType
     
+    [<DefaultValue>]
     [<JsonPropertyName("context")>]
-    val Context: InteractionContextType option
+    val mutable Context: InteractionContextType option

@@ -8,6 +8,10 @@
     <RootNamespace>SweeperSmackdown.Bot</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Services\Configuration\IConfigurationService.fs" />
+    <Compile Include="Services\Configuration\ConfigurationService.fs" />
+    <Compile Include="Services\Signing\ISigningService.fs" />
+    <Compile Include="Services\Signing\Ed25519SigningService.fs" />
     <Compile Include="Discord\Enums\GuildNsfwLevel.fs" />
     <Compile Include="Discord\Enums\GuildPremiumTier.fs" />
     <Compile Include="Discord\Enums\GuildMfaLevel.fs" />
