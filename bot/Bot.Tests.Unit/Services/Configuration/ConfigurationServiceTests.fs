@@ -8,16 +8,19 @@ open System.Configuration
 
 [<TestClass>]
 type ConfigurationServiceTests() =
-    member val _configuration = Substitute.For<IConfiguration>()
+    [<DefaultValue>] val mutable _configuration: IConfiguration
+
+    [<TestInitialize>]
+    member this.TestInitialize() =
+        this._configuration <- Substitute.For<IConfiguration>()
 
     [<TestMethod>]
     member this.ReadOrThrow_InvalidKey_ThrowsException() =
         // Arrange
         let key = "key"
 
-        this._configuration = Substitute.For<IConfiguration>() |> ignore
-
         this._configuration[key].ReturnsNull() |> ignore
+
         let configurationService: IConfigurationService = ConfigurationService this._configuration
 
         // Act
@@ -33,6 +36,7 @@ type ConfigurationServiceTests() =
         let value = "value"
 
         this._configuration[key].Returns(value) |> ignore
+
         let configurationService: IConfigurationService = ConfigurationService this._configuration
 
         // Act
