@@ -31,7 +31,7 @@ type InteractionPostFunction(
             let body = (new StreamReader(req.Body)).ReadToEnd()
 
             // Verify the request
-            let verified = signingService.Verify(timestamp + body, signature, publicKey)
+            let verified = signingService.Verify(timestamp, body, signature, publicKey)
         
             // Return appropriate response
             if not verified then

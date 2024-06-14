@@ -1,52 +1,38 @@
 ﻿namespace SweeperSmackdown.Bot.Services
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
-open Org.BouncyCastle.Security
-open Org.BouncyCastle.Crypto.Generators
-open Org.BouncyCastle.Crypto.Parameters
-open Org.BouncyCastle.OpenSsl
 open System
 open System.Text
-open System.IO
+open TweetNaclSharp
 
 [<TestClass>]
 type Ed25519SigningServiceTests() =
-    member val _iterations = 3
+    [<TestMethod>]
+    member _.``TESTUTIL - Generate valid ed25519 datarows`` () =
+        let body = Guid.NewGuid().ToString()
+        let timestamp = DateTime.UtcNow.ToString()
+
+        let keypair = Nacl.SignKeyPair()
+        let publicKey = keypair.PublicKey |> Convert.ToHexString
+
+        let message = timestamp + body |> Encoding.UTF8.GetBytes
+        let signature = Nacl.SignDetached(message, keypair.SecretKey) |> Convert.ToHexString
+
+        Console.WriteLine("Body:       " + body)
+        Console.WriteLine("Timestamp:  " + timestamp)
+        Console.WriteLine("Signature:  " + signature)
+        Console.WriteLine("Public key: " + publicKey)
 
     [<TestMethod>]
-    member this.TESTUTIL_GenerateValidParameters() =
-        for _ = 1 to this._iterations do
-            let message = Guid.NewGuid().ToByteArray() |> Convert.ToBase64String
-            let data = message |> Encoding.UTF8.GetBytes
-
-            let parameters = SecureRandom() |> Ed25519KeyGenerationParameters
-            let generator = Ed25519KeyPairGenerator()
-            generator.Init(parameters)
-            let keypair = generator.GenerateKeyPair()
-
-            let signer = SignerUtilities.GetSigner("Ed25519")
-            signer.Init(true, keypair.Private)
-            signer.BlockUpdate(data, 0, message.Length)
-            let signature = signer.GenerateSignature() |> Convert.ToHexString
-
-            let textWriter = new StringWriter()
-            let pemWriter = PemWriter(textWriter)
-            pemWriter.WriteObject(keypair.Public)
-            pemWriter.Writer.Flush()
-            let publicKey = textWriter.ToString()
-
-            Console.WriteLine("Message: " + message)
-            Console.WriteLine("Signature: " + signature)
-            Console.WriteLine("Public key: " + publicKey)
-            Console.WriteLine()
-
-            // TODO: Determine how these should be generated to be valid (based off https://asecuritysite.com/bouncy/bc_eddsa)
-
-    [<TestMethod>]
-    [<DataRow("MESSAGE", "SIGNATURE", "PUBLIC_KEY")>] // TODO: Populate a couple data rows
-    [<Ignore>]
+    [<DataRow(
+        "14/06/2024 3:33:11 PM",
+        "e4e3e46e-99b1-4cc5-8fcb-a43ea68afaa6",
+        "8228317DD172FCB211E6532D2CC34B7158D0877D768EAEA6A1205CEBEFF32CAE114455830E2885E1CAB7D54BF2ED387FD4F4D73E8AFAF186D2141F8778582901",
+        "1DA73B9FFB48F89FB07D0226FB147A95C7DD412D985548822D3127416D505C06"
+    )>]
     member _.Verify_InvalidParameters_RejectsVerification(
-        message: string,
+        timestamp: string,
+        body: string,
         signature: string,
         publicKey: string
     ) =
@@ -54,16 +40,21 @@ type Ed25519SigningServiceTests() =
         let signingService: ISigningService = Ed25519SigningService()
 
         // Act
-        let res = signingService.Verify(message, signature, publicKey)
+        let res = signingService.Verify(timestamp, body, signature, publicKey)
 
         // Assert
         Assert.IsFalse(res)
 
     [<TestMethod>]
-    [<DataRow("MESSAGE", "SIGNATURE", "PUBLIC_KEY")>] // TODO: Populate a couple data rows
-    [<Ignore>]
+    [<DataRow(
+        "14/06/2024 3:33:11 PM",
+        "e4e3e46e-99b1-4cc5-8fcb-a43ea68afaa6",
+        "9228317DD172FCB211E6532D2CC34B7158D0877D768EAEA6A1205CEBEFF32CAE114455830E2885E1CAB7D54BF2ED387FD4F4D73E8AFAF186D2141F8778582901",
+        "1DA73B9FFB48F89FB07D0226FB147A95C7DD412D985548822D3127416D505C06"
+    )>]
     member _.Verify_ValidParameters_AcceptsVerification(
-        message: string,
+        timestamp: string,
+        body: string,
         signature: string,
         publicKey: string
     ) =
@@ -71,7 +62,7 @@ type Ed25519SigningServiceTests() =
         let signingService: ISigningService = Ed25519SigningService()
 
         // Act
-        let res = signingService.Verify(message, signature, publicKey)
+        let res = signingService.Verify(timestamp, body, signature, publicKey)
 
         // Assert
         Assert.IsTrue(res)

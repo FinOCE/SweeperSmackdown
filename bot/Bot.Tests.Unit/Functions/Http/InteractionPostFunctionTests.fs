@@ -62,7 +62,7 @@ type InteractionPostFunctionTests() =
         |> ignore
 
         this._signingService
-            .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(false)
         |> ignore
 
@@ -82,7 +82,7 @@ type InteractionPostFunctionTests() =
         |> ignore
 
         this._signingService
-            .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(true)
         |> ignore
 

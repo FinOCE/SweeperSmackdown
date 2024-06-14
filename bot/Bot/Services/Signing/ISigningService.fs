@@ -2,7 +2,8 @@
 
 type ISigningService =
     abstract member Verify:
-        message: string
+        timestamp: string
+        * body: string
         * signature: string
         * publicKey: string
         -> bool
