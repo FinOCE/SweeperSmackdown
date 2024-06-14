@@ -1,4 +1,4 @@
 ﻿namespace SweeperSmackdown.Bot.Services
 
 type IConfigurationService =
-    abstract member ReadOrThrow: key: string -> string
+    abstract member TryGetValue: key: string -> string option

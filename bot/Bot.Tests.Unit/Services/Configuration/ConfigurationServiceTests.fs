@@ -4,43 +4,39 @@ open Microsoft.VisualStudio.TestTools.UnitTesting
 open Microsoft.Extensions.Configuration
 open NSubstitute
 open NSubstitute.ReturnsExtensions
-open System.Configuration
 
 [<TestClass>]
 type ConfigurationServiceTests() =
+    [<DefaultValue>] val mutable _key: string
+    [<DefaultValue>] val mutable _value: string
     [<DefaultValue>] val mutable _configuration: IConfiguration
 
     [<TestInitialize>]
     member this.TestInitialize() =
+        this._key <- "key"
+        this._value <- "value"
         this._configuration <- Substitute.For<IConfiguration>()
 
     [<TestMethod>]
     member this.ReadOrThrow_InvalidKey_ThrowsException() =
         // Arrange
-        let key = "key"
-
-        this._configuration[key].ReturnsNull() |> ignore
-
+        this._configuration[this._key].ReturnsNull() |> ignore
         let configurationService: IConfigurationService = ConfigurationService this._configuration
 
         // Act
-        let res = fun () -> configurationService.ReadOrThrow(key) |> ignore
+        let res = configurationService.TryGetValue this._key
 
         // Assert
-        Assert.ThrowsException<SettingsPropertyNotFoundException>(res)
+        Assert.AreEqual(None, res)
 
     [<TestMethod>]
     member this.ReadOrThrow_ValidKey_ReturnsCorrectValue() =
         // Arrange
-        let key = "key"
-        let value = "value"
-
-        this._configuration[key].Returns(value) |> ignore
-
+        this._configuration[this._key].Returns(this._value) |> ignore
         let configurationService: IConfigurationService = ConfigurationService this._configuration
 
         // Act
-        let res = configurationService.ReadOrThrow(key)
+        let res = configurationService.TryGetValue this._key
 
         // Assert
-        Assert.AreEqual(value, res)
+        Assert.AreEqual(this._value, res.Value)

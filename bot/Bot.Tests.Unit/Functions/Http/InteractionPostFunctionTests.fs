@@ -6,10 +6,8 @@ open Microsoft.Azure.Functions.Worker
 open Microsoft.Extensions.Logging
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open NSubstitute
-open NSubstitute.ExceptionExtensions
 open SweeperSmackdown.Bot.Discord
 open SweeperSmackdown.Bot.Services
-open System.Configuration
 open System.Text
 open System.Text.Json
 open System.IO
@@ -44,22 +42,23 @@ type InteractionPostFunctionTests() =
     member this.Run_MissingEnvironmentVariable_ReturnsInternalErrorResult() =
         // Arrange
         this._configurationService
-            .ReadOrThrow(Arg.Any<string>())
-            .Throws<SettingsPropertyNotFoundException>()
+            .TryGetValue(Arg.Any<string>())
+            .Returns(None)
         |> ignore
 
         // Act
-        let res() = this._function.Run(this._req, this._executionContext, this._interaction) |> ignore
+        let res = this._function.Run(this._req, this._executionContext, this._interaction)
 
         // Assert
-        Assert.ThrowsException<SettingsPropertyNotFoundException>(res)
+        Assert.IsInstanceOfType<StatusCodeResult>(res)
+        Assert.AreEqual(500, (res :?> StatusCodeResult).StatusCode)
 
     [<TestMethod>]
     member this.Run_InvalidSignature_ReturnsUnauthorizedResult() =
         // Arrange
         this._configurationService
-            .ReadOrThrow(Arg.Any<string>())
-            .Returns("value")
+            .TryGetValue(Arg.Any<string>())
+            .Returns(Some "value")
         |> ignore
 
         this._signingService
@@ -78,8 +77,8 @@ type InteractionPostFunctionTests() =
     member this.Run_PingInteraction_ReturnsPongResponse() =
         // Arrange
         this._configurationService
-            .ReadOrThrow(Arg.Any<string>())
-            .Returns("value")
+            .TryGetValue(Arg.Any<string>())
+            .Returns(Some "value")
         |> ignore
 
         this._signingService
