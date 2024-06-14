@@ -42,8 +42,3 @@ type InteractionPostFunction(
                 match interaction.Type with
                 | InteractionType.PING -> OkObjectResult PingInteractionResponseDto
                 | _ -> StatusCodeResult 500
-
-
-
-
-
