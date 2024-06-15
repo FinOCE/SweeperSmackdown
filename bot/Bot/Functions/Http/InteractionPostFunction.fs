@@ -25,23 +25,28 @@ type InteractionPostFunction(
             | None ->
                 // Return error if variable missing
                 logger.LogError "Missing environment variable DISCORD_PUBLIC_KEY"
-                return StatusCodeResult 500
+                return StatusCodeResult 500 :> IActionResult
             | Some publicKey -> 
                 // Get necessary contents of request and environment
-                let signature = req.Headers["X-Signature-Ed25519"] |> Seq.head
-                let timestamp = req.Headers["X-Signature-Timestamp"] |> Seq.head
-                let body = (new StreamReader(req.Body)).ReadToEnd()
+                let signature = req.Headers["X-Signature-Ed25519"] |> Seq.tryHead
+                let timestamp = req.Headers["X-Signature-Timestamp"] |> Seq.tryHead
+                let! body = (new StreamReader(req.Body)).ReadToEndAsync()
 
-                // Verify the request
-                let verified = signingService.Verify(timestamp, body, signature, publicKey)
-        
-                // Return appropriate response
-                if not verified then
-                    logger.LogInformation "Received an interaction without a valid signature"
-                    return StatusCodeResult 401
+                if Option.isNone signature || Option.isNone timestamp then
+                    // Return error if missing headers
+                    logger.LogInformation "Received an interaction without a signature or timestamp header"
+                    return StatusCodeResult 401 :> IActionResult
                 else
-                    logger.LogInformation $"Received an valid interaction of type {interaction.Type}"
-                    match interaction.Type with
-                    | InteractionType.PING -> return OkObjectResult PingInteractionResponseDto
-                    | _ -> return StatusCodeResult 500
+                    // Verify the request
+                    let verified = signingService.Verify(timestamp.Value, body, signature.Value, publicKey)
+        
+                    // Return appropriate response
+                    if not verified then
+                        logger.LogInformation "Received an interaction without a valid signature"
+                        return StatusCodeResult 401 :> IActionResult
+                    else
+                        logger.LogInformation $"Received an valid interaction of type {interaction.Type}"
+                        match interaction.Type with
+                        | InteractionType.PING -> return OkObjectResult PingInteractionResponseDto :> IActionResult
+                        | _ -> return StatusCodeResult 500 :> IActionResult
         }

@@ -11,6 +11,7 @@ open SweeperSmackdown.Bot.Services
 open System.IO
 open System.Text
 open System.Text.Json
+open Microsoft.Extensions.Primitives
 
 [<TestClass>]
 type InteractionPostFunctionTests() =
@@ -53,6 +54,44 @@ type InteractionPostFunctionTests() =
             // Assert
             Assert.IsInstanceOfType<StatusCodeResult>(res)
             Assert.AreEqual(500, (res :?> StatusCodeResult).StatusCode)
+        } |> Async.RunSynchronously
+
+    [<TestMethod>]
+    member this.Run_MissingEd25519Header_ReturnsUnauthorizedResult() =
+        async {
+            // Arrange
+            this._configurationService
+                .TryGetValue(Arg.Any<string>())
+                .Returns(Some "value")
+            |> ignore
+
+            this._req.Headers["X-Signature-Ed25519"].Returns(StringValues()) |> ignore
+
+            // Act
+            let! res = this._function.Run(this._req, this._executionContext, this._interaction) |> Async.AwaitTask
+
+            // Assert
+            Assert.IsInstanceOfType<StatusCodeResult>(res)
+            Assert.AreEqual(401, (res :?> StatusCodeResult).StatusCode)
+        } |> Async.RunSynchronously
+
+    [<TestMethod>]
+    member this.Run_MissingTimestampHeader_ReturnsUnauthorizedResult() =
+        async {
+            // Arrange
+            this._configurationService
+                .TryGetValue(Arg.Any<string>())
+                .Returns(Some "value")
+            |> ignore
+
+            this._req.Headers["X-Signature-Timestamp"].Returns(StringValues()) |> ignore
+
+            // Act
+            let! res = this._function.Run(this._req, this._executionContext, this._interaction) |> Async.AwaitTask
+
+            // Assert
+            Assert.IsInstanceOfType<StatusCodeResult>(res)
+            Assert.AreEqual(401, (res :?> StatusCodeResult).StatusCode)
         } |> Async.RunSynchronously
 
     [<TestMethod>]
