@@ -10,8 +10,12 @@ on:
 env:
   ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'dev' }}
   REGION: eastus2
-  DISCORD_CLIENT_ID: "1233026365213773965" # TODO: Handle dev/prod
-  DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }} # TODO: Handle dev/prod
+  BEARER_TOKEN_SECRET_KEY: ${{ secrets.BEARER_TOKEN_SECRET_KEY }}
+  DISCORD_CLIENT_ID: "1233026365213773965"
+  DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+  DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+
+  # TODO: Handle dev/prod for environment variables
 
 jobs:
   deploy:
@@ -25,9 +29,17 @@ jobs:
         with:
           dotnet-version: "6.0.x"
 
-      # - name: Test project
+      # - name: Test API project
       #   run: |
+      #     pushd ./api
       #     dotnet test --configuration Release
+      #     popd
+
+      - name: Test bot project
+        run: |
+          pushd ./bot
+          dotnet test --configuration Release
+          popd
 
       - name: Log into Azure
         uses: azure/login@v1
@@ -40,7 +52,7 @@ jobs:
         with:
           scope: "subscription"
           template: .bicep/main.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ secrets.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{  }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
           failOnStdErr: false
           region: ${{ env.REGION }}
 
