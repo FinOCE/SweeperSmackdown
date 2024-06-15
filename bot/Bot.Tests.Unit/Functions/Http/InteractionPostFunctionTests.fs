@@ -8,9 +8,9 @@ open Microsoft.VisualStudio.TestTools.UnitTesting
 open NSubstitute
 open SweeperSmackdown.Bot.Discord
 open SweeperSmackdown.Bot.Services
+open System.IO
 open System.Text
 open System.Text.Json
-open System.IO
 
 [<TestClass>]
 type InteractionPostFunctionTests() =
@@ -40,54 +40,60 @@ type InteractionPostFunctionTests() =
 
     [<TestMethod>]
     member this.Run_MissingEnvironmentVariable_ReturnsInternalErrorResult() =
-        // Arrange
-        this._configurationService
-            .TryGetValue(Arg.Any<string>())
-            .Returns(None)
-        |> ignore
+        async {
+            // Arrange
+            this._configurationService
+                .TryGetValue(Arg.Any<string>())
+                .Returns(None)
+            |> ignore
 
-        // Act
-        let res = this._function.Run(this._req, this._executionContext, this._interaction)
+            // Act
+            let! res = this._function.Run(this._req, this._executionContext, this._interaction) |> Async.AwaitTask
 
-        // Assert
-        Assert.IsInstanceOfType<StatusCodeResult>(res)
-        Assert.AreEqual(500, (res :?> StatusCodeResult).StatusCode)
+            // Assert
+            Assert.IsInstanceOfType<StatusCodeResult>(res)
+            Assert.AreEqual(500, (res :?> StatusCodeResult).StatusCode)
+        } |> Async.RunSynchronously
 
     [<TestMethod>]
     member this.Run_InvalidSignature_ReturnsUnauthorizedResult() =
-        // Arrange
-        this._configurationService
-            .TryGetValue(Arg.Any<string>())
-            .Returns(Some "value")
-        |> ignore
+        async {
+            // Arrange
+            this._configurationService
+                .TryGetValue(Arg.Any<string>())
+                .Returns(Some "value")
+            |> ignore
 
-        this._signingService
-            .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(false)
-        |> ignore
+            this._signingService
+                .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(false)
+            |> ignore
 
-        // Act
-        let res = this._function.Run(this._req, this._executionContext, this._interaction)
+            // Act
+            let! res = this._function.Run(this._req, this._executionContext, this._interaction) |> Async.AwaitTask
 
-        // Assert
-        Assert.IsInstanceOfType<StatusCodeResult>(res)
-        Assert.AreEqual(401, (res :?> StatusCodeResult).StatusCode)
+            // Assert
+            Assert.IsInstanceOfType<StatusCodeResult>(res)
+            Assert.AreEqual(401, (res :?> StatusCodeResult).StatusCode)
+        } |> Async.RunSynchronously
 
     [<TestMethod>]
     member this.Run_PingInteraction_ReturnsPongResponse() =
-        // Arrange
-        this._configurationService
-            .TryGetValue(Arg.Any<string>())
-            .Returns(Some "value")
-        |> ignore
+        async {
+            // Arrange
+            this._configurationService
+                .TryGetValue(Arg.Any<string>())
+                .Returns(Some "value")
+            |> ignore
 
-        this._signingService
-            .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(true)
-        |> ignore
+            this._signingService
+                .Verify(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(true)
+            |> ignore
 
-        // Act
-        let res = this._function.Run(this._req, this._executionContext, this._interaction)
+            // Act
+            let! res = this._function.Run(this._req, this._executionContext, this._interaction) |> Async.AwaitTask
 
-        // Assert
-        Assert.IsInstanceOfType<OkObjectResult>(res)
+            // Assert
+            Assert.IsInstanceOfType<OkObjectResult>(res)
+        } |> Async.RunSynchronously
