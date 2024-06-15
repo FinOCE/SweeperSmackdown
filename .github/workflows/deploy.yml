@@ -52,7 +52,7 @@ jobs:
         with:
           scope: "subscription"
           template: .bicep/main.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{  }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ env.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
           failOnStdErr: false
           region: ${{ env.REGION }}
 
