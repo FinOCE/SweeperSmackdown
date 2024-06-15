@@ -5,7 +5,7 @@ open SweeperSmackdown.Bot.Services
 open System.IO
 
 HostBuilder()
-    .ConfigureFunctionsWebApplication()
+    .ConfigureFunctionsWorkerDefaults()
     .ConfigureAppConfiguration(fun builder ->
         builder
             .SetBasePath(Directory.GetCurrentDirectory())

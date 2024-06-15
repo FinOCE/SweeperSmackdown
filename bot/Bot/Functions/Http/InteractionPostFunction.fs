@@ -1,52 +1,74 @@
 ﻿namespace SweeperSmackdown.Bot.Functions.Http
 
-open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Mvc
+open FSharp.Json
 open Microsoft.Azure.Functions.Worker
-open Microsoft.Extensions.Logging
 open SweeperSmackdown.Bot.Discord
 open SweeperSmackdown.Bot.Services
 open System.IO
+open System.Net
 open System.Threading.Tasks
+open Microsoft.Azure.Functions.Worker.Http
+
+type TempRequestInteraction = {
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: InteractionType
+}
+
+type TempResponseInteraction = {
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: InteractionCallbackType
+}
 
 type InteractionPostFunction(
-    logger: ILogger<InteractionPostFunction>,
     signingService: ISigningService,
     configurationService: IConfigurationService
 ) =
     [<Function(nameof InteractionPostFunction)>]
     member _.Run(
-        [<HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "interaction")>] req: HttpRequest,
-        executionContext: FunctionContext,
-        [<FromBody>] interaction: Interaction
-    ): Task<IActionResult> =
+        [<HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "interaction")>] req: HttpRequestData
+    ): Task<HttpResponseData> =
         task {
+            // Get the public key from the environment
             match configurationService.TryGetValue "DISCORD_PUBLIC_KEY" with
-            | None ->
-                // Return error if variable missing
-                logger.LogError "Missing environment variable DISCORD_PUBLIC_KEY"
-                return StatusCodeResult 500 :> IActionResult
+            | None -> return req.CreateResponse HttpStatusCode.InternalServerError
             | Some publicKey -> 
-                // Get necessary contents of request and environment
-                let signature = req.Headers["X-Signature-Ed25519"] |> Seq.tryHead
-                let timestamp = req.Headers["X-Signature-Timestamp"] |> Seq.tryHead
-                let! body = (new StreamReader(req.Body)).ReadToEndAsync()
 
-                if Option.isNone signature || Option.isNone timestamp then
-                    // Return error if missing headers
-                    logger.LogInformation "Received an interaction without a signature or timestamp header"
-                    return StatusCodeResult 401 :> IActionResult
-                else
-                    // Verify the request
-                    let verified = signingService.Verify(timestamp.Value, body, signature.Value, publicKey)
+            // Get the body of the request
+            let! body = (new StreamReader(req.Body)).ReadToEndAsync()
+            let interactionOption = 
+                try Some(Json.deserialize<TempRequestInteraction> body)
+                with exn -> None
+
+            match interactionOption with
+            | None -> return req.CreateResponse HttpStatusCode.BadRequest
+            | Some interaction ->
+
+            // Get necessary contents of request and environment
+            let signatureExists = req.Headers.Contains "X-Signature-Ed25519"
+            let timestampExists = req.Headers.Contains "X-Signature-Timestamp"
+
+            if not signatureExists || not timestampExists then
+                return req.CreateResponse HttpStatusCode.Unauthorized
+            else
+
+            let signature = req.Headers.GetValues "X-Signature-Ed25519" |> Seq.head
+            let timestamp = req.Headers.GetValues "X-Signature-Timestamp" |> Seq.head
+
+            // Verify the request
+            let verified = signingService.Verify(timestamp, body, signature, publicKey)
         
-                    // Return appropriate response
-                    if not verified then
-                        logger.LogInformation "Received an interaction without a valid signature"
-                        return StatusCodeResult 401 :> IActionResult
-                    else
-                        logger.LogInformation $"Received an valid interaction of type {interaction.Type}"
-                        match interaction.Type with
-                        | InteractionType.PING -> return OkObjectResult PingInteractionResponseDto :> IActionResult
-                        | _ -> return StatusCodeResult 500 :> IActionResult
+            if not verified then
+                return req.CreateResponse HttpStatusCode.Unauthorized
+            else
+
+            // Return appropriate response
+            match interaction.Type with
+            | InteractionType.PING -> 
+                let res = req.CreateResponse HttpStatusCode.OK
+                res.Headers.Add("Content-Type", "application/json")
+                let content: TempResponseInteraction = { Type = InteractionCallbackType.PONG }
+                do! res.WriteStringAsync(Json.serialize content)
+                return res
+            | _ ->
+                return req.CreateResponse HttpStatusCode.InternalServerError
         }
