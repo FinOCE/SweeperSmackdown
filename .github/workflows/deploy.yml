@@ -71,7 +71,7 @@ jobs:
       - name: Create API zip
         run: |
           cd ./api
-          dotnet publish --configuration Release --output ./output --self-contained
+          dotnet publish --configuration Release --output ./output --self-contained -r win-x64
           cd ./output
           zip -r ../deploy.zip .
           cd ../..
@@ -84,7 +84,7 @@ jobs:
       - name: Create bot zip
         run: |
           cd ./bot
-          dotnet publish --configuration Release --output ./output --self-contained
+          dotnet publish --configuration Release --output ./output --self-contained -r linux-x64
           cd ./output
           zip -r ../deploy.zip .
           cd ../..

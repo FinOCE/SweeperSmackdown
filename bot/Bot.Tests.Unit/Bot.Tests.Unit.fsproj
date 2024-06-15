@@ -5,6 +5,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
     <IsTestProject>true</IsTestProject>
     <RootNamespace>SweeperSmackdown.Bot</RootNamespace>
+    <IsPublishable>false</IsPublishable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Services\Configuration\ConfigurationServiceTests.fs" />
