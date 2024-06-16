@@ -86,8 +86,8 @@ type Message = {
     [<JsonField("thread")>]
     Thread: Channel option
 
-    //[<JsonField("components")>]
-    //Components: MessageComponent list option
+    [<JsonField("components")>]
+    Components: MessageComponent list option
 
     [<JsonField("sticker_items")>]
     StickerItems: Sticker list option

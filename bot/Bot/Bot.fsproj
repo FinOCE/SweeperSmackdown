@@ -12,6 +12,9 @@
     <Compile Include="Services\Configuration\ConfigurationService.fs" />
     <Compile Include="Services\Signing\ISigningService.fs" />
     <Compile Include="Services\Signing\Ed25519SigningService.fs" />
+    <Compile Include="Discord\Enums\TextInputStyle.fs" />
+    <Compile Include="Discord\Enums\ButtonStyle.fs" />
+    <Compile Include="Discord\Enums\MessageComponentType.fs" />
     <Compile Include="Discord\Enums\PermissionOverwriteType.fs" />
     <Compile Include="Discord\Enums\ChannelForumLayout.fs" />
     <Compile Include="Discord\Enums\ChannelSortOrder.fs" />
@@ -84,6 +87,9 @@
     <Compile Include="Discord\Structures\PollResults.fs" />
     <Compile Include="Discord\Structures\Poll.fs" />
     <Compile Include="Discord\Structures\MessageCall.fs" />
+    <Compile Include="Discord\Structures\SelectMenuOption.fs" />
+    <Compile Include="Discord\Structures\SelectMenuDefaultValue.fs" />
+    <Compile Include="Discord\Structures\MessageComponent.fs" />
     <Compile Include="Discord\Structures\Message.fs" />
     <Compile Include="Discord\Structures\InteractionData.fs" />
     <Compile Include="Discord\Structures\Interactions\BaseInteraction.fs" />
