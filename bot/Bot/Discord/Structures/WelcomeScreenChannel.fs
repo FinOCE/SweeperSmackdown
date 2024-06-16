@@ -1,16 +1,17 @@
 ﻿namespace SweeperSmackdown.Bot.Discord
 
-open System.Text.Json.Serialization
+open FSharp.Json
 
-type WelcomeScreenChannel =
-    [<JsonPropertyName("channel_id")>]
-    val ChannelId: string
+type WelcomeScreenChannel = {
+    [<JsonField("channel_id")>]
+    ChannelId: string
 
-    [<JsonPropertyName("description")>]
-    val Description: string
+    [<JsonField("description")>]
+    Description: string
     
-    [<JsonPropertyName("emoji_id")>]
-    val EmojiId: string option
+    [<JsonField("emoji_id")>]
+    EmojiId: string option
 
-    [<JsonPropertyName("emoji_name")>]
-    val EmojiName: string option
+    [<JsonField("emoji_name")>]
+    EmojiName: string option
+}
