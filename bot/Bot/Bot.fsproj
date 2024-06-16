@@ -39,8 +39,10 @@
     <Compile Include="Discord\Structures\Guild.fs" />
     <Compile Include="Discord\Structures\ResolvedData.fs" />
     <Compile Include="Discord\Structures\InteractionData.fs" />
-    <Compile Include="Discord\Structures\Interaction.fs" />
-    <Compile Include="Discord\DTOs\PingInteractionResponseDto.fs" />
+    <Compile Include="Discord\Structures\Interactions\BaseInteraction.fs" />
+    <Compile Include="Discord\Structures\Interactions\Interaction.fs" />
+    <Compile Include="Discord\Structures\Interactions\PingInteraction.fs" />
+    <Compile Include="Discord\Structures\Interactions\PingInteractionResponse.fs" />
     <Compile Include="Functions\Http\InteractionPostFunction.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
