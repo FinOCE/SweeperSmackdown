@@ -1,10 +1,11 @@
 ﻿namespace SweeperSmackdown.Bot.Discord
 
-open System.Text.Json.Serialization
+open FSharp.Json
 
-type WelcomeScreen =
-    [<JsonPropertyName("description")>]
-    val Description: string option
+type WelcomeScreen = {
+    [<JsonField("description")>]
+    Description: string option
 
-    [<JsonPropertyName("welcome_channels")>]
-    val WelcomeChannels: WelcomeScreenChannel list
+    [<JsonField("welcome_channels")>]
+    WelcomeChannels: WelcomeScreenChannel list
+}

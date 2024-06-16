@@ -1,20 +1,20 @@
 ﻿namespace SweeperSmackdown.Bot.Discord
 
-open System.Text.Json.Serialization
+open FSharp.Json
 
-type CommandInteractionDataOption =
-    [<JsonPropertyName("name")>]
-    val Name: string
+type CommandInteractionDataOption = {
+    [<JsonField("name")>]
+    Name: string
     
-    [<JsonPropertyName("type")>]
-    val Type: ApplicationCommandType
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: ApplicationCommandType
     
-    [<JsonPropertyName("value")>]
-    val Value: CommandInteractionDataOptionValue option
+    [<JsonField("value")>]
+    Value: CommandInteractionDataOptionValue option
     
-    [<JsonPropertyName("options")>]
-    val Options: CommandInteractionDataOption list option
+    [<JsonField("options")>]
+    Options: CommandInteractionDataOption list option
 
-    [<JsonPropertyName("focused")>]
-    val Focused: bool option
-    
+    [<JsonField("focused")>]
+    Focused: bool option
+}

@@ -55,7 +55,7 @@ type Interaction = {
     Entitlements: Entitlement list
 
     [<JsonField("authorizing_integration_owners")>]
-    AuthorizingIntegrationOwners: ApplicationIntegrationType
+    AuthorizingIntegrationOwners: Map<ApplicationIntegrationType, ApplicationIntegrationTypeConfiguration>
 
     [<JsonField("context", EnumValue = EnumMode.Value)>]
     Context: InteractionContextType option

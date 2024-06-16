@@ -1,25 +1,26 @@
 ﻿namespace SweeperSmackdown.Bot.Discord
 
-open System.Text.Json.Serialization
+open FSharp.Json
 
-type InteractionData =
-    [<JsonPropertyName("id")>]
-    val Id: string
+type InteractionData = {
+    [<JsonField("id")>]
+    Id: string
     
-    [<JsonPropertyName("name")>]
-    val Name: string
+    [<JsonField("name")>]
+    Name: string
     
-    [<JsonPropertyName("type")>]
-    val Type: ApplicationCommandType
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: ApplicationCommandType
     
-    [<JsonPropertyName("resolved")>]
-    val Resolved: ResolvedData option
+    [<JsonField("resolved")>]
+    Resolved: ResolvedData option
 
-    [<JsonPropertyName("options")>]
-    val Options: CommandInteractionDataOption list option
+    [<JsonField("options")>]
+    Options: CommandInteractionDataOption list option
     
-    [<JsonPropertyName("guild_id")>]
-    val GuildId: string option
+    [<JsonField("guild_id")>]
+    GuildId: string option
     
-    [<JsonPropertyName("target_it")>]
-    val TargetId: string option
+    [<JsonField("target_it")>]
+    TargetId: string option
+}

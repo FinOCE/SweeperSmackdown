@@ -1,130 +1,131 @@
 ﻿namespace SweeperSmackdown.Bot.Discord
 
-open System.Text.Json.Serialization
+open FSharp.Json
 
-type Guild =
-    [<JsonPropertyName("id")>]
-    val Id: string
+type Guild = {
+    [<JsonField("id")>]
+    Id: string
 
-    [<JsonPropertyName("name")>]
-    val Name: string
+    [<JsonField("name")>]
+    Name: string
 
-    [<JsonPropertyName("icon")>]
-    val Icon: string option
+    [<JsonField("icon")>]
+    Icon: string option
 
-    [<JsonPropertyName("icon_hash")>]
-    val IconHash: string option
+    [<JsonField("icon_hash")>]
+    IconHash: string option
 
-    [<JsonPropertyName("splash")>]
-    val Splash: string option
+    [<JsonField("splash")>]
+    Splash: string option
 
-    [<JsonPropertyName("discovery_splash")>]
-    val DiscoverySplash: string option
+    [<JsonField("discovery_splash")>]
+    DiscoverySplash: string option
 
-    [<JsonPropertyName("owner")>]
-    val Owner: bool option
+    [<JsonField("owner")>]
+    Owner: bool option
 
-    [<JsonPropertyName("owner_id")>]
-    val OwnerId: string
+    [<JsonField("owner_id")>]
+    OwnerId: string
 
-    [<JsonPropertyName("permissions")>]
-    val Permissions: string option
+    [<JsonField("permissions")>]
+    Permissions: string option
 
-    [<JsonPropertyName("afk_channel_id")>]
-    val AfkChannelId: string option
+    [<JsonField("afk_channel_id")>]
+    AfkChannelId: string option
 
-    [<JsonPropertyName("afk_timeout")>]
-    val AfkTimeout: int
+    [<JsonField("afk_timeout")>]
+    AfkTimeout: int
 
-    [<JsonPropertyName("widget_enabled")>]
-    val WidgetEnabled: bool option
+    [<JsonField("widget_enabled")>]
+    WidgetEnabled: bool option
 
-    [<JsonPropertyName("widget_channel_id")>]
-    val WidgetChannelId: string option
+    [<JsonField("widget_channel_id")>]
+    WidgetChannelId: string option
 
-    [<JsonPropertyName("verification_level")>]
-    val VerificationLevel: GuildVerificationLevel
+    [<JsonField("verification_level", EnumValue = EnumMode.Value)>]
+    VerificationLevel: GuildVerificationLevel
 
-    [<JsonPropertyName("default_message_notifications")>]
-    val DefaultMessageNotifications: GuildMessageNotificationLevel
+    [<JsonField("default_message_notifications", EnumValue = EnumMode.Value)>]
+    DefaultMessageNotifications: GuildMessageNotificationLevel
 
-    [<JsonPropertyName("explicit_content_filter")>]
-    val ExplicitContentFilter: GuildExplicitContentFilterLevel
+    [<JsonField("explicit_content_filter", EnumValue = EnumMode.Value)>]
+    ExplicitContentFilter: GuildExplicitContentFilterLevel
 
-    [<JsonPropertyName("roles")>]
-    val Roles: Role list
+    [<JsonField("roles")>]
+    Roles: Role list
 
-    [<JsonPropertyName("emojis")>]
-    val Emojis: Emoji list
+    [<JsonField("emojis")>]
+    Emojis: Emoji list
 
-    [<JsonPropertyName("features")>]
-    val Featuers: string list
+    [<JsonField("features")>]
+    Featuers: string list
 
-    [<JsonPropertyName("mfa_level")>]
-    val MfaLevel: GuildMfaLevel
+    [<JsonField("mfa_level", EnumValue = EnumMode.Value)>]
+    MfaLevel: GuildMfaLevel
 
-    [<JsonPropertyName("application_id")>]
-    val ApplicationId: string option
+    [<JsonField("application_id")>]
+    ApplicationId: string option
 
-    [<JsonPropertyName("system_channel_id")>]
-    val SystemChannelId: string option
+    [<JsonField("system_channel_id")>]
+    SystemChannelId: string option
 
-    [<JsonPropertyName("system_channel_flags")>]
-    val SystemChannelFlags: int
+    [<JsonField("system_channel_flags")>]
+    SystemChannelFlags: int
 
-    [<JsonPropertyName("rules_channel_id")>]
-    val RulesChannelId: string option
+    [<JsonField("rules_channel_id")>]
+    RulesChannelId: string option
 
-    [<JsonPropertyName("max_presences")>]
-    val MaxPresences: int option
+    [<JsonField("max_presences")>]
+    MaxPresences: int option
 
-    [<JsonPropertyName("max_members")>]
-    val MaxMembers: int option
+    [<JsonField("max_members")>]
+    MaxMembers: int option
 
-    [<JsonPropertyName("vanity_url_code")>]
-    val VanityUrlCode: string option
+    [<JsonField("vanity_url_code")>]
+    VanityUrlCode: string option
 
-    [<JsonPropertyName("description")>]
-    val Description: string option
+    [<JsonField("description")>]
+    Description: string option
 
-    [<JsonPropertyName("banner")>]
-    val Banner: string option
+    [<JsonField("banner")>]
+    Banner: string option
 
-    [<JsonPropertyName("premium_tier")>]
-    val PremiumTier: GuildPremiumTier
+    [<JsonField("premium_tier", EnumValue = EnumMode.Value)>]
+    PremiumTier: GuildPremiumTier
 
-    [<JsonPropertyName("premium_subscription_count")>]
-    val PremiumSubscriptionCount: int option
+    [<JsonField("premium_subscription_count")>]
+    PremiumSubscriptionCount: int option
 
-    [<JsonPropertyName("preferred_locale")>]
-    val PreferredLocale: string
+    [<JsonField("preferred_locale")>]
+    PreferredLocale: string
 
-    [<JsonPropertyName("public_updates_channel_id")>]
-    val PublicUpdatesChannelId: string option
+    [<JsonField("public_updates_channel_id")>]
+    PublicUpdatesChannelId: string option
 
-    [<JsonPropertyName("max_video_channel_users")>]
-    val MaxVideoChannelUsers: int option
+    [<JsonField("max_video_channel_users")>]
+    MaxVideoChannelUsers: int option
 
-    [<JsonPropertyName("max_stage_video_channel_users")>]
-    val MaxStageVideoChannelUsers: int option
+    [<JsonField("max_stage_video_channel_users")>]
+    MaxStageVideoChannelUsers: int option
 
-    [<JsonPropertyName("approximate_member_count")>]
-    val ApproximateMemberCount: int option
+    [<JsonField("approximate_member_count")>]
+    ApproximateMemberCount: int option
 
-    [<JsonPropertyName("approximate_presence_count")>]
-    val ApproximatePresenceCount: int option
+    [<JsonField("approximate_presence_count")>]
+    ApproximatePresenceCount: int option
 
-    [<JsonPropertyName("welcome_screen")>]
-    val WelcomeScreen: WelcomeScreen option
+    [<JsonField("welcome_screen")>]
+    WelcomeScreen: WelcomeScreen option
 
-    [<JsonPropertyName("nsfw_level")>]
-    val NsfwLevel: GuildNsfwLevel
+    [<JsonField("nsfw_level", EnumValue = EnumMode.Value)>]
+    NsfwLevel: GuildNsfwLevel
 
-    [<JsonPropertyName("stickers")>]
-    val Stickers: Sticker list option
+    [<JsonField("stickers")>]
+    Stickers: Sticker list option
 
-    [<JsonPropertyName("premium_progress_bar_enabled")>]
-    val PremiumProgressBarEnabled: bool
+    [<JsonField("premium_progress_bar_enabled")>]
+    PremiumProgressBarEnabled: bool
 
-    [<JsonPropertyName("safety_alerts_channel_id")>]
-    val SafetyAlertsChannelId: string option
+    [<JsonField("safety_alerts_channel_id")>]
+    SafetyAlertsChannelId: string option
+}
