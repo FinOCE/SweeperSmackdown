@@ -1,16 +1,10 @@
-targetScope = 'subscription'
-
 param location string
 param environment string
-param resourceGroupName string
 @secure()
 param bearerTokenSecretKey string
-@secure()
 param discordClientId string
 @secure()
 param discordClientSecret string
-@allowed(['dotnet', 'dotnet-isolated'])
-param eventHandlerAddress string
 
 var resourceToken = take(toLower(uniqueString(subscription().id, environment, location, 'api')), 7)
 
@@ -35,13 +29,8 @@ var storageAccountName = 'saapi${environment}${resourceToken}'
 var storageContainerName = 'app-package-${take(resourceToken, 7)}-${resourceToken}'
 var functionAppName = 'fa-api-${environment}-${resourceToken}'
 
-resource azResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
-  name: resourceGroupName
-}
-
 module azCosmosDb '../resources/azCosmosDb.bicep' = {
   name: cosmosDbName
-  scope: azResourceGroup
   params: {
     name: cosmosDbName
     location: location
@@ -50,7 +39,6 @@ module azCosmosDb '../resources/azCosmosDb.bicep' = {
 
 module azCosmosDbDatabase '../resources/azCosmosDbDatabase.bicep' = {
   name: databaseName
-  scope: azResourceGroup
   params: {
     name: databaseName
     location: location
@@ -60,7 +48,6 @@ module azCosmosDbDatabase '../resources/azCosmosDbDatabase.bicep' = {
 
 module azCosmosDbContainer '../resources/azCosmosDbContainer.bicep' = [for container in containers: {
   name: container.name
-  scope: azResourceGroup
   params: {
     name: container.name
     location: location
@@ -71,7 +58,6 @@ module azCosmosDbContainer '../resources/azCosmosDbContainer.bicep' = [for conta
 
 module azWebPubSub '../resources/azWebPubSub.bicep' = {
   name: webPubSubName
-  scope: azResourceGroup
   params: {
     name: webPubSubName
     location: location
@@ -81,7 +67,6 @@ module azWebPubSub '../resources/azWebPubSub.bicep' = {
 
 module azApplicationInsights '../resources/azApplicationInsights.bicep' = {
   name: applicationInsightsName
-  scope: azResourceGroup
   params: {
     name: applicationInsightsName
     location: location
@@ -90,7 +75,6 @@ module azApplicationInsights '../resources/azApplicationInsights.bicep' = {
 
 module azServerFarm '../resources/azServerFarm.bicep' = {
   name: serverFarmName
-  scope: azResourceGroup
   params: {
     name: serverFarmName
     location: location
@@ -100,7 +84,6 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
 
 module azStorageAccount '../resources/azStorageAccount.bicep' = {
   name: storageAccountName
-  scope: azResourceGroup
   params: {
     name: storageAccountName
     location: location
@@ -109,7 +92,6 @@ module azStorageAccount '../resources/azStorageAccount.bicep' = {
 
 module azStorageContainer '../resources/azStorageContainer.bicep' = {
   name: storageContainerName
-  scope: azResourceGroup
   params: {
     name: storageContainerName
     publicAccess: 'None'
@@ -119,7 +101,6 @@ module azStorageContainer '../resources/azStorageContainer.bicep' = {
 
 module azFunctionApp '../resources/azFunctionApp.bicep' = {
   name: functionAppName
-  scope: azResourceGroup
   params: {
     name: functionAppName
     location: location
@@ -132,28 +113,23 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
 
 module azWebPubSubHub '../resources/azWebPubSubHub.bicep' = {
   name: webPubSubHubName
-  scope: azResourceGroup
   params: {
     name: webPubSubHubName
     webPubSubName: azWebPubSub.outputs.name
     functionAppName: azFunctionApp.outputs.name
-    eventHandlerAddress: eventHandlerAddress
   }
 }
 
 resource azCosmosDbExisting 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
   name: cosmosDbName
-  scope: azResourceGroup
 }
 
 resource azWebPubSubExisting 'Microsoft.SignalRService/webPubSub@2023-02-01' existing = {
   name: webPubSubName
-  scope: azResourceGroup
 }
 
 module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
   name: '${functionAppName}/appsettings'
-  scope: azResourceGroup
   params: {
     functionAppName: azFunctionApp.outputs.name
     storageAccountName: azStorageAccount.outputs.name
@@ -165,3 +141,6 @@ module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
     discordClientSecret: discordClientSecret
   }
 }
+
+output name string = azFunctionApp.outputs.name
+output defaultHostName string = azFunctionApp.outputs.defaultHostName

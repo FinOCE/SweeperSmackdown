@@ -8,7 +8,6 @@ param cosmosDbConnectionString string
 param webPubSubConnectionString string
 @secure()
 param bearerTokenSecretKey string
-@secure()
 param discordClientId string
 @secure()
 param discordClientSecret string
