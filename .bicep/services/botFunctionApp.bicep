@@ -8,13 +8,13 @@ param serverFarmSku string
 param runtime string
 param discordPublicKey string
 
-var resourceToken = toLower(uniqueString(subscription().id, environment, location, functionAppName)) // TODO: Use resource token for all names
+var resourceToken = take(toLower(uniqueString(subscription().id, environment, location, 'bot')), 7)
 
-var applicationInsightsName = 'ai-sweeperbot-${environment}'
-var serverFarmName = 'sf-sweeperbot-${environment}'
-var storageAccountName = 'sasweeperbot${environment}'
-var storageContainerName = 'app-package-${take(resourceToken, 7)}'
-var functionAppName = 'fa-sweeperbot-${environment}'
+var applicationInsightsName = 'ai-bot-${environment}-${resourceToken}'
+var serverFarmName = 'sf-bot-${environment}-${resourceToken}'
+var storageAccountName = 'sabot${environment}${resourceToken}'
+var storageContainerName = 'app-package-${resourceToken}'
+var functionAppName = 'fa-bot-${environment}-${resourceToken}'
 
 resource azResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
   name: resourceGroupName

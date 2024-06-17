@@ -3,34 +3,71 @@ targetScope = 'subscription'
 param location string
 param environment string
 param resourceGroupName string
-@allowed(['Consumption', 'FlexConsumption'])
-param serverFarmSku string
-param runtime string
-param cosmosDbName string
 @secure()
 param bearerTokenSecretKey string
 @secure()
 param discordClientId string
 @secure()
 param discordClientSecret string
-@allowed(['Free', 'Standard'])
-param webPubSubSku string
 @allowed(['dotnet', 'dotnet-isolated'])
 param eventHandlerAddress string
 
-var resourceToken = toLower(uniqueString(subscription().id, environment, location, functionAppName)) // TODO: Use resource token for all names
+var resourceToken = take(toLower(uniqueString(subscription().id, environment, location, 'api')), 7)
 
-var webPubSubName = 'ws-sweepersmackdown-${environment}'
+var cosmosDbName = 'db-api-${environment}-${resourceToken}'
+var databaseName = 'smackdown-db'
+var containers = [
+  {
+    name: 'lobbies'
+    partitionkeyPath: '/id'
+  }
+  {
+    name: 'players'
+    partitionKeyPath: '/lobbyId'
+  }
+]
+
+var webPubSubName = 'ws-api-${environment}-${resourceToken}'
 var webPubSubHubName = 'Game'
-var applicationInsightsName = 'ai-sweepersmackdown-${environment}'
-var serverFarmName = 'sf-sweepersmackdown-${environment}'
-var storageAccountName = 'sasweepersmackdown${environment}'
-var storageContainerName = 'app-package-${take(resourceToken, 7)}'
-var functionAppName = 'fa-sweepersmackdown-${environment}'
+var applicationInsightsName = 'ai-api-${environment}-${resourceToken}'
+var serverFarmName = 'sf-api-${environment}-${resourceToken}'
+var storageAccountName = 'saapi${environment}${resourceToken}'
+var storageContainerName = 'app-package-${take(resourceToken, 7)}-${resourceToken}'
+var functionAppName = 'fa-api-${environment}-${resourceToken}'
 
 resource azResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
   name: resourceGroupName
 }
+
+module azCosmosDb '../resources/azCosmosDb.bicep' = {
+  name: cosmosDbName
+  scope: azResourceGroup
+  params: {
+    name: cosmosDbName
+    location: location
+  }
+}
+
+module azCosmosDbDatabase '../resources/azCosmosDbDatabase.bicep' = {
+  name: databaseName
+  scope: azResourceGroup
+  params: {
+    name: databaseName
+    location: location
+    resourceName: azCosmosDb.outputs.name
+  }
+}
+
+module azCosmosDbContainer '../resources/azCosmosDbContainer.bicep' = [for container in containers: {
+  name: container.name
+  scope: azResourceGroup
+  params: {
+    name: container.name
+    location: location
+    partitionKeyPath: container.partitionKeyPath
+    databaseName: azCosmosDbDatabase.outputs.name
+  }
+}]
 
 module azWebPubSub '../resources/azWebPubSub.bicep' = {
   name: webPubSubName
@@ -38,7 +75,7 @@ module azWebPubSub '../resources/azWebPubSub.bicep' = {
   params: {
     name: webPubSubName
     location: location
-    sku: webPubSubSku
+    sku: 'Free'
   }
 }
 
@@ -57,7 +94,7 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
   params: {
     name: serverFarmName
     location: location
-    sku: serverFarmSku
+    sku: 'Consumption'
   }
 }
 
@@ -89,7 +126,7 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
     serverFarmId: azServerFarm.outputs.id
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
-    runtime: runtime
+    runtime: 'dotnet'
   }
 }
 
