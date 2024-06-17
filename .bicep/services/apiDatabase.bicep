@@ -1,9 +1,10 @@
 targetScope = 'subscription'
 
 param location string
+param environment string
 param resourceGroupName string
 
-var name = 'cosmosDb'
+var name = 'db-sweepersmackdown-${environment}'
 var databaseName = 'smackdown-db'
 var containers = [
   {
@@ -49,3 +50,6 @@ module azCosmosDbContainer '../resources/azCosmosDbContainer.bicep' = [for conta
     databaseName: azCosmosDbDatabase.outputs.name
   }
 }]
+
+output id string = azCosmosDb.outputs.id
+output name string = azCosmosDb.outputs.name
