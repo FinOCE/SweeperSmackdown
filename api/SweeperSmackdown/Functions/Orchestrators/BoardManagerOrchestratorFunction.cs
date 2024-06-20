@@ -50,7 +50,7 @@ public static class BoardManagerOrchestratorFunction
         await ctx.CallEntityAsync(
             Id.For<Board>(userId),
             nameof(Board.Create),
-            (gameState, lives));
+            (lobbyId, gameState, lives));
 
         // Notify users the board was created
         await ctx.CallActivityAsync(

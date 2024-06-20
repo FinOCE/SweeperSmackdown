@@ -52,6 +52,12 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.MOVE_ADD, userId, move),
             WebPubSubDataType.Json);
 
+    public static WebPubSubAction RejectMove(string userId, OnMoveData move) =>
+        WebPubSubAction.CreateSendToUserAction(
+            userId,
+            MessageFactory.Create(PubSubEvents.MOVE_REJECT, userId, move),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction GameWon(string userId, string lobbyId) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
