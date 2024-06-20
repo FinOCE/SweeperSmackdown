@@ -7,6 +7,7 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Models;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System;
 using System.Collections.Generic;
@@ -57,9 +58,9 @@ public static class BoardGetFunction
             return new NotFoundResult();
 
         // Respond to request
-        var data = new Dictionary<string, string>()
+        var data = new Dictionary<string, PlayerState>()
         {
-            { userId, new BinaryData(entity.EntityState.GameState).ToString() }
+            { userId, PlayerState.FromEntity(entity.EntityState) }
         };
 
         return new OkObjectResult(data);

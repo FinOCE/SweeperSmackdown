@@ -63,6 +63,9 @@ public static class BoardResetActionFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
+        if (entity.EntityState.IsDisabled)
+            return new ConflictResult();
+
         // Reset board
         await entityClient.SignalEntityAsync<IBoard>(
             Id.For<Board>(userId),

@@ -65,6 +65,9 @@ public static class BoardSolutionActionFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
+        if (entity.EntityState.IsDisabled)
+            return new ConflictResult();
+
         // Verify board
         var initialState = entity.EntityState.InitialState;
         var gameState = new BinaryData(payload.GameState).ToArray();

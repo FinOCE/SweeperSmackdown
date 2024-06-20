@@ -67,6 +67,9 @@ public static class BoardSkipActionFunction
         if (!entity.EntityExists)
             return new NotFoundResult();
 
+        if (entity.EntityState.IsDisabled)
+            return new ConflictResult();
+
         // Notify orchestrator
         await orchestrationClient.RaiseEventAsync(
             Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, userId),

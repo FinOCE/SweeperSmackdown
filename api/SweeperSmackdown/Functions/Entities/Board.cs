@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs.Websocket;
 using SweeperSmackdown.Factories;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
@@ -22,7 +23,7 @@ public interface IBoard
 
     Task<byte[]> GetGameState();
     
-    Task MakeMove(OnMoveData data);
+    Task MakeMove((DateTime TriggerTime, OnMoveData Data) args);
 
     void Reset();
 }
@@ -30,13 +31,13 @@ public interface IBoard
 [DataContract]
 public class Board : IBoard
 {
-    private IAsyncCollector<WebPubSubAction> _ws { get; set; } = null!;
+    private IAsyncCollector<WebPubSubAction> _ws { get; private set; } = null!;
 
     [DataMember]
-    public string LobbyId { get; set; } = null!;
+    public string LobbyId { get; private set; } = null!;
 
     [DataMember]
-    public string UserId { get; set; } = null!;
+    public string UserId { get; private set; } = null!;
 
     [DataMember]
     public byte[] InitialState { get; private set; } = null!;
@@ -49,6 +50,14 @@ public class Board : IBoard
 
     [DataMember]
     public int Lives { get; private set; }
+
+    [DataMember]
+    public DateTime? DisabledUntil { get; set; }
+
+    public bool IsDisabled
+    {
+        get { return Lives == 0 || DisabledUntil is not null && DisabledUntil.Value < DateTime.UtcNow; }
+    }
 
     public Board(IAsyncCollector<WebPubSubAction> ws)
     {
@@ -63,6 +72,7 @@ public class Board : IBoard
         GameState = args.GameState;
         InitialLives = args.Lives;
         Lives = args.Lives;
+        DisabledUntil = null;
     }
 
     public void Delete() =>
@@ -74,12 +84,17 @@ public class Board : IBoard
     public Task<byte[]> GetGameState() =>
         Task.FromResult(GameState);
 
-    public async Task MakeMove(OnMoveData data)
+    public async Task MakeMove((DateTime TriggerTime, OnMoveData Data) args)
     {
+        var data = args.Data;
+        var triggerTime = args.TriggerTime; // Reduce timeout delay from trigger -> entity
+
         try
         {
-            if (Lives == 0)
-                throw new InvalidOperationException("No lives remaining");
+            var playerStateUpdated = false;
+
+            if (IsDisabled)
+                throw new InvalidOperationException("Moves are currently disabled");
 
             if (data.FlagAdd != null)
             {
@@ -104,10 +119,17 @@ public class Board : IBoard
 
                 foreach (var reveal in data.Reveals)
                     if (State.IsBomb(GameState[reveal]) && Lives != -1 && Lives != 0)
+                    {
                         Lives--;
+                        DisabledUntil = triggerTime.AddSeconds(3);
+                        playerStateUpdated = true;
+                    }
             }
 
             await _ws.AddAsync(ActionFactory.MakeMove(UserId, LobbyId, data));
+
+            if (playerStateUpdated)
+                await _ws.AddAsync(ActionFactory.UpdatePlayerState(UserId, LobbyId, PlayerState.FromEntity(this)));
         }
         catch (InvalidOperationException)
         {

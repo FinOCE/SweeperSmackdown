@@ -7,6 +7,7 @@ using SweeperSmackdown.DTOs.Websocket;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -26,6 +27,6 @@ public static class OnMoveFunction
         // Update board state
         await entityClient.SignalEntityAsync<IBoard>(
             Id.For<Board>(userId),
-            board => board.MakeMove(data.Data));
+            board => board.MakeMove((DateTime.UtcNow, data.Data)));
     }
 }
