@@ -64,17 +64,17 @@ public class GameSettings
         int? boardCount,
         int? seed)
     {
-        var isDifficultySet = difficulty != null || ((difficulty ?? Difficulty) != null && mines == null);
-        
-        var updatedDifficulty = isDifficultySet
-            ? difficulty ?? Difficulty
+        var usesDifficulty = (difficulty ?? Difficulty) is not null && mines == null;
+
+        var newDifficulty = usesDifficulty
+            ? (difficulty ?? Difficulty)
             : null;
 
-        var updatedMines = isDifficultySet
-            ? MineUtils.CalculateMineCount(updatedDifficulty!.Value, (height ?? Height) * (width ?? Width))
+        var newMines = newDifficulty.HasValue
+            ? MineUtils.CalculateMineCount(newDifficulty.Value, (height ?? Height) * (width ?? Width))
             : mines ?? Mines;
 
-        if (updatedMines > (height ?? Height) * (width ?? Width))
+        if (newMines > (height ?? Height) * (width ?? Width))
             throw new ArgumentException("Too many mines");
         
         return new GameSettings()
@@ -82,8 +82,8 @@ public class GameSettings
             Mode = mode ?? Mode,
             Height = height ?? Height,
             Width = width ?? Width,
-            Mines = updatedMines,
-            Difficulty = updatedDifficulty,
+            Mines = newMines,
+            Difficulty = newDifficulty,
             Lives = lives ?? Lives,
             TimeLimit = timeLimit ?? TimeLimit,
             BoardCount = boardCount ?? BoardCount,

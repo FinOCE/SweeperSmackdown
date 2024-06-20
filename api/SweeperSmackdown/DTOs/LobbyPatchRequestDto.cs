@@ -68,6 +68,9 @@ public class LobbyPatchRequestDto
             if (Difficulty != null && !Enum.IsDefined(Difficulty.Value))
                 errors.Add("The 'difficulty' must be a valid difficulty");
 
+            if (Mines is not null && Difficulty is not null)
+                errors.Add("Cannot specify both 'mines' and 'difficulty' as they are mutually exclusive");
+
             if (Lives != null && Lives < 0)
                 errors.Add($"The 'lives' must be greater than or equal to 0 (0 means unlimited)");
 
