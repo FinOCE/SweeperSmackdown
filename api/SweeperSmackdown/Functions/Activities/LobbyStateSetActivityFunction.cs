@@ -3,6 +3,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Models;
+using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Activities;
@@ -13,10 +14,13 @@ public class LobbyStateSetActivityFunctionProps
     
     public ELobbyState State { get; set; }
 
-    public LobbyStateSetActivityFunctionProps(string lobbyId, ELobbyState state)
+    public DateTime? StateExpiry { get; set; }
+
+    public LobbyStateSetActivityFunctionProps(string lobbyId, ELobbyState state, DateTime? stateExpiry = null)
     {
         LobbyId = lobbyId;
         State = state;
+        StateExpiry = stateExpiry;
     }
 }
 
@@ -32,7 +36,8 @@ public static class LobbyStateSetActivityFunction
         
         await container.PatchItemAsync<Lobby>(props.LobbyId, new(props.LobbyId), new[]
         {
-            PatchOperation.Set("/state", props.State)
+            PatchOperation.Set("/state", props.State),
+            PatchOperation.Set("/stateExpiry", props.StateExpiry)
         });
     }
 }

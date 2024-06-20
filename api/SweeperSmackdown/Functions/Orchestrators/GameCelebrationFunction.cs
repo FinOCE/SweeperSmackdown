@@ -29,20 +29,14 @@ public static class GameCelebrationFunction
         var props = ctx.GetInput<GameCelebrationFunctionProps>();
 
         // Set state to celebrate
-        await ctx.CallActivityAsync(
-            nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.Celebrate));
-
-        // Start countdown and notify players
-        using var timeoutCts = new CancellationTokenSource();
         var expiry = ctx.CurrentUtcDateTime.AddSeconds(Constants.CELEBRATION_COUNTDOWN_DURATION);
 
-        var notification = ctx.CallActivityAsync(
-            nameof(GameCelebrationNotifyCountdownActivityFunction),
-            new GameCelebrationNotifyCountdownActivityFunctionProps(lobbyId, expiry));
+        await ctx.CallActivityAsync(
+            nameof(LobbyStateSetActivityFunction),
+            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.Celebrate, expiry));
 
-        var timer = ctx.CreateTimer(expiry, timeoutCts.Token);
-
-        await Task.WhenAll(notification, timer);
+        // Start countdown
+        using var timeoutCts = new CancellationTokenSource();
+        await ctx.CreateTimer(expiry, timeoutCts.Token);
     }
 }

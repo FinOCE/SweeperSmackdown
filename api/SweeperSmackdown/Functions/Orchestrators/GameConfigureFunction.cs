@@ -42,22 +42,22 @@ public static class GameConfigureFunction
             return new GameSettings(); // Empty response to continue as new
         }
 
+        // Set lobby state to countdown to share timer expiry
+        var expiry = ctx.CurrentUtcDateTime.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
+
+        await ctx.CallActivityAsync(
+            nameof(LobbyStateSetActivityFunction),
+            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.ConfigureCountdown, expiry));
+
         // Fetch lobby settings
         var lobby = await ctx.CallActivityAsync<Lobby>(
             nameof(LobbyFetchActivityFunction),
             new LobbyFetchActivityFunctionProps(lobbyId));
 
-        // Start countdown and notify players
+        // Start countdown
         using var timeoutCts = new CancellationTokenSource();
-        var expiry = ctx.CurrentUtcDateTime.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
+        await ctx.CreateTimer(expiry, timeoutCts.Token);
 
-        var notification = ctx.CallActivityAsync(
-            nameof(GameStartNotifyCountdownActivityFunction),
-            new GameStartNotifyCountdownActivityFunctionProps(lobbyId, expiry));
-
-        var timer = ctx.CreateTimer(expiry, timeoutCts.Token);
-
-        await Task.WhenAll(notification, timer);
         return lobby.Settings;
     }
 }

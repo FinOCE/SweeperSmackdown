@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -33,6 +34,10 @@ public class LobbyResponseDto
     [JsonPropertyName("state")]
     public ELobbyState State { get; set; }
 
+    [JsonProperty("stateExpiry")]
+    [JsonPropertyName("stateExpiry")]
+    public DateTime? StateExpiry { get; set; }
+
     [JsonProperty("settings")]
     [JsonPropertyName("settings")]
     public GameSettings Settings { get; set; }
@@ -44,6 +49,7 @@ public class LobbyResponseDto
         IDictionary<string, int> scores,
         IDictionary<string, int> wins,
         ELobbyState state,
+        DateTime? stateExpiry,
         GameSettings settings)
     {
         LobbyId = lobbyId;
@@ -52,6 +58,7 @@ public class LobbyResponseDto
         Scores = scores;
         Wins = wins;
         State = state;
+        StateExpiry = stateExpiry;
         Settings = settings;
     }
 
@@ -64,6 +71,7 @@ public class LobbyResponseDto
             players.ToDictionary(p => p.Id, p => p.Score),
             players.ToDictionary(p => p.Id, p => p.Wins),
             lobby.State,
+            lobby.StateExpiry,
             lobby.Settings);
     }
 }

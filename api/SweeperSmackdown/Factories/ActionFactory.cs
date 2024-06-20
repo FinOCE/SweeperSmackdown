@@ -70,16 +70,4 @@ public static class ActionFactory
             lobbyId,
             MessageFactory.Create(PubSubEvents.GAME_WON, userId, ""),
             WebPubSubDataType.Json);
-
-    public static WebPubSubAction GameStarting(string lobbyId, DateTime expiry) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.GAME_STARTING, "SYSTEM", expiry),
-            WebPubSubDataType.Json);
-
-    public static WebPubSubAction GameCelebrationStarting(string lobbyId, DateTime expiry) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.GAME_CELEBRATION_STARTING, "SYSTEM", expiry),
-            WebPubSubDataType.Json);
 }

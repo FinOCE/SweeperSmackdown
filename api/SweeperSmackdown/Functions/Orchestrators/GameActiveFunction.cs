@@ -51,20 +51,16 @@ public static class GameActiveFunction
 
         // Setup timer if needed
         using var timeoutCts = new CancellationTokenSource();
-        
-        if (props.Settings.TimeLimit != 0)
-        {
-            var timerTask = ctx.CreateTimer(
-                ctx.CurrentUtcDateTime.AddSeconds(props.Settings.TimeLimit),
-                timeoutCts.Token);
+        var hasTimeLimit = props.Settings.TimeLimit != 0;
+        var playStateExpiry = ctx.CurrentUtcDateTime.AddSeconds(props.Settings.TimeLimit);
 
-            tasks.Add(timerTask);
-        }
+        if (hasTimeLimit)
+            tasks.Add(ctx.CreateTimer(playStateExpiry, timeoutCts.Token));
 
         // Set state to active
         await ctx.CallActivityAsync(
             nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Play));
+            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Play, hasTimeLimit ? playStateExpiry : null));
 
         // Listen for a winner
         var winnerTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_WON);

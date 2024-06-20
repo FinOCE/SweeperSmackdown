@@ -31,7 +31,7 @@ public interface IBoard
 [DataContract]
 public class Board : IBoard
 {
-    private IAsyncCollector<WebPubSubAction> _ws { get; private set; } = null!;
+    private IAsyncCollector<WebPubSubAction> _ws { get; set; } = null!;
 
     [DataMember]
     public string LobbyId { get; private set; } = null!;
