@@ -60,7 +60,15 @@ public static class LobbyUserPutFunction
 
         // Short circuit if already in lobby
         if (player is not null)
+        {
+            if (!player.Active)
+            {
+                player.Active = true;
+                await playerDb.AddAsync(player);
+            }
+
             return new OkObjectResult(LobbyUserResponseDto.FromModel(player));
+        }
 
         // Add to lobby
         player = new Player(userId, lobbyId, true, 0, 0);
