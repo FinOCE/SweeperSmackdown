@@ -5,6 +5,7 @@ using SweeperSmackdown.Functions.Activities;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -53,6 +54,17 @@ public static class GameConfigureFunction
         var lobby = await ctx.CallActivityAsync<Lobby>(
             nameof(LobbyFetchActivityFunction),
             new LobbyFetchActivityFunctionProps(lobbyId));
+
+        // Create board manager for each user
+        var players = await ctx.CallActivityAsync<IEnumerable<Player>>(
+            nameof(LobbyPlayersFetchActivityFunction),
+            new LobbyPlayersFetchActivityFunctionProps(lobbyId));
+
+        foreach (var player in players)
+            _ = ctx.StartNewOrchestration(
+                nameof(BoardManagerOrchestratorFunction),
+                new BoardManagerOrchestratorFunctionProps(lobby.Settings),
+                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, player.Id));
 
         // Start countdown
         using var timeoutCts = new CancellationTokenSource();

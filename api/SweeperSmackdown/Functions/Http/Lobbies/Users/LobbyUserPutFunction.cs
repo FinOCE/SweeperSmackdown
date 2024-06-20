@@ -69,15 +69,15 @@ public static class LobbyUserPutFunction
         await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
         await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
 
-        // Create board for new user if game is in progress
-        if (lobby.State == ELobbyState.Play)
+        // Create board for new user if game is in progress or about to start
+        if (lobby.State == ELobbyState.ConfigureCountdown || lobby.State == ELobbyState.Play)
         {
             var boardManagerStatus = await orchestrationClient.GetStatusAsync(
                 Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId));
 
             if (boardManagerStatus.IsInactive())
                 await orchestrationClient.StartNewAsync(
-                nameof(BoardManagerOrchestratorFunction),
+                    nameof(BoardManagerOrchestratorFunction),
                     Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId),
                     new BoardManagerOrchestratorFunctionProps(lobby.Settings));
         }

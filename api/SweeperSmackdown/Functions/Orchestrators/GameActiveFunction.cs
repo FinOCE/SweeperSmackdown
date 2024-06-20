@@ -32,23 +32,6 @@ public static class GameActiveFunction
 
         var tasks = new List<Task>();
 
-        // Create board manager for each user
-        var lobby = await ctx.CallActivityAsync<Lobby>(
-            nameof(LobbyFetchActivityFunction),
-            new LobbyFetchActivityFunctionProps(lobbyId));
-
-        var players = await ctx.CallActivityAsync<IEnumerable<Player>>(
-            nameof(LobbyPlayersFetchActivityFunction),
-            new LobbyPlayersFetchActivityFunctionProps(lobbyId));
-        
-        foreach (var player in players)
-            _ = ctx.StartNewOrchestration(
-                nameof(BoardManagerOrchestratorFunction),
-                new BoardManagerOrchestratorFunctionProps(props.Settings),
-                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, player.Id));
-
-        // TODO: Ensure all players have a board created before starting
-
         // Setup timer if needed
         using var timeoutCts = new CancellationTokenSource();
         var hasTimeLimit = props.Settings.TimeLimit != 0;
@@ -60,7 +43,7 @@ public static class GameActiveFunction
         // Set state to active
         await ctx.CallActivityAsync(
             nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Play, hasTimeLimit ? playStateExpiry : null));
+            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.Play, hasTimeLimit ? playStateExpiry : null));
 
         // Listen for a winner
         var winnerTask = ctx.WaitForExternalEvent<string>(DurableEvents.GAME_WON);
@@ -75,7 +58,7 @@ public static class GameActiveFunction
         // Update state to won
         await ctx.CallActivityAsync(
             nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobby.Id, ELobbyState.Won));
+            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.Won));
         
         // Return winner ID
         return (winner == winnerTask)
