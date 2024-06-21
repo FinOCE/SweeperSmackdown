@@ -43,7 +43,7 @@ public static class LobbyUserDeleteFunction
             return new StatusCodeResult(401);
 
         // Check if lobby exists and that user is in it
-        if (lobby is null || player is null)
+        if (lobby is null || player is null || !player.Active)
             return new NotFoundResult();
 
         // Only allow the specific user and the host to delete them
