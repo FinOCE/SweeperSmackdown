@@ -58,24 +58,29 @@ public static class LobbyUserPutFunction
         if (requesterId != userId)
             return new StatusCodeResult(403);
 
-        // Short circuit if already in lobby
+        // Add user or update active status
+        var previouslyExisting = player is not null;
+        var previouslyActive = player is not null && player.Active;
+
         if (player is not null)
         {
-            if (!player.Active)
+            if (!player!.Active)
             {
                 player.Active = true;
                 await playerDb.AddAsync(player);
             }
-
-            return new OkObjectResult(LobbyUserResponseDto.FromModel(player));
+        }
+        else
+        {
+            player = new Player(userId, lobbyId, true, 0, 0);
+            await playerDb.AddAsync(player);
         }
 
-        // Add to lobby
-        player = new Player(userId, lobbyId, true, 0, 0);
-        await playerDb.AddAsync(player);
-
-        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
+        // Add user to ws and notify lobby members if fresh join
         await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+
+        if (!previouslyActive)
+            await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
 
         // Create board for new user if game is in progress or about to start
         if (lobby.State == ELobbyState.ConfigureCountdown || lobby.State == ELobbyState.Play)
@@ -91,8 +96,10 @@ public static class LobbyUserPutFunction
         }
 
         // Respond to request
-        return new CreatedResult(
-            $"/lobbies/{lobbyId}/users/{userId}",
-            LobbyUserResponseDto.FromModel(player));
+        return previouslyExisting
+            ? new CreatedResult(
+                $"/lobbies/{lobbyId}/users/{userId}",
+                LobbyUserResponseDto.FromModel(player))
+            : new OkObjectResult(LobbyUserResponseDto.FromModel(player));
     }
 }
