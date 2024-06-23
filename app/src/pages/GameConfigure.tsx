@@ -39,7 +39,10 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const { scores } = useScores()
   const { members } = useMembers()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => setCountdownExpiry(null))
+  const { countdown, start, stop } = useCountdown(() => {
+    setCountdownCompleted(true)
+    setCountdownExpiry(null)
+  })
 
   // Create function to handle translatin between game settings and payloads
   type LocalSettings = Required<Omit<Api.Request.LobbyPatch, "hostId">>
@@ -77,6 +80,7 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(settings))
   const [changes, setChanges] = useState<Api.Request.LobbyPatch>({})
   const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
+  const [countdownCompleted, setCountdownCompleted] = useState(false)
 
   // Update local state whenever server state changes
   useEffect(() => {
@@ -317,6 +321,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
           <div className="game-configure-countdown-container">
             <Text type="title">Starting in {countdown}</Text>
           </div>
+        ) : countdownCompleted ? (
+          <>{/* This state is when countdown has been triggered then completed to show nothing here */}</>
         ) : lobby.hostId === user.id ? (
           <>
             <Box onClick={lock} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureUnlocked}>

@@ -42,7 +42,7 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameCelebrationStarting>("GAME_CELEBRATION_STARTING", data)) return
 
-      setCountdownExpiry(data.data)
+      setCountdownExpiry(new Date(data.data))
     }
 
     function onLobbyDelete(e: OnGroupDataMessageArgs) {
