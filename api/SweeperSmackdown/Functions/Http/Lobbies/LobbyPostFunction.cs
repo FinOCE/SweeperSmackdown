@@ -57,7 +57,7 @@ public static class LobbyPostFunction
         {
             lobbyId = random.Next(1, 100_000).ToString();
         }
-        while (!lobbies.Select(l => l.Id).Contains(lobbyId));
+        while (lobbies.Select(l => l.Id).Contains(lobbyId));
 
         // Create lobby
         var lobby = new Lobby(
