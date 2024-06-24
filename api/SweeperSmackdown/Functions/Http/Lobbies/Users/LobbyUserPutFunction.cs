@@ -11,6 +11,8 @@ using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
@@ -34,6 +36,12 @@ public static class LobbyUserPutFunction
             Id = "{userId}",
             PartitionKey = "{lobbyId}")]
             Player? player,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
         [CosmosDB(
             containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -66,8 +74,11 @@ public static class LobbyUserPutFunction
         player = new Player(userId, lobbyId, true, 0, 0);
         await playerDb.AddAsync(player);
 
-        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
+        players = players.Where(p => p.Id != player.Id).Append(player);
+
+        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId, player));
         await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.UpdateLobby(lobbyId, LobbyResponseDto.FromModel(lobby, players)));
 
         // Create board for new user if game is in progress
         if (lobby.State == ELobbyState.Play)

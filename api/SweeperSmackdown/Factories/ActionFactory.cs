@@ -3,6 +3,7 @@ using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.DTOs.Websocket;
+using SweeperSmackdown.Models;
 using System;
 using System.Text;
 
@@ -22,10 +23,10 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, "SYSTEM", lobby),
             WebPubSubDataType.Json);
     
-    public static WebPubSubAction AddUser(string userId, string lobbyId) =>
+    public static WebPubSubAction AddUser(string userId, string lobbyId, Player player) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.USER_JOIN, userId, ""),
+            MessageFactory.Create(PubSubEvents.USER_JOIN, userId, player),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction RemoveUser(string userId, string lobbyId) =>

@@ -2,8 +2,11 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
+using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
@@ -29,38 +32,44 @@ public static class PlayerChangeFeedFunction
             databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Lobby> lobbyDb,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient)
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
     {
         foreach (var player in players)
         {
-            // Update host for lobbies the player was hosting
-            var lobbies = await cosmosClient
+            Lobby lobby = await cosmosClient
                 .GetLobbyContainer()
-                .GetItemLinqQueryable<Lobby>()
-                    .Where(l => l.HostId == player.Id)
-                .ToFeedIterator()
-                .ReadAllAsync();
+                .ReadItemAsync<Lobby>(player.LobbyId, new(player.LobbyId));
 
-            await Task.WhenAll(
-                lobbies.Select(async lobby =>
+            var participants = await cosmosClient.GetAllPlayersInLobbyAsync(lobby.Id);
+
+            // Notify lobby if player left
+            if (!player.Active)
+            {
+                await ws.AddAsync(ActionFactory.RemoveUser(player.Id, lobby.Id));
+                await ws.AddAsync(ActionFactory.RemoveUserFromLobby(player.Id, lobby.Id));
+                await ws.AddAsync(ActionFactory.UpdateLobby(
+                    lobby.Id,
+                    LobbyResponseDto.FromModel(lobby, participants)));
+            }
+
+            // Update host for lobbies the player was hosting
+            if (!player.Active && lobby.HostId == player.Id)
+            {
+                var newHost = participants.Where(p => p.Active).FirstOrDefault();
+
+                if (newHost is not null)
                 {
-                    var participants = await cosmosClient.GetAllPlayersInLobbyAsync(lobby.Id);
-                    var newHost = participants.Where(p => p.Active).FirstOrDefault();
-
-                    if (newHost is not null)
-                    {
-                        lobby.HostId = newHost.Id;
-                        await lobbyDb.AddAsync(lobby);
-                    }
-                }));
+                    lobby.HostId = newHost.Id;
+                    await lobbyDb.AddAsync(lobby);
+                }
+            }
 
             // Delete lobby if no active players remain
-            var competitors = await cosmosClient.GetAllPlayersInLobbyAsync(player.LobbyId);
-
-            if (!competitors.Any(p => p.Active))
+            if (!participants.Any(p => p.Active))
                 await orchestrationClient.StartNewAsync(
                     nameof(LobbyDeleteOrchestratorFunction),
-                    Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), player.LobbyId));
+                    Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), lobby.Id));
         }
     }
 }

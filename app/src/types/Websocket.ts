@@ -19,6 +19,9 @@ export namespace Websocket {
     export type UserJoin = {
       eventName: "USER_JOIN"
       userId: string
+
+      /** The data for the player who joined */
+      data: Api.Player
     }
 
     export type UserLeave = {

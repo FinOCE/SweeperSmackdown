@@ -17,8 +17,7 @@ public static class OnDisconnectFunction
     [FunctionName(nameof(OnDisconnectFunction))]
     public static async Task Run(
         [WebPubSubTrigger(PubSubConstants.HUB_NAME, WebPubSubEventType.System, "disconnected")] DisconnectedEventRequest req,
-        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws)
+        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
     {
         var userId = req.ConnectionContext.UserId;
         
@@ -40,9 +39,6 @@ public static class OnDisconnectFunction
                 {
                     PatchOperation.Set("/active", false)
                 });
-
-                await ws.AddAsync(ActionFactory.RemoveUser(p.Id, p.LobbyId));
-                await ws.AddAsync(ActionFactory.RemoveUserFromLobby(p.Id, p.LobbyId));
             })));
     }
 }
