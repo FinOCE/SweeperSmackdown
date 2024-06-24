@@ -121,6 +121,8 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
       .catch((err: Error) => [err, null] as const)
 
     if (err) throw new Error("Failed to lock lobby")
+
+    setLobbyData(d => ({ ...d!, state: Api.Enums.ELobbyState.ConfigureLocked }))
   }
 
   async function unlockLobby() {
@@ -132,6 +134,8 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
       .catch((err: Error) => [err, null] as const)
 
     if (err) throw new Error("Failed to unlock lobby")
+
+    setLobbyData(d => ({ ...d!, state: Api.Enums.ELobbyState.ConfigureUnlocked }))
   }
 
   async function confirmLobby() {
@@ -143,6 +147,9 @@ export function LobbyProvider(props: { children?: React.ReactNode }) {
       .catch((err: Error) => [err, null] as const)
 
     if (err) throw new Error("Failed to confirm lobby")
+
+    // TODO: Optimistically update to confirmation lobby state once branch with that change is merged in
+    //       Alternatively, just handle on frontend by forcing into some new state without all the buttons or something
   }
 
   return (
