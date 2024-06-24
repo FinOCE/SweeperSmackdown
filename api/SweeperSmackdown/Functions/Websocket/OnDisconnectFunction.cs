@@ -44,8 +44,5 @@ public static class OnDisconnectFunction
                 await ws.AddAsync(ActionFactory.RemoveUser(p.Id, p.LobbyId));
                 await ws.AddAsync(ActionFactory.RemoveUserFromLobby(p.Id, p.LobbyId));
             })));
-
-        // Update host of any lobbies that need to
-        await cosmosClient.ChangeHostAsync(userId);
     }
 }

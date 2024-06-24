@@ -59,9 +59,6 @@ public static class LobbyUserDeleteFunction
         await ws.AddAsync(ActionFactory.RemoveUser(player.Id, lobby.Id));
         await ws.AddAsync(ActionFactory.RemoveUserFromLobby(player.Id, lobby.Id));
 
-        // Update host of any lobbies that need to
-        await cosmosClient.ChangeHostAsync(userId);
-
         // Respond to request
         return new NoContentResult();
     }
