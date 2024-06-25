@@ -58,9 +58,13 @@ module appStaticWebApp 'services/appStaticWebApp.bicep' = {
 }
 
 output resourceGroupName string = azResourceGroup.name
+
 output apiFunctionAppName string = apiFunctionApp.outputs.name
 output apiFunctionAppDefaultHostName string = apiFunctionApp.outputs.defaultHostName
+output webPubSubDefaultHostName string = apiFunctionApp.outputs.webPubSubDefaultHostName
+
 output botFunctionAppName string = botFunctionApp.outputs.name
 output botFunctionAppDefaultHostName string = botFunctionApp.outputs.defaultHostName
+
 output staticWebAppName string = appStaticWebApp.outputs.name
 output staticWebAppDefaultHostName string = appStaticWebApp.outputs.defaultHostName

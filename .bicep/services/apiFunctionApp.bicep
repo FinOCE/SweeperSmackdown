@@ -144,3 +144,4 @@ module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
 
 output name string = azFunctionApp.outputs.name
 output defaultHostName string = azFunctionApp.outputs.defaultHostName
+output webPubSubDefaultHostName string = azWebPubSubExisting.properties.hostName

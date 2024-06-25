@@ -6,6 +6,9 @@ on:
       - production
   workflow_dispatch:
 
+env:
+  REGION: ${{ vars.REGION }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -14,7 +17,6 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       ENVIRONMENT: ${{ vars.ENVIRONMENT_NAME }}
-      REGION: eastus2
       BEARER_TOKEN_SECRET_KEY: ${{ secrets.BEARER_TOKEN_SECRET_KEY }}
       DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
       DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
@@ -46,7 +48,7 @@ jobs:
           creds: ${{ env.AZURE_CREDENTIALS }}
 
       - name: Build infrastructure with Bicep
-        id: deploy
+        id: bicep
         uses: azure/arm-deploy@v1
         with:
           scope: "subscription"
@@ -55,21 +57,32 @@ jobs:
           failOnStdErr: false
           region: ${{ env.REGION }}
 
+      - name: Get subscription ID
+        id: get-subscription-id
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          echo "::add-mask::$SUBSCRIPTION_ID"
+          echo "SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_OUTPUT"
+
       - name: Build SWA
+        id: build-swa
         run: |
           pushd ./app
           touch .env
           echo "PUBLIC_ENV__DISCORD_CLIENT_ID=${{ env.DISCORD_CLIENT_ID }}" >> .env
-          echo "PUBLIC_ENV__API_BASE_URL=https://${{ steps.deploy.outputs.apiFunctionAppDefaultHostName }}" >> .env
+          echo "PUBLIC_ENV__API_BASE_URL=https://${{ steps.bicep.outputs.apiFunctionAppDefaultHostName }}" >> .env
           npm ci
           npm run build
           popd
-          echo "DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name swa-sweepersmackdown-${{ env.ENVIRONMENT }} --query 'properties.apiKey' | tr -d '"')" >> $GITHUB_ENV
+
+          SWA_DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ steps.bicep.outputs.staticWebAppName }} --query 'properties.apiKey' | tr -d '"')
+          echo "::add-mask::$SWA_DEPLOYMENT_TOKEN"
+          echo "SWA_DEPLOYMENT_TOKEN=$SWA_DEPLOYMENT_TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Deploy SWA
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
+          azure_static_web_apps_api_token: ${{ steps.build-swa.outputs.SWA_DEPLOYMENT_TOKEN }}
           repo_token: ${{ env.GITHUB_TOKEN }}
           action: "upload"
           app_location: "app/dist"
@@ -79,7 +92,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ env.GITHUB_TOKEN }}
 
-      - name: Create API zip
+      - name: Create and deploy API
         run: |
           cd ./api
           dotnet publish --configuration Release --output ./output --self-contained -r win-x64
@@ -87,12 +100,9 @@ jobs:
           zip -r ../deploy.zip .
           cd ../..
 
-      - name: Deploy API through Azure CLI
-        run: |
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.apiFunctionAppName }} --src ./api/deploy.zip
+          az functionapp deployment source config-zip --subscription ${{ steps.get-subscription-id.outputs.SUBSCRIPTION_ID }} -g ${{ steps.bicep.outputs.resourceGroupName }} -n ${{ steps.bicep.outputs.apiFunctionAppName }} --src ./api/deploy.zip
 
-      - name: Create bot zip
+      - name: Create and deploy bot
         run: |
           cd ./bot
           dotnet publish --configuration Release --output ./output --self-contained -r linux-x64
@@ -100,10 +110,7 @@ jobs:
           zip -r ../deploy.zip .
           cd ../..
 
-      - name: Deploy bot through Azure CLI
-        run: |
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.botFunctionAppName }} --src ./bot/deploy.zip
+          az functionapp deployment source config-zip --subscription ${{ steps.get-subscription-id.outputs.SUBSCRIPTION_ID }} -g ${{ steps.bicep.outputs.resourceGroupName }} -n ${{ steps.bicep.outputs.botFunctionAppName }} --src ./bot/deploy.zip
 
       - name: Log out of Azure
         run: |
@@ -111,4 +118,8 @@ jobs:
 
       - name: Show default address
         run: |
-          echo "Deployment successful! Game can be played at https://${{ steps.deploy.outputs.staticWebAppDefaultHostName }}"
+          echo "Deployment successful!"
+          echo "App static web app default host name: ${{ steps.bicep.outputs.staticWebAppDefaultHostName }}"
+          echo "API function app default host name: ${{ steps.bicep.outputs.apiFunctionAppDefaultHostName }}"
+          echo "Web PubSub default host name: ${{ steps.bicep.outputs.webPubSubDefaultHostName }}"
+          echo "Bot function app default host name: ${{ steps.bicep.outputs.botFunctionAppDefaultHostName }}"
