@@ -1,0 +1,114 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Production
+    env:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ENVIRONMENT: ${{ vars.ENVIRONMENT_NAME }}
+      REGION: eastus2
+      BEARER_TOKEN_SECRET_KEY: ${{ secrets.BEARER_TOKEN_SECRET_KEY }}
+      DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+      DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+      DISCORD_PUBLIC_KEY: ${{ vars.DISCORD_PUBLIC_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "6.0.x"
+
+      # - name: Test API project
+      #   run: |
+      #     pushd ./api
+      #     dotnet test --configuration Release
+      #     popd
+
+      - name: Test bot project
+        run: |
+          pushd ./bot
+          dotnet test --configuration Release
+          popd
+
+      - name: Log into Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ env.AZURE_CREDENTIALS }}
+
+      - name: Build infrastructure with Bicep
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          scope: "subscription"
+          template: .bicep/main.bicep
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ env.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
+          failOnStdErr: false
+          region: ${{ env.REGION }}
+
+      - name: Build SWA
+        run: |
+          pushd ./app
+          touch .env
+          echo "PUBLIC_ENV__DISCORD_CLIENT_ID=${{ env.DISCORD_CLIENT_ID }}" >> .env
+          echo "PUBLIC_ENV__API_BASE_URL=https://${{ steps.deploy.outputs.apiFunctionAppDefaultHostName }}" >> .env
+          npm ci
+          npm run build
+          popd
+          echo "DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name swa-sweepersmackdown-${{ env.ENVIRONMENT }} --query 'properties.apiKey' | tr -d '"')" >> $GITHUB_ENV
+
+      - name: Deploy SWA
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
+          repo_token: ${{ env.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "app/dist"
+          api_location: ""
+          output_location: ""
+          skip_app_build: true
+        env:
+          NODE_AUTH_TOKEN: ${{ env.GITHUB_TOKEN }}
+
+      - name: Create API zip
+        run: |
+          cd ./api
+          dotnet publish --configuration Release --output ./output --self-contained -r win-x64
+          cd ./output
+          zip -r ../deploy.zip .
+          cd ../..
+
+      - name: Deploy API through Azure CLI
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.apiFunctionAppName }} --src ./api/deploy.zip
+
+      - name: Create bot zip
+        run: |
+          cd ./bot
+          dotnet publish --configuration Release --output ./output --self-contained -r linux-x64
+          cd ./output
+          zip -r ../deploy.zip .
+          cd ../..
+
+      - name: Deploy bot through Azure CLI
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          az functionapp deployment source config-zip --subscription $SUBSCRIPTION_ID -g ${{ steps.deploy.outputs.resourceGroupName }} -n ${{ steps.deploy.outputs.botFunctionAppName }} --src ./bot/deploy.zip
+
+      - name: Log out of Azure
+        run: |
+          az logout
+
+      - name: Show default address
+        run: |
+          echo "Deployment successful! Game can be played at https://${{ steps.deploy.outputs.staticWebAppDefaultHostName }}"
