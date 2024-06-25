@@ -3,19 +3,19 @@ name: Sweeper Smackdown Deployment
 on:
   push:
     branches:
-      - production
       - main
+      - production
   workflow_dispatch:
 
 env:
-  ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'dev' }}
+  AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ENVIRONMENT: ${{ github.ref == 'refs/heads/production' && 'prod' || 'beta' }}
   REGION: eastus2
   BEARER_TOKEN_SECRET_KEY: ${{ secrets.BEARER_TOKEN_SECRET_KEY }}
-  DISCORD_CLIENT_ID: "1233026365213773965"
+  DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
   DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
-  DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
-
-  # TODO: Handle dev/prod for environment variables
+  DISCORD_PUBLIC_KEY: ${{ vars.DISCORD_PUBLIC_KEY }}
 
 jobs:
   deploy:
@@ -44,7 +44,7 @@ jobs:
       - name: Log into Azure
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ env.AZURE_CREDENTIALS }}
 
       - name: Build infrastructure with Bicep
         id: deploy
@@ -71,14 +71,14 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ env.GITHUB_TOKEN }}
           action: "upload"
           app_location: "app/dist"
           api_location: ""
           output_location: ""
           skip_app_build: true
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ env.GITHUB_TOKEN }}
 
       - name: Create API zip
         run: |
