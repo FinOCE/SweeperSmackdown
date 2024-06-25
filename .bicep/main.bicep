@@ -2,7 +2,7 @@ targetScope = 'subscription'
 
 @description('The environment to build in')
 @allowed([
-  'dev'
+  'beta'
   'prod'
 ])
 param environment string
