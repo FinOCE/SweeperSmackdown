@@ -108,6 +108,7 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
     runtime: 'dotnet'
+    isFlex: azServerFarm.outputs.isFlex
   }
 }
 
@@ -118,6 +119,10 @@ module azWebPubSubHub '../resources/azWebPubSubHub.bicep' = {
     webPubSubName: azWebPubSub.outputs.name
     functionAppName: azFunctionApp.outputs.name
   }
+}
+
+resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: storageAccountName
 }
 
 resource azCosmosDbExisting 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
@@ -132,8 +137,8 @@ module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
   params: {
     functionAppName: azFunctionApp.outputs.name
-    storageAccountName: azStorageAccount.outputs.name
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
+    storageConnectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
     cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
     webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString
     bearerTokenSecretKey: bearerTokenSecretKey

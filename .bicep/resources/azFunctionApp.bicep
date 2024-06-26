@@ -5,6 +5,7 @@ param storageAccountName string
 param storageContainerName string
 @allowed(['dotnet', 'dotnet-isolated'])
 param runtime string
+param isFlex bool
 
 resource azStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -25,25 +26,27 @@ resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' = {
         allowedOrigins: ['*']
       }
     }
-    functionAppConfig: {
-      scaleAndConcurrency: {
-        maximumInstanceCount: 100
-        instanceMemoryMB: 2048
-      }
-      runtime: { 
-        name: runtime
-        version: runtime == 'dotnet-isolated' ? '8.0' : '6.0'
-      }
-      deployment: {
-        storage: {
-          type: 'blobContainer'
-          value: '${azStorageAccount.properties.primaryEndpoints.blob}${storageContainerName}'
-          authentication: {
-            type: 'SystemAssignedIdentity'
+    functionAppConfig: isFlex
+      ? {
+        scaleAndConcurrency: {
+          maximumInstanceCount: 100
+          instanceMemoryMB: 2048
+        }
+        runtime: { 
+          name: runtime
+          version: runtime == 'dotnet-isolated' ? '8.0' : '6.0'
+        }
+        deployment: {
+          storage: {
+            type: 'blobContainer'
+            value: '${azStorageAccount.properties.primaryEndpoints.blob}${storageContainerName}'
+            authentication: {
+              type: 'SystemAssignedIdentity'
+            }
           }
         }
       }
-    }
+      : null
   }
 }
 

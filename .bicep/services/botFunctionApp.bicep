@@ -53,6 +53,7 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
     runtime: 'dotnet-isolated'
+    isFlex: azServerFarm.outputs.isFlex
   }
 }
 

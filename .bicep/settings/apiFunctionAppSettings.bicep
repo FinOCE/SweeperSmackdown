@@ -1,7 +1,8 @@
 param functionAppName string
-param storageAccountName string
 @secure()
 param applicationInsightsInstrumentationKey string
+@secure()
+param storageConnectionString string
 @secure()
 param cosmosDbConnectionString string
 @secure()
@@ -15,7 +16,8 @@ param discordClientSecret string
 resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
   name: '${functionAppName}/appsettings'
   properties: {
-    AzureWebJobsStorage__accountName: storageAccountName
+    AzureWebJobsStorage: storageConnectionString
+    FUNCTIONS_WORKER_RUNTIME: 'dotnet'
     APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey
     CosmosDbConnectionString: cosmosDbConnectionString
     WebPubsubConnectionString: webPubSubConnectionString
