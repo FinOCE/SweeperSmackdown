@@ -58,6 +58,7 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
 
 module botFunctionAppSettings '../settings/botFunctionAppSettings.bicep' = {
   name: '${functionAppName}/appsettings'
+  dependsOn: [azFunctionApp]
   params: {
     functionAppName: azFunctionApp.outputs.name
     storageAccountName: azStorageAccount.outputs.name

@@ -12,7 +12,7 @@ param discordClientId string
 @secure()
 param discordClientSecret string
 
-resource azFunctionAppSettings 'Microsoft.Web/sites/config@2022-09-01' = {
+resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
   name: '${functionAppName}/appsettings'
   properties: {
     AzureWebJobsStorage__accountName: storageAccountName
