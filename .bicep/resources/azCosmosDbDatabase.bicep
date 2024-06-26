@@ -2,13 +2,8 @@ param name string
 param location string
 param resourceName string
 
-resource azCosmosDb 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
-  name: resourceName
-}
-
 resource azCosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15' = {
-  parent: azCosmosDb
-  name: name
+  name: '${resourceName}/${name}'
   location: location
   properties: {
     resource: {

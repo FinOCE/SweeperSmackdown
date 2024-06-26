@@ -3,13 +3,8 @@ param location string
 param partitionKeyPath string
 param databaseName string
 
-resource azCosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15' existing = {
-  name: databaseName
-}
-
 resource azCosmosDbContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' = {
-  parent: azCosmosDbDatabase
-  name: name
+  name: '${databaseName}/${name}'
   location: location
   properties: {
     resource: {
