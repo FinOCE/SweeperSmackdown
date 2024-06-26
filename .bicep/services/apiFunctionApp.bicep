@@ -129,8 +129,7 @@ resource azWebPubSubExisting 'Microsoft.SignalRService/webPubSub@2023-02-01' exi
 }
 
 module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
-  name: '${functionAppName}/appsettings'
-  dependsOn: [azFunctionApp]
+  name: '${functionAppName}-appsettings'
   params: {
     functionAppName: azFunctionApp.outputs.name
     storageAccountName: azStorageAccount.outputs.name
