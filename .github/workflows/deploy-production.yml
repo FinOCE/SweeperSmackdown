@@ -49,7 +49,6 @@ jobs:
 
       - name: Build infrastructure with Bicep
         id: bicep
-        continue-on-error: true
         uses: azure/arm-deploy@v1
         with:
           scope: "subscription"
@@ -113,18 +112,12 @@ jobs:
 
           az functionapp deployment source config-zip --subscription ${{ steps.get-subscription-id.outputs.SUBSCRIPTION_ID }} -g ${{ steps.bicep.outputs.resourceGroupName }} -n ${{ steps.bicep.outputs.botFunctionAppName }} --src ./bot/deploy.zip
 
-      - name: Retry bicep deployment to ensure web pubsub hub is definitely created
-        if: steps.bicep.outcome == 'failure'
-        # Unfortunately, the pubsub system key is not generated until a binding is deployed, meaning this has to be
-        # done AFTER the code has been deployed. Appears to be no good workaround at the moment that would ensure new
-        # environments are able to be created. This means that it will attempt to build and deploy all services even if
-        # the bicep deployment fails for a different reason, but then either those deploys will fail or this rebuild
-        # step will fail.
+      - name: Completed deployment sandwich with Bicep
         uses: azure/arm-deploy@v1
         with:
           scope: "subscription"
-          template: .bicep/main.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ env.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
+          template: .bicep/sandwich.bicep
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }}"
           failOnStdErr: false
           region: ${{ env.REGION }}
 

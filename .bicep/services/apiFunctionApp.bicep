@@ -22,7 +22,6 @@ var containers = [
 ]
 
 var webPubSubName = 'ws-api-${environment}-${resourceToken}'
-var webPubSubHubName = 'Game'
 var applicationInsightsName = 'ai-api-${environment}-${resourceToken}'
 var serverFarmName = 'sf-api-${environment}-${resourceToken}'
 var storageAccountName = 'saapi${environment}${resourceToken}'
@@ -109,15 +108,6 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
     storageContainerName: azStorageContainer.outputs.name
     runtime: 'dotnet'
     isFlex: azServerFarm.outputs.isFlex
-  }
-}
-
-module azWebPubSubHub '../resources/azWebPubSubHub.bicep' = {
-  name: webPubSubHubName
-  params: {
-    name: webPubSubHubName
-    webPubSubName: azWebPubSub.outputs.name
-    functionAppName: azFunctionApp.outputs.name
   }
 }
 
