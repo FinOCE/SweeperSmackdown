@@ -111,6 +111,14 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   }
 }
 
+module azFunctionAppSystemKey '../resources/azFunctionAppSystemKey.bicep' = {
+  name: 'webpubsub_extension'
+  params: {
+    name: 'webpubsub_extension'
+    functionAppName: azFunctionApp.outputs.name
+  }
+}
+
 resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
 }
