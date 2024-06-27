@@ -2,7 +2,6 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using SweeperSmackdown.Stats.Assets;
-using SweeperSmackdown.Stats.Extensions;
 using SweeperSmackdown.Stats.Models;
 using System;
 using System.Collections.Generic;
@@ -28,15 +27,14 @@ public static class PlayerInfoChangeFeedFunction
     
     public static async Task<PlayerInfoChangeFeedFunctionOutputs> Run(
         [CosmosDBTrigger(Constants.DATABASE_NAME, Constants.STATS_CONTAINER_NAME, CreateLeaseContainerIfNotExists = true)] IEnumerable<PlayerInfo> infos,
-        [CosmosDBInput(Constants.DATABASE_NAME, Constants.ACHIEVEMENTS_CONTAINER_NAME)] CosmosClient cosmosClient)
+        [CosmosDBInput(Constants.DATABASE_NAME, Constants.ACHIEVEMENTS_CONTAINER_NAME)] Container container)
     {
         // Fetch existing achievement progresses
         var keys = infos
             .Select(info => (info.Id, new PartitionKey(info.Id)))
             .ToList();
 
-        IEnumerable<AchievementProgressCollection> oldProgresses = await cosmosClient
-            .GetAchievementProgressContainer()
+        IEnumerable<AchievementProgressCollection> oldProgresses = await container
             .ReadManyItemsAsync<AchievementProgressCollection>(keys);
 
         // Calculate new achievement progresses
