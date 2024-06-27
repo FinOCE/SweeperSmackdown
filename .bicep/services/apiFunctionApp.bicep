@@ -27,6 +27,7 @@ var serverFarmName = 'sf-api-${environment}-${resourceToken}'
 var storageAccountName = 'saapi${environment}${resourceToken}'
 var storageContainerName = 'app-package-${take(resourceToken, 7)}-${resourceToken}'
 var functionAppName = 'fa-api-${environment}-${resourceToken}'
+var webPubSubHubName = 'Game'
 
 module azCosmosDb '../resources/azCosmosDb.bicep' = {
   name: cosmosDbName
@@ -116,6 +117,16 @@ module azFunctionAppSystemKey '../resources/azFunctionAppSystemKey.bicep' = {
   params: {
     name: 'webpubsub_extension'
     functionAppName: azFunctionApp.outputs.name
+  }
+}
+
+module azWebPubSubHub '../resources/azWebPubSubHub.bicep' = {
+  name: webPubSubHubName
+  dependsOn: [azFunctionAppSystemKey]
+  params: {
+    name: webPubSubHubName
+    webPubSubName: webPubSubName
+    functionAppName: functionAppName
   }
 }
 

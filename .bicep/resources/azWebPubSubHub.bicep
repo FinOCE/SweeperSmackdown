@@ -20,7 +20,7 @@ resource azWebPubSubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
           'connected'
           'disconnected'
         ]
-        urlTemplate: '${eventHandlerAddress}?code=${extensionKey}'
+        urlTemplate: 'https://${eventHandlerAddress}/runtime/webhooks/webpubsub?code=${extensionKey}'
         userEventPattern: '*'
       }
     ]

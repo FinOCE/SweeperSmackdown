@@ -112,15 +112,6 @@ jobs:
 
           az functionapp deployment source config-zip --subscription ${{ steps.get-subscription-id.outputs.SUBSCRIPTION_ID }} -g ${{ steps.bicep.outputs.resourceGroupName }} -n ${{ steps.bicep.outputs.botFunctionAppName }} --src ./bot/deploy.zip
 
-      - name: Completed deployment sandwich with Bicep
-        uses: azure/arm-deploy@v1
-        with:
-          scope: "subscription"
-          template: .bicep/sandwich.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }}"
-          failOnStdErr: false
-          region: ${{ env.REGION }}
-
       - name: Log out of Azure
         run: |
           az logout
