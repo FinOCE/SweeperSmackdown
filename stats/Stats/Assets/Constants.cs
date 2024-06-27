@@ -7,6 +7,14 @@ namespace SweeperSmackdown.Stats.Assets;
 
 public static class Constants
 {
+    public const string SERVICE_BUS_QUEUE_NAME = "stats";
+
+    public const string DATABASE_NAME = "stats-db";
+
+    public const string STATS_CONTAINER_NAME = "stats";
+
+    public const string ACHIEVEMENTS_CONTAINER_NAME = "achievements";
+
     public static IEnumerable<Achievement> Achievements { get; } =
     [
         new(
