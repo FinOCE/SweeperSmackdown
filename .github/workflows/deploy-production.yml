@@ -17,6 +17,10 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       ENVIRONMENT: ${{ vars.ENVIRONMENT_NAME }}
+      API_HOSTING_SKU: ${{ vars.API_HOSTING_SKU }}
+      PUBSUB_HOSTING_SKU: ${{ vars.PUBSUB_HOSTING_SKU }}
+      APP_HOSTING_SKU: ${{ vars.APP_HOSTING_SKU }}
+      BOT_HOSTING_SKU: ${{ vars.BOT_HOSTING_SKU }}
       BEARER_TOKEN_SECRET_KEY: ${{ secrets.BEARER_TOKEN_SECRET_KEY }}
       DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
       DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
@@ -53,7 +57,7 @@ jobs:
         with:
           scope: "subscription"
           template: .bicep/main.bicep
-          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} bearerTokenSecretKey=${{ env.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
+          parameters: "environment=${{ env.ENVIRONMENT }} location=${{ env.REGION }} apiHostingSku=${{ env.API_HOSTING_SKU }} pubsubHostingSku=${{ env.PUBSUB_HOSTING_SKU }} appHostingSku=${{ env.APP_HOSTING_SKU }} botHostingSku=${{ env.BOT_HOSTING_SKU }} bearerTokenSecretKey=${{ env.BEARER_TOKEN_SECRET_KEY }} discordClientId=${{ env.DISCORD_CLIENT_ID }} discordClientSecret=${{ env.DISCORD_CLIENT_SECRET }} discordPublicKey=${{ env.DISCORD_PUBLIC_KEY }}"
           failOnStdErr: false
           region: ${{ env.REGION }}
 

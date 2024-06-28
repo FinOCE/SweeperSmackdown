@@ -26,4 +26,3 @@ resource azServerFarm 'Microsoft.Web/serverfarms@2022-09-01' = {
 
 output id string = azServerFarm.id
 output name string = azServerFarm.name
-output isFlex bool = sku == 'FlexConsumption'

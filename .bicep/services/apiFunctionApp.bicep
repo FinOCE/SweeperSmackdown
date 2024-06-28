@@ -1,5 +1,8 @@
 param location string
 param environment string
+param sku string
+param pubsubSku string
+
 @secure()
 param bearerTokenSecretKey string
 param discordClientId string
@@ -61,7 +64,7 @@ module azWebPubSub '../resources/azWebPubSub.bicep' = {
   params: {
     name: webPubSubName
     location: location
-    sku: 'Free'
+    sku: pubsubSku
   }
 }
 
@@ -78,7 +81,7 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
   params: {
     name: serverFarmName
     location: location
-    sku: 'Consumption'
+    sku: sku
   }
 }
 
@@ -104,11 +107,12 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   params: {
     name: functionAppName
     location: location
+    sku: sku
+    runtime: 'dotnet'
+    version: '6.0'
     serverFarmId: azServerFarm.outputs.id
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
-    runtime: 'dotnet'
-    isFlex: azServerFarm.outputs.isFlex
   }
 }
 

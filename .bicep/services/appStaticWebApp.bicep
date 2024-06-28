@@ -1,5 +1,6 @@
 param location string
 param environment string
+param sku string
 
 var resourceToken = take(toLower(uniqueString(subscription().id, environment, location, 'app')), 7)
 
@@ -10,6 +11,7 @@ module azStaticWebApp '../resources/azStaticWebApp.bicep' = {
   params: {
     name: staticWebAppName
     location: location
+    sku: sku
   }
 }
 
