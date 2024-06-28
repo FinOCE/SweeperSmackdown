@@ -1,21 +1,32 @@
 param functionAppName string
-param storageValueIsConnectionString bool
+param runtime string
 @secure()
 param storageValue string
 @secure()
 param applicationInsightsInstrumentationKey string
 param discordPublicKey string
 
-resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
-  name: '${functionAppName}/appsettings'
-  properties: {
-    AzureWebJobsStorage: storageValueIsConnectionString ? storageValue : null
-    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageValueIsConnectionString ? storageValue : null
+resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' existing = {
+  name: functionAppName
+}
+
+var skuSettings = azFunctionApp.kind == 'functionapp'
+  ? {
+    AzureWebJobsStorage: storageValue
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageValue
     WEBSITE_CONTENTSHARE: functionAppName
-    AzureWebJobsStorage__accountName: storageValueIsConnectionString ? null : storageValue
-    FUNCTIONS_WORKER_RUNTIME: 'dotnet'
+    FUNCTIONS_WORKER_RUNTIME: runtime
     FUNCTIONS_EXTENSION_VERSION: '~4'
+  }
+  : {
+    AzureWebJobsStorage__accountName: storageValue
+  }
+
+resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
+  name: 'appsettings'
+  parent: azFunctionApp
+  properties: union(skuSettings, {
     APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey
     DISCORD_PUBLIC_KEY: discordPublicKey
-  }
+  })
 }

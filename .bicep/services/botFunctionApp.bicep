@@ -24,7 +24,6 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
   name: serverFarmName
   params: {
     name: serverFarmName
-    location: location
     sku: sku
   }
 }
@@ -50,7 +49,6 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   name: functionAppName
   params: {
     name: functionAppName
-    location: location
     runtime: 'dotnet-isolated'
     version: '8.0'
     sku: sku
@@ -68,7 +66,7 @@ module botFunctionAppSettings '../settings/botFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
   params: {
     functionAppName: azFunctionApp.outputs.name
-    storageValueIsConnectionString: sku != 'FlexConsumption'
+    runtime: 'dotnet-isolated'
     storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
     discordPublicKey: discordPublicKey

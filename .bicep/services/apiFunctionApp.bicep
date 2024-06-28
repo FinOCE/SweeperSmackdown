@@ -80,7 +80,6 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
   name: serverFarmName
   params: {
     name: serverFarmName
-    location: location
     sku: sku
   }
 }
@@ -106,7 +105,6 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   name: functionAppName
   params: {
     name: functionAppName
-    location: location
     sku: sku
     runtime: 'dotnet'
     version: '6.0'
@@ -150,8 +148,8 @@ module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
   params: {
     functionAppName: azFunctionApp.outputs.name
+    runtime: 'dotnet'
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
-    storageValueIsConnectionString: sku != 'FlexConsumption'
     storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
     cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
     webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString
