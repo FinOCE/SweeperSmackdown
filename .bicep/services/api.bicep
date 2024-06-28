@@ -146,6 +146,7 @@ resource azWebPubSubExisting 'Microsoft.SignalRService/webPubSub@2023-02-01' exi
 
 module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
+  dependsOn: [azStorageAccount, azCosmosDb, azWebPubSub]
   params: {
     functionAppName: azFunctionApp.outputs.name
     runtime: 'dotnet'

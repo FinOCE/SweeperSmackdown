@@ -37,7 +37,7 @@ resource azResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   location: location
 }
 
-module apiFunctionApp 'services/apiFunctionApp.bicep' = {
+module apiFunctionApp 'services/api.bicep' = {
   name: 'apiFunctionApp'
   scope: azResourceGroup
   params: {
@@ -51,7 +51,17 @@ module apiFunctionApp 'services/apiFunctionApp.bicep' = {
   }
 }
 
-module botFunctionApp 'services/botFunctionApp.bicep' = {
+module appStaticWebApp 'services/app.bicep' = {
+  name: 'appStaticWebApp'
+  scope: azResourceGroup
+  params: {
+    location: location
+    environment: environment
+    sku: appHostingSku
+  }
+}
+
+module botFunctionApp 'services/bot.bicep' = {
   name: 'botFunctionApp'
   scope: azResourceGroup
   params: {
@@ -59,16 +69,6 @@ module botFunctionApp 'services/botFunctionApp.bicep' = {
     environment: environment
     sku: botHostingSku
     discordPublicKey: discordPublicKey
-  }
-}
-
-module appStaticWebApp 'services/appStaticWebApp.bicep' = {
-  name: 'appStaticWebApp'
-  scope: azResourceGroup
-  params: {
-    location: location
-    environment: environment
-    sku: appHostingSku
   }
 }
 

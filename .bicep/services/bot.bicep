@@ -64,6 +64,7 @@ resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01'
 
 module botFunctionAppSettings '../settings/botFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
+  dependsOn: [azStorageAccount]
   params: {
     functionAppName: azFunctionApp.outputs.name
     runtime: 'dotnet-isolated'
