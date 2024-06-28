@@ -17,10 +17,10 @@ var skus = {
 resource azServerFarm 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: name
   location: location
-  kind: 'functionapp,linux'
+  kind: sku == 'FlexConsumption' ? 'functionapp,linux' : 'functionapp'
   sku: skus[sku]
   properties: {
-    reserved: true
+    reserved: sku == 'FlexConsumption' ? true : null
   }
 }
 

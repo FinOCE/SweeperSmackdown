@@ -14,7 +14,7 @@ resource azStorageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existin
 resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' = {
   name: name
   location: location
-  kind: 'functionapp,linux'
+  kind: sku == 'FlexConsumption' ? 'functionapp,linux' : 'functionapp'
   identity: {
     type: 'SystemAssigned'
   }
