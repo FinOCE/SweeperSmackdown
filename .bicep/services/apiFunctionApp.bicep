@@ -151,7 +151,8 @@ module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
   params: {
     functionAppName: azFunctionApp.outputs.name
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
-    storageConnectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
+    storageValueIsConnectionString: sku != 'FlexConsumption'
+    storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
     cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
     webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString
     bearerTokenSecretKey: bearerTokenSecretKey
