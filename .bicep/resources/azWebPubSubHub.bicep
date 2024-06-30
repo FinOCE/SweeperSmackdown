@@ -1,20 +1,16 @@
-// Parameters
-param webPubsubName string
-param eventHandlerAddress string
+param name string
+param webPubSubName string
 param functionAppName string
 
-// Get web pubsub
-resource azWebPubsub 'Microsoft.SignalRService/webPubSub@2023-02-01' existing = {
-  name: webPubsubName
+resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' existing = {
+  name: functionAppName
 }
 
-// Get function app's web pubsub extension system key
+var eventHandlerAddress = azFunctionApp.properties.defaultHostName
 var extensionKey = listkeys('${resourceId('Microsoft.Web/sites', functionAppName)}/host/default/','2022-09-01').systemkeys.webpubsub_extension
 
-// Create web pubsub hub
-resource azWebPubsubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
-  name: 'Game'
-  parent: azWebPubsub
+resource azWebPubSubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
+  name: '${webPubSubName}/${name}'
   properties: {
     anonymousConnectPolicy: 'allow'
     eventHandlers: [
@@ -31,5 +27,5 @@ resource azWebPubsubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
   }
 }
 
-// Outputs
-output name string = azWebPubsubHub.name
+output id string = azWebPubSubHub.id
+output name string = azWebPubSubHub.name
