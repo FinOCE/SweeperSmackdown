@@ -1,13 +1,23 @@
 param name string
 param location string
+param sku string
+
+var skus = {
+  Free: {
+    name: 'Free'
+    tier: 'F1'
+  }
+  Standard: {
+    capacity: 1
+    name: 'Standard'
+    tier: 'Standard'
+  }
+}
 
 resource azStaticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
   name: name
   location: location
-  sku: {
-    name: 'Free'
-    tier: 'F1'
-  }
+  sku: skus[sku]
   properties: {}
 }
 

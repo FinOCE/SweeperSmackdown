@@ -1,5 +1,8 @@
 param location string
 param environment string
+param sku string
+param pubsubSku string
+
 @secure()
 param bearerTokenSecretKey string
 param discordClientId string
@@ -22,12 +25,12 @@ var containers = [
 ]
 
 var webPubSubName = 'ws-api-${environment}-${resourceToken}'
-var webPubSubHubName = 'Game'
 var applicationInsightsName = 'ai-api-${environment}-${resourceToken}'
 var serverFarmName = 'sf-api-${environment}-${resourceToken}'
 var storageAccountName = 'saapi${environment}${resourceToken}'
 var storageContainerName = 'app-package-${take(resourceToken, 7)}-${resourceToken}'
 var functionAppName = 'fa-api-${environment}-${resourceToken}'
+var webPubSubHubName = 'Game'
 
 module azCosmosDb '../resources/azCosmosDb.bicep' = {
   name: cosmosDbName
@@ -61,7 +64,7 @@ module azWebPubSub '../resources/azWebPubSub.bicep' = {
   params: {
     name: webPubSubName
     location: location
-    sku: 'Free'
+    sku: pubsubSku
   }
 }
 
@@ -77,8 +80,7 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
   name: serverFarmName
   params: {
     name: serverFarmName
-    location: location
-    sku: 'Consumption'
+    sku: sku
   }
 }
 
@@ -103,21 +105,30 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   name: functionAppName
   params: {
     name: functionAppName
-    location: location
+    sku: sku
+    runtime: 'dotnet'
+    version: '6.0'
     serverFarmId: azServerFarm.outputs.id
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
-    runtime: 'dotnet'
-    isFlex: azServerFarm.outputs.isFlex
+  }
+}
+
+module azFunctionAppSystemKey '../resources/azFunctionAppSystemKey.bicep' = {
+  name: 'webpubsub_extension'
+  params: {
+    name: 'webpubsub_extension'
+    functionAppName: azFunctionApp.outputs.name
   }
 }
 
 module azWebPubSubHub '../resources/azWebPubSubHub.bicep' = {
   name: webPubSubHubName
+  dependsOn: [azFunctionAppSystemKey]
   params: {
     name: webPubSubHubName
-    webPubSubName: azWebPubSub.outputs.name
-    functionAppName: azFunctionApp.outputs.name
+    webPubSubName: webPubSubName
+    functionAppName: functionAppName
   }
 }
 
@@ -135,10 +146,12 @@ resource azWebPubSubExisting 'Microsoft.SignalRService/webPubSub@2023-02-01' exi
 
 module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
+  dependsOn: [azStorageAccount, azCosmosDb, azWebPubSub]
   params: {
     functionAppName: azFunctionApp.outputs.name
+    runtime: 'dotnet'
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
-    storageConnectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
+    storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
     cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
     webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString
     bearerTokenSecretKey: bearerTokenSecretKey

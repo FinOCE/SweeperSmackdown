@@ -1,5 +1,7 @@
 param location string
 param environment string
+param sku string
+
 param discordPublicKey string
 
 var resourceToken = take(toLower(uniqueString(subscription().id, environment, location, 'bot')), 7)
@@ -22,8 +24,7 @@ module azServerFarm '../resources/azServerFarm.bicep' = {
   name: serverFarmName
   params: {
     name: serverFarmName
-    location: location
-    sku: 'FlexConsumption'
+    sku: sku
   }
 }
 
@@ -48,20 +49,26 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   name: functionAppName
   params: {
     name: functionAppName
-    location: location
+    runtime: 'dotnet-isolated'
+    version: '8.0'
+    sku: sku
     serverFarmId: azServerFarm.outputs.id
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
-    runtime: 'dotnet-isolated'
-    isFlex: azServerFarm.outputs.isFlex
   }
+}
+
+resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: storageAccountName
 }
 
 module botFunctionAppSettings '../settings/botFunctionAppSettings.bicep' = {
   name: '${functionAppName}-appsettings'
+  dependsOn: [azStorageAccount]
   params: {
     functionAppName: azFunctionApp.outputs.name
-    storageAccountName: azStorageAccount.outputs.name
+    runtime: 'dotnet-isolated'
+    storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
     discordPublicKey: discordPublicKey
   }

@@ -7,7 +7,7 @@ resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' existing = {
 }
 
 var eventHandlerAddress = azFunctionApp.properties.defaultHostName
-var extensionKey = listkeys('${resourceId('Microsoft.Web/sites', functionAppName)}/host/default/','2022-09-01').systemkeys.webpubsub_extension
+var extensionKey = listKeys(resourceId('Microsoft.Web/sites/host', functionAppName, 'default'), '2022-03-01').systemkeys.webpubsub_extension
 
 resource azWebPubSubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
   name: '${webPubSubName}/${name}'
@@ -20,7 +20,7 @@ resource azWebPubSubHub 'Microsoft.SignalRService/webPubSub/hubs@2023-02-01' = {
           'connected'
           'disconnected'
         ]
-        urlTemplate: '${eventHandlerAddress}?code=${extensionKey}'
+        urlTemplate: 'https://${eventHandlerAddress}/runtime/webhooks/webpubsub?code=${extensionKey}'
         userEventPattern: '*'
       }
     ]
