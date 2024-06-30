@@ -66,12 +66,15 @@ public static class LobbyUserPutFunction
         if (requesterId != userId)
             return new StatusCodeResult(403);
 
-        // Short circuit if already in lobby
+        // Create new player or update active state of existing
+        var existing = player is not null;
+
         if (player is not null)
-            return new OkObjectResult(LobbyUserResponseDto.FromModel(player));
+            player.Active = true;
+        else
+            player = new Player(userId, lobbyId, true, 0, 0);
 
         // Add to lobby
-        player = new Player(userId, lobbyId, true, 0, 0);
         await playerDb.AddAsync(player);
 
         players = players.Where(p => p.Id != player.Id).Append(player);
@@ -94,8 +97,10 @@ public static class LobbyUserPutFunction
         }
 
         // Respond to request
-        return new CreatedResult(
-            $"/lobbies/{lobbyId}/users/{userId}",
-            LobbyUserResponseDto.FromModel(player));
+        return existing
+            ? new OkObjectResult(LobbyUserResponseDto.FromModel(player))
+            : new CreatedResult(
+                $"/lobbies/{lobbyId}/users/{userId}",
+                LobbyUserResponseDto.FromModel(player));
     }
 }

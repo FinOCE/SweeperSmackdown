@@ -66,7 +66,7 @@ public static class PlayerChangeFeedFunction
             }
 
             // Delete lobby if no active players remain
-            if (!participants.Any(p => p.Active))
+            if (participants.All(p => !p.Active))
                 await orchestrationClient.StartNewAsync(
                     nameof(LobbyDeleteOrchestratorFunction),
                     Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), lobby.Id));
