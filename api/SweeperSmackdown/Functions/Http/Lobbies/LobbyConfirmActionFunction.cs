@@ -49,6 +49,6 @@ public static class LobbyConfirmActionFunction
             Id.ForInstance(nameof(GameConfigureFunction), lobby.Id),
             DurableEvents.GAME_START_CONFIRMATION);
 
-        return new NoContentResult();
+        return new AcceptedResult();
     }
 }

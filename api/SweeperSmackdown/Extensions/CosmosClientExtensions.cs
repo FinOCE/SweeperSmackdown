@@ -2,6 +2,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -54,35 +55,43 @@ public static class CosmosClientExtensions
             .ReadAllAsync();
     }
 
-    public static async Task<IEnumerable<Lobby>> ChangeHostAsync(this CosmosClient cosmosClient, string userId)
+    /// <summary>
+    /// Regenerate database containers. For debug purposes only.
+    /// </summary>
+    /// <param name="cosmosClient">The CosmosClient</param>
+    /// <returns>A task which resolves once all containers have been regenerated</returns>
+    public static async Task RegenerateContainers(this CosmosClient cosmosClient)
     {
-        var lobbies = await cosmosClient
-            .GetPlayerContainer()
-            .GetItemLinqQueryable<Lobby>()
-                .Where(l => l.HostId == userId)
-            .ToFeedIterator()
-            .ReadAllAsync();
+        var database = cosmosClient.GetSmackdownDatabase();
 
-        var updatedLobbies = await Task.WhenAll(
-            lobbies.Select(lobby => Task.Run(async () => {
-                var players = await cosmosClient.GetAllPlayersInLobbyAsync(lobby.Id);
+        // Setup lobby container
+        try
+        {
+            await cosmosClient.GetLobbyContainer().DeleteContainerAsync();
+        }
+        catch (Exception)
+        {
+        }
 
-                if (players.Any())
-                {
-                    var hostId = players.First().Id;
+        await database.CreateContainerAsync(new()
+        {
+            Id = DatabaseConstants.LOBBY_CONTAINER_NAME,
+            PartitionKeyPath = "/id"
+        });
 
-                    await cosmosClient.GetLobbyContainer().PatchItemAsync<Lobby>(lobby.Id, new(lobby.Id), new[]
-                    {
-                        PatchOperation.Set("/hostId", hostId)
-                    });
-                    lobby.HostId = hostId;
+        // Setup player container
+        try
+        {
+            await cosmosClient.GetPlayerContainer().DeleteContainerAsync();
+        }
+        catch (Exception)
+        {
+        }
 
-                    return lobby;
-                }
-
-                return null;
-            })));
-
-        return updatedLobbies.Where(l => l is not null) as IEnumerable<Lobby>;
+        await database.CreateContainerAsync(new()
+        {
+            Id = DatabaseConstants.PLAYER_CONTAINER_NAME,
+            PartitionKeyPath = "/lobbyId"
+        });
     }
 }

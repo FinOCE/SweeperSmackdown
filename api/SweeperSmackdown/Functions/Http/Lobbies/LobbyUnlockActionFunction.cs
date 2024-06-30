@@ -49,6 +49,6 @@ public static class LobbyUnlockActionFunction
             Id.ForInstance(nameof(GameConfigureFunction), lobby.Id),
             DurableEvents.GAME_START_UNLOCK);
 
-        return new NoContentResult();
+        return new AcceptedResult();
     }
 }
