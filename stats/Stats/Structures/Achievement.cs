@@ -8,7 +8,6 @@ public class Achievement(
     string id,
     string name,
     string description,
-    bool hidden,
     EAchievementTag tag,
     EAchivementDifficulty difficulty,
     Func<PlayerInfo, decimal> getProgress)
@@ -18,8 +17,6 @@ public class Achievement(
     public string Name { get; } = name;
 
     public string Description { get; } = description;
-
-    public bool Hidden { get; } = hidden;
 
     public EAchievementTag Tag { get; } = tag;
 
