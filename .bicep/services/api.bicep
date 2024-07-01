@@ -32,6 +32,9 @@ var storageContainerName = 'app-package-${take(resourceToken, 7)}-${resourceToke
 var functionAppName = 'fa-api-${environment}-${resourceToken}'
 var webPubSubHubName = 'Game'
 
+var runtime = 'dotnet'
+var version = '6.0'
+
 module azCosmosDb '../resources/azCosmosDb.bicep' = {
   name: cosmosDbName
   params: {
@@ -106,8 +109,8 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   params: {
     name: functionAppName
     sku: sku
-    runtime: 'dotnet'
-    version: '6.0'
+    runtime: runtime
+    version: version
     serverFarmId: azServerFarm.outputs.id
     storageAccountName: azStorageAccount.outputs.name
     storageContainerName: azStorageContainer.outputs.name
@@ -144,19 +147,20 @@ resource azWebPubSubExisting 'Microsoft.SignalRService/webPubSub@2023-02-01' exi
   name: webPubSubName
 }
 
-module apiFunctionAppSettings '../settings/apiFunctionAppSettings.bicep' = {
+module azFunctionAppConfig '../resources/azFunctionAppConfig.bicep' = {
   name: '${functionAppName}-appsettings'
-  dependsOn: [azStorageAccount, azCosmosDb, azWebPubSub]
   params: {
-    functionAppName: azFunctionApp.outputs.name
-    runtime: 'dotnet'
+    functionAppName: functionAppName
+    runtime: runtime
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
     storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
-    cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
-    webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString
-    bearerTokenSecretKey: bearerTokenSecretKey
-    discordClientId: discordClientId
-    discordClientSecret: discordClientSecret
+    secrets: {
+      cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
+      webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString
+      bearerTokenSecretKey: bearerTokenSecretKey
+      discordClientId: discordClientId
+      discordClientSecret: discordClientSecret
+    }
   }
 }
 
