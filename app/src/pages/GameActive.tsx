@@ -19,6 +19,7 @@ import { useSettings } from "../hooks/resources/useSettings"
 import { useScores } from "../hooks/resources/useScores"
 import { useWins } from "../hooks/resources/useWins"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
+import { Api } from "../types/Api"
 
 type GameActiveProps = {
   lobbyId: string
@@ -133,6 +134,16 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
     return stop
   }, [lost])
 
+  // Handle game over (TEMPORARY)
+  const [celebrationState, setCelebrationState] = useState(false)
+  const [gameWon, setGameWon] = useState(false)
+
+  useEffect(() => {
+    if (celebrationState && gameWon) navigate("GameCelebration", { lobbyId })
+  }, [celebrationState, gameWon])
+
+  // TODO: Fix how transitioning to celebration works so this can be deleted
+
   // Handle websocket events
   function isReveals(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; reveals: number[] } {
     return "reveals" in data && data.reveals !== null
@@ -197,7 +208,7 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       const data = e.message.data as Websocket.Message
       if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
 
-      navigate("GameCelebration", { lobbyId })
+      setGameWon(true) // TODO: Fix needing to do this and the onLobbyUpdate
 
       // TODO: Change to stop control and tell everyone the game is over on a countdown
     }
@@ -233,11 +244,28 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       })
     }
 
+    function onLobbyUpdate(e: OnGroupDataMessageArgs) {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
+
+      if (data.data.state === Api.Enums.ELobbyState.Celebrate) setCelebrationState(true) // TODO: Fix needing to do this and the onGameWon
+    }
+
+    function onLobbyDelete(e: OnGroupDataMessageArgs) {
+      const data = e.message.data as Websocket.Message
+      if (!isEvent<Websocket.Response.LobbyDelete>("LOBBY_DELETE", data)) return
+
+      alert("Your lobby has been closed due to inactivity") // TODO: Send proper alert (also shared in other game pages)
+      navigate("MainMenu", {})
+    }
+
     ws.on("group-message", onBoardCreate)
     ws.on("group-message", onMoveAdd)
     ws.on("group-message", onGameWon)
     ws.on("group-message", onUserJoin)
     ws.on("group-message", onUserLeave)
+    ws.on("group-message", onLobbyUpdate)
+    ws.on("group-message", onLobbyDelete)
 
     return () => {
       ws.off("group-message", onBoardCreate)
@@ -245,6 +273,8 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       ws.off("group-message", onGameWon)
       ws.off("group-message", onUserJoin)
       ws.off("group-message", onUserLeave)
+      ws.off("group-message", onLobbyUpdate)
+      ws.off("group-message", onLobbyDelete)
     }
   }, [ws, competitionState])
 
@@ -322,9 +352,9 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
       <Settings>
         <ButtonList>
-          {/* <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
+          <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
             <Text type="big">Solve (DEV)</Text>
-          </Box> */}
+          </Box>
           <ButtonList horizontal>
             <Box onClick={reset}>
               <Text type="big">Reset</Text>

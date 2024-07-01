@@ -22,6 +22,9 @@ public class Player
     [JsonProperty("wins")]
     public int Wins { get; set; }
 
+    [JsonProperty("_ts")]
+    public long UpdatedAt { get; set; }
+
     public Player(string id, string lobbyId, bool active, int score, int wins)
     {
         Id = id;

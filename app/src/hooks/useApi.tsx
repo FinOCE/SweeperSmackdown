@@ -179,7 +179,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
         })
-          .then(accept(204))
+          .then(accept(202))
           .then(result()),
 
       lobbyUnlock: (lobbyId: string) =>
@@ -187,7 +187,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
         })
-          .then(accept(204))
+          .then(accept(202))
           .then(result()),
 
       lobbyConfirm: (lobbyId: string) =>
@@ -195,7 +195,7 @@ function getApi(baseUrl: string | null, token: string | null) {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
         })
-          .then(accept(204))
+          .then(accept(202))
           .then(result())
     }
   }

@@ -75,8 +75,9 @@ public static class LobbyPutFunction
         await playerDb.AddAsync(player);
         players = players.Append(player);
 
-        await ws.AddAsync(ActionFactory.AddUser(requesterId, lobbyId));
+        await ws.AddAsync(ActionFactory.AddUser(requesterId, lobbyId, player));
         await ws.AddAsync(ActionFactory.AddUserToLobby(requesterId, lobbyId));
+        await ws.AddAsync(ActionFactory.UpdateLobby(lobbyId, LobbyResponseDto.FromModel(lobby, players)));
 
         // Start orchestrator
         await orchestrationClient.StartNewAsync(
