@@ -20,7 +20,7 @@ export namespace Api {
     state: Enums.ELobbyState
   }
 
-  export type User = {
+  export type Player = {
     id: string
     lobbyId: string
     active: boolean
@@ -77,9 +77,9 @@ export namespace Api {
       bearerToken: string
     }
 
-    export type LobbyUserGet = User
+    export type LobbyUserGet = Player
 
-    export type LobbyUserPut = User
+    export type LobbyUserPut = Player
 
     export type BoardGet = BoardDictionary
 
