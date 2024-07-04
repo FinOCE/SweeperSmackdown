@@ -14,7 +14,7 @@ public static class UserAchievementGetAllFunction
     [Function(nameof(UserAchievementGetAllFunction))]
     public static async Task<HttpResponseData> Run(
         [HttpTrigger(
-            AuthorizationLevel.Anonymous,
+            AuthorizationLevel.Function,
             "get",
             Route = "users/{userId}/achievements")]
         HttpRequestData req,

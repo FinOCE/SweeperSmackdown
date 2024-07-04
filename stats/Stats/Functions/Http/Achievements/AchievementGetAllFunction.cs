@@ -12,7 +12,7 @@ public static class AchievementGetAllFunction
 {
     [Function(nameof(AchievementGetAllFunction))]
     public static async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "achievements")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "achievements")] HttpRequestData req)
     {
         var res = req.CreateResponse(HttpStatusCode.OK);
         await res.WriteAsJsonAsync(Constants.Achievements.Select(AchievementResponse.FromModel));

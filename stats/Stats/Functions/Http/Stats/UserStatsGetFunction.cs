@@ -13,7 +13,7 @@ public static class UserStatsGetFunction
     [Function(nameof(UserStatsGetFunction))]
     public static async Task<HttpResponseData> Run(
         [HttpTrigger(
-            AuthorizationLevel.Anonymous,
+            AuthorizationLevel.Function,
             "get",
             Route = "users/{userId}/stats")]
         HttpRequestData req,
