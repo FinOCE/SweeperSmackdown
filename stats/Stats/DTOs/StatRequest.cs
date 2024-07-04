@@ -164,13 +164,13 @@ public class StatRequest(
                 model.LastPlayed = LastPlayed;
         }
 
-        if (UnlockedClassicMinesweeper is not null)
+        if (UnlockedClassicMinesweeper is not null && UnlockedClassicMinesweeper.Value)
             model.UnlockedClassicMinesweeper = UnlockedClassicMinesweeper.Value;
 
         if (LobbySize is not null && LobbySize.Value > model.LargestLobbyPlayed)
             model.LargestLobbyPlayed = LobbySize.Value;
 
-        if (SharedMoment is not null)
+        if (SharedMoment is not null && SharedMoment.Value)
             model.SharedMoment = SharedMoment.Value;
 
         return model;
