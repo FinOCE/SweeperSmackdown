@@ -99,7 +99,7 @@ jobs:
       - name: Create and deploy API
         run: |
           cd ./api
-          dotnet publish --configuration Release --output ./output --self-contained -r win-x64
+          dotnet publish SweeperSmackdown --configuration Release --output ./output --self-contained
           cd ./output
           zip -r ../deploy.zip .
           cd ../..
@@ -109,7 +109,7 @@ jobs:
       - name: Create and deploy bot
         run: |
           cd ./bot
-          dotnet publish --configuration Release --output ./output --self-contained -r linux-x64
+          dotnet publish Bot --configuration Release --output ./output --self-contained
           cd ./output
           zip -r ../deploy.zip .
           cd ../..
