@@ -1,15 +1,23 @@
-﻿namespace SweeperSmackdown.Stats.Models;
+﻿namespace SweeperSmackdown.Stats.DTOs;
 
 using Newtonsoft.Json;
+using SweeperSmackdown.Stats.Models;
 using System;
 
-public class PlayerInfo(
+public class StatResponse(
     string id,
-    int? playtime = null,
-    int[]? tilesCleared = null,
-    int? minesFlagged = null,
-    int? minesHit = null,
-    int? blindGuesses = null,
+    int playtime,
+    int[] tilesCleared,
+    int minesFlagged,
+    int minesHit,
+    int blindGuesses,
+    int boardsPlayed,
+    int boardsCompleted,
+    int boardsFailed,
+    int gamesPlayed,
+    int gamesWon,
+    bool unlockedClassicMinesweeper,
+    bool sharedMoment,
     int? fastestStandardSolve = null,
     int[]? largestBoardCompleted = null,
     int? largestZeroSpread = null,
@@ -17,40 +25,33 @@ public class PlayerInfo(
     int? longestClearStreakWithoutMine = null,
     int? longestClearStreakWithoutMineOrFlag = null,
     int? fewestFlagsUsedWithoutHittingMine = null,
-    int? boardsPlayed = null,
-    int? boardsCompleted = null,
-    int? boardsFailed = null,
-    int? gamesPlayed = null,
-    int? gamesWon = null,
     DateTime? firstPlayed = null,
     DateTime? lastPlayed = null,
-    bool? unlockedClassicMinesweeper = null,
-    int? largestLobbyPlayed = null,
-    bool? sharedMoment = null)
+    int? largestLobbyPlayed = null)
 {
     [JsonProperty("id")]
     public string Id { get; set; } = id;
 
     [JsonProperty("playtime")]
-    public int Playtime { get; set; } = playtime ?? 0; // Duration in seconds solving boards
+    public int Playtime { get; set; } = playtime;
 
     [JsonProperty("tilesCleared")]
-    public int[] TilesCleared { get; set; } = tilesCleared ?? [0, 0, 0, 0, 0, 0, 0, 0, 0]; // Index = adjacent mine count
+    public int[] TilesCleared { get; set; } = tilesCleared;
 
     [JsonProperty("minesFlagged")]
-    public int MinesFlagged { get; set; } = minesFlagged ?? 0;
+    public int MinesFlagged { get; set; } = minesFlagged;
 
     [JsonProperty("minesHit")]
-    public int MinesHit { get; set; } = minesHit ?? 0;
+    public int MinesHit { get; set; } = minesHit;
 
     [JsonProperty("blindGuesses")]
-    public int BlindGuesses { get; set; } = blindGuesses ?? 0;
+    public int BlindGuesses { get; set; } = blindGuesses;
 
     [JsonProperty("fastestStandardSolve", NullValueHandling = NullValueHandling.Ignore)]
     public int? FastestStandardSolve { get; set; } = fastestStandardSolve;
 
     [JsonProperty("largestBoardCompleted", NullValueHandling = NullValueHandling.Ignore)]
-    public int[]? LargestBoardCompleted { get; set; } = largestBoardCompleted; // [width, height], calculated based on volume
+    public int[]? LargestBoardCompleted { get; set; } = largestBoardCompleted;
 
     [JsonProperty("largestZeroSpread", NullValueHandling = NullValueHandling.Ignore)]
     public int? LargestZeroSpread { get; set; } = largestZeroSpread;
@@ -68,19 +69,19 @@ public class PlayerInfo(
     public int? FewestFlagsUsedWithoutHittingMine { get; set; } = fewestFlagsUsedWithoutHittingMine;
 
     [JsonProperty("boardsPlayed")]
-    public int BoardsPlayed { get; set; } = boardsPlayed ?? 0;
+    public int BoardsPlayed { get; set; } = boardsPlayed;
 
     [JsonProperty("boardsCompleted")]
-    public int BoardsCompleted { get; set; } = boardsCompleted ?? 0;
+    public int BoardsCompleted { get; set; } = boardsCompleted;
 
     [JsonProperty("boardsFailed")]
-    public int BoardsFailed { get; set; } = boardsFailed ?? 0;
+    public int BoardsFailed { get; set; } = boardsFailed;
 
     [JsonProperty("gamesPlayed")]
-    public int GamesPlayed { get; set; } = gamesPlayed ?? 0;
+    public int GamesPlayed { get; set; } = gamesPlayed;
 
     [JsonProperty("gamesWon")]
-    public int GamesWon { get; set; } = gamesWon ?? 0;
+    public int GamesWon { get; set; } = gamesWon;
 
     [JsonProperty("firstPlayed", NullValueHandling = NullValueHandling.Ignore)]
     public DateTime? FirstPlayed { get; set; } = firstPlayed;
@@ -89,11 +90,36 @@ public class PlayerInfo(
     public DateTime? LastPlayed { get; set; } = lastPlayed;
 
     [JsonProperty("unlockedClassicMinesweeper")]
-    public bool UnlockedClassicMinesweeper { get; set; } = unlockedClassicMinesweeper ?? false;
+    public bool UnlockedClassicMinesweeper { get; set; } = unlockedClassicMinesweeper;
 
     [JsonProperty("largestLobbyPlayed", NullValueHandling = NullValueHandling.Ignore)]
     public int? LargestLobbyPlayed { get; set; } = largestLobbyPlayed;
 
     [JsonProperty("sharedMoment")]
-    public bool SharedMoment { get; set; } = sharedMoment ?? false;
+    public bool SharedMoment { get; set; } = sharedMoment;
+
+    public static StatResponse FromModel(PlayerInfo playerInfo) => new(
+        playerInfo.Id,
+        playerInfo.Playtime,
+        playerInfo.TilesCleared,
+        playerInfo.MinesFlagged,
+        playerInfo.MinesHit,
+        playerInfo.BlindGuesses,
+        playerInfo.BoardsPlayed,
+        playerInfo.BoardsCompleted,
+        playerInfo.BoardsFailed,
+        playerInfo.GamesPlayed,
+        playerInfo.GamesWon,
+        playerInfo.UnlockedClassicMinesweeper,
+        playerInfo.SharedMoment,
+        playerInfo.FastestStandardSolve,
+        playerInfo.LargestBoardCompleted,
+        playerInfo.LargestZeroSpread,
+        playerInfo.LargestAdjacentBombCountFound,
+        playerInfo.LongestClearStreakWithoutMine,
+        playerInfo.LongestClearStreakWithoutMineOrFlag,
+        playerInfo.FewestFlagsUsedWithoutHittingMine,
+        playerInfo.FirstPlayed,
+        playerInfo.LastPlayed,
+        playerInfo.LargestLobbyPlayed);
 }
