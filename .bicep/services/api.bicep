@@ -135,10 +135,6 @@ module azWebPubSubHub '../resources/azWebPubSubHub.bicep' = {
   }
 }
 
-resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
-}
-
 resource azCosmosDbExisting 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
   name: cosmosDbName
 }
@@ -150,10 +146,10 @@ resource azWebPubSubExisting 'Microsoft.SignalRService/webPubSub@2023-02-01' exi
 module azFunctionAppConfig '../resources/azFunctionAppConfig.bicep' = {
   name: '${functionAppName}-appsettings'
   params: {
-    functionAppName: functionAppName
+    functionAppName: azFunctionApp.outputs.name
     runtime: runtime
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
-    storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
+    storageAccountName: azStorageAccount.outputs.name
     secrets: {
       cosmosDbConnectionString: azCosmosDbExisting.listConnectionStrings().connectionStrings[0].connectionString
       webPubSubConnectionString: azWebPubSubExisting.listKeys().primaryConnectionString

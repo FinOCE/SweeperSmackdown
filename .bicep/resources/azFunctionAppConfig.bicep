@@ -1,20 +1,23 @@
 param functionAppName string
 param runtime string
-@secure()
-param storageValue string
+param storageAccountName string
 @secure()
 param applicationInsightsInstrumentationKey string
 @secure()
 param secrets object
 
+resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: storageAccountName
+}
+
 var runtimeSettings = {
   'dotnet-isolated': {
-    AzureWebJobsStorage__accountName: storageValue
+    AzureWebJobsStorage__accountName: azStorageAccountExisting.name
     WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: 1
   }
   dotnet: {
-    AzureWebJobsStorage: storageValue
-    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageValue
+    AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
     WEBSITE_CONTENTSHARE: functionAppName
     WEBSITE_RUN_FROM_PACKAGE: 1
   }

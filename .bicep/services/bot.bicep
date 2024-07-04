@@ -61,18 +61,16 @@ module azFunctionApp '../resources/azFunctionApp.bicep' = {
   }
 }
 
-resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
-}
-
 module azFunctionAppConfig '../resources/azFunctionAppConfig.bicep' = {
   name: '${functionAppName}-appsettings'
   params: {
-    functionAppName: functionAppName
+    functionAppName: azFunctionApp.outputs.name
     runtime: runtime
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
-    storageValue: sku != 'FlexConsumption' ? 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}' : azStorageAccount.outputs.name
-    secrets: { discordPublicKey: discordPublicKey }
+    storageAccountName: azStorageAccount.outputs.name 
+    secrets: {
+      discordPublicKey: discordPublicKey
+    }
   }
 }
 
