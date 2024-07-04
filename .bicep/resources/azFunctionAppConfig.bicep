@@ -6,16 +6,19 @@ param applicationInsightsInstrumentationKey string
 @secure()
 param secrets object
 
+resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' existing = {
+  name: functionAppName
+}
+
 resource azStorageAccountExisting 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
 }
 
-var runtimeSettings = {
-  'dotnet-isolated': {
+var kindSettings = {
+  'functionapp,linux': {
     AzureWebJobsStorage__accountName: azStorageAccountExisting.name
-    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: 1
   }
-  dotnet: {
+  functionapp: {
     AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
     WEBSITE_CONTENTSHARE: functionAppName
@@ -23,9 +26,18 @@ var runtimeSettings = {
   }
 }
 
+var runtimeSettings = {
+  'dotnet-isolated': {
+    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: 1
+  }
+  dotnet: {}
+}
+
 resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
-  name: '${functionAppName}/appsettings'
+  name: 'appsettings'
+  parent: azFunctionApp
   properties: union(
+    kindSettings[azFunctionApp.kind],
     runtimeSettings[runtime],
     {
       APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey
