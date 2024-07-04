@@ -23,6 +23,8 @@ var kindSettings = {
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${azStorageAccountExisting.listKeys().keys[0].value}'
     WEBSITE_CONTENTSHARE: functionAppName
     WEBSITE_RUN_FROM_PACKAGE: 1
+    FUNCTIONS_WORKER_RUNTIME: runtime
+    FUNCTIONS_EXTENSION_VERSION: '~4'
   }
 }
 
@@ -30,7 +32,9 @@ var runtimeSettings = {
   'dotnet-isolated': {
     WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: 1
   }
-  dotnet: {}
+  dotnet: {
+    SCM_DO_BUILD_DURING_DEPLOYMENT: true
+  }
 }
 
 resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
@@ -41,8 +45,6 @@ resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
     runtimeSettings[runtime],
     {
       APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey
-      FUNCTIONS_WORKER_RUNTIME: runtime
-      FUNCTIONS_EXTENSION_VERSION: '~4'
     },
     secrets
   )
