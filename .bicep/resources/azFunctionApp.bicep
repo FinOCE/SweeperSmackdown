@@ -24,6 +24,7 @@ resource azFunctionAppWindows 'Microsoft.Web/sites@2023-12-01' = if (isWindows) 
         allowedOrigins: ['*']
       }
       use32BitWorkerProcess: false
+      netFrameworkVersion: 'v${version}'
     }
   }
 }
@@ -43,6 +44,7 @@ resource azFunctionAppLinux 'Microsoft.Web/sites@2023-12-01' = if (!isWindows) {
         allowedOrigins: ['*']
       }
       use32BitWorkerProcess: false
+      netFrameworkVersion: 'v${version}'
     }
     functionAppConfig: {
       scaleAndConcurrency: {
