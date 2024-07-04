@@ -23,6 +23,7 @@ resource azFunctionAppWindows 'Microsoft.Web/sites@2023-12-01' = if (isWindows) 
       cors: {
         allowedOrigins: ['*']
       }
+      use32BitWorkerProcess: false
     }
   }
 }
@@ -41,6 +42,7 @@ resource azFunctionAppLinux 'Microsoft.Web/sites@2023-12-01' = if (!isWindows) {
       cors: {
         allowedOrigins: ['*']
       }
+      use32BitWorkerProcess: false
     }
     functionAppConfig: {
       scaleAndConcurrency: {

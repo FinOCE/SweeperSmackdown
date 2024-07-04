@@ -20,6 +20,7 @@ var inProcessSettings = {
 
 var isolatedProcessSettings = {
     AzureWebJobsStorage__accountName: storageValue
+    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: 1
 }
 
 resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
