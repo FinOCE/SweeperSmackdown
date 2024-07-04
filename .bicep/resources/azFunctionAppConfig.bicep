@@ -7,27 +7,23 @@ param applicationInsightsInstrumentationKey string
 @secure()
 param secrets object
 
-resource azFunctionApp 'Microsoft.Web/sites@2023-12-01' existing = {
-  name: functionAppName
-}
-
-var inProcessSettings = {
-  AzureWebJobsStorage: storageValue
-  WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageValue
-  WEBSITE_CONTENTSHARE: functionAppName
-  WEBSITE_RUN_FROM_PACKAGE: 1
-}
-
-var isolatedProcessSettings = {
+var runtimeSettings = {
+  'dotnet-isolated': {
     AzureWebJobsStorage__accountName: storageValue
     WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: 1
+  }
+  dotnet: {
+    AzureWebJobsStorage: storageValue
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageValue
+    WEBSITE_CONTENTSHARE: functionAppName
+    WEBSITE_RUN_FROM_PACKAGE: 1
+  }
 }
 
 resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
-  name: 'appsettings'
-  parent: azFunctionApp
+  name: '${functionAppName}/appsettings'
   properties: union(
-    azFunctionApp.kind == 'functionapp' ? inProcessSettings : isolatedProcessSettings,
+    runtimeSettings[runtime],
     {
       APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey
       FUNCTIONS_WORKER_RUNTIME: runtime
