@@ -15,8 +15,6 @@ var inProcessSettings = {
   AzureWebJobsStorage: storageValue
   WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageValue
   WEBSITE_CONTENTSHARE: functionAppName
-  FUNCTIONS_WORKER_RUNTIME: runtime
-  FUNCTIONS_EXTENSION_VERSION: '~4'
   WEBSITE_RUN_FROM_PACKAGE: 1
 }
 
@@ -29,7 +27,11 @@ resource azFunctionAppSettings 'Microsoft.Web/sites/config@2023-12-01' = {
   parent: azFunctionApp
   properties: union(
     azFunctionApp.kind == 'functionapp' ? inProcessSettings : isolatedProcessSettings,
-    { APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey },
+    {
+      APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsightsInstrumentationKey
+      FUNCTIONS_WORKER_RUNTIME: runtime
+      FUNCTIONS_EXTENSION_VERSION: '~4'
+    },
     secrets
   )
 }
