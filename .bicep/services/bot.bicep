@@ -69,7 +69,7 @@ module azFunctionAppConfig '../resources/azFunctionAppConfig.bicep' = {
     applicationInsightsInstrumentationKey: azApplicationInsights.outputs.instrumentationKey
     storageAccountName: azStorageAccount.outputs.name 
     secrets: {
-      discordPublicKey: discordPublicKey
+      DISCORD_PUBLIC_KEY: discordPublicKey
     }
   }
 }
