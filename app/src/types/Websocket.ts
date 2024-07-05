@@ -19,6 +19,9 @@ export namespace Websocket {
     export type UserJoin = {
       eventName: "USER_JOIN"
       userId: string
+
+      /** The data for the player who joined */
+      data: Api.Player
     }
 
     export type UserLeave = {
@@ -64,8 +67,13 @@ export namespace Websocket {
       eventName: "GAME_CELEBRATION_STARTING"
       userId: "SYSTEM"
 
-      /** The time the game celebration will complete */
-      data: Date
+      /** The time the game celebration will complete as an ISO string */
+      data: string
+    }
+
+    export type LobbyDelete = {
+      eventName: "LOBBY_DELETE"
+      userId: "SYSTEM"
     }
   }
 }

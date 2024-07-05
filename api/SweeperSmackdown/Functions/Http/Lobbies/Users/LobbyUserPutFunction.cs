@@ -11,6 +11,8 @@ using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
@@ -37,6 +39,12 @@ public static class LobbyUserPutFunction
         [CosmosDB(
             containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
             Connection = "CosmosDbConnectionString")]
             IAsyncCollector<Player> playerDb,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
@@ -58,29 +66,22 @@ public static class LobbyUserPutFunction
         if (requesterId != userId)
             return new StatusCodeResult(403);
 
-        // Add user or update active status
-        var previouslyExisting = player is not null;
-        var previouslyActive = player is not null && player.Active;
+        // Create new player or update active state of existing
+        var existing = player is not null;
 
         if (player is not null)
-        {
-            if (!player!.Active)
-            {
-                player.Active = true;
-                await playerDb.AddAsync(player);
-            }
-        }
+            player.Active = true;
         else
-        {
             player = new Player(userId, lobbyId, true, 0, 0);
-            await playerDb.AddAsync(player);
-        }
 
-        // Add user to ws and notify lobby members if fresh join
+        // Add to lobby
+        await playerDb.AddAsync(player);
+
+        players = players.Where(p => p.Id != player.Id).Append(player);
+
+        await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId, player));
         await ws.AddAsync(ActionFactory.AddUserToLobby(userId, lobbyId));
-
-        if (!previouslyActive)
-            await ws.AddAsync(ActionFactory.AddUser(userId, lobbyId));
+        await ws.AddAsync(ActionFactory.UpdateLobby(lobbyId, LobbyResponseDto.FromModel(lobby, players)));
 
         // Create board for new user if game is in progress or about to start
         if (lobby.State == ELobbyState.ConfigureCountdown || lobby.State == ELobbyState.Play)
@@ -96,10 +97,10 @@ public static class LobbyUserPutFunction
         }
 
         // Respond to request
-        return previouslyExisting
-            ? new CreatedResult(
+        return existing
+            ? new OkObjectResult(LobbyUserResponseDto.FromModel(player))
+            : new CreatedResult(
                 $"/lobbies/{lobbyId}/users/{userId}",
-                LobbyUserResponseDto.FromModel(player))
-            : new OkObjectResult(LobbyUserResponseDto.FromModel(player));
+                LobbyUserResponseDto.FromModel(player));
     }
 }

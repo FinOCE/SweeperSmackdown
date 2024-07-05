@@ -24,6 +24,9 @@ public class Lobby
     [JsonProperty("stateExpiry")]
     public DateTime? StateExpiry { get; set; }
 
+    [JsonProperty("_ts")]
+    public long UpdatedAt { get; set; }
+
     public Lobby(
         string id,
         string hostId,

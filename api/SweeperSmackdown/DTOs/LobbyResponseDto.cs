@@ -17,7 +17,7 @@ public class LobbyResponseDto
     [JsonProperty("hostId")]
     [JsonPropertyName("hostId")]
     public string HostId { get; set; }
-    
+
     [JsonProperty("userIds")]
     [JsonPropertyName("userIds")]
     public IEnumerable<string> UserIds { get; set; }
@@ -67,7 +67,7 @@ public class LobbyResponseDto
         return new(
             lobby.Id,
             lobby.HostId,
-            players.Select(p => p.Id),
+            players.Where(p => p.Active).Select(p => p.Id),
             players.ToDictionary(p => p.Id, p => p.Score),
             players.ToDictionary(p => p.Id, p => p.Wins),
             lobby.State,

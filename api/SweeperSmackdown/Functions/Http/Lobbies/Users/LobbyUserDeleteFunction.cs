@@ -32,7 +32,6 @@ public static class LobbyUserDeleteFunction
             PartitionKey = "{lobbyId}")]
             Player? player,
         [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
         string lobbyId,
         string userId)
     {
@@ -55,12 +54,6 @@ public static class LobbyUserDeleteFunction
         {
             PatchOperation.Set("/active", false)
         });
-
-        await ws.AddAsync(ActionFactory.RemoveUser(player.Id, lobby.Id));
-        await ws.AddAsync(ActionFactory.RemoveUserFromLobby(player.Id, lobby.Id));
-
-        // Update host of any lobbies that need to
-        await cosmosClient.ChangeHostAsync(userId);
 
         // Respond to request
         return new NoContentResult();
