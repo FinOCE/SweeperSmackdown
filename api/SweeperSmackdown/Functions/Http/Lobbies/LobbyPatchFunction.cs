@@ -60,6 +60,13 @@ public static class LobbyPatchFunction
         if (!players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
+        // Only allow host to modify if host managed
+        if (lobby.HostId != requesterId && lobby.Settings.HostManaged)
+            return new StatusCodeResult(403);
+
+        if (lobby.HostId != requesterId && payload.HostManaged.HasValue && payload.HostManaged.Value != lobby.Settings.HostManaged)
+            return new StatusCodeResult(403);
+
         // Confirm user is allowed to change host ID if attempted
         if (payload.HostId != null && lobby.HostId != requesterId)
             return new BadRequestObjectResult(new string[]
@@ -88,7 +95,8 @@ public static class LobbyPatchFunction
                 payload.Lives,
                 payload.TimeLimit,
                 payload.BoardCount,
-                seed);
+                seed,
+                payload.HostManaged);
         }
         catch (ArgumentException)
         {

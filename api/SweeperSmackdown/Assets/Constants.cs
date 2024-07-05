@@ -39,4 +39,6 @@ public static class Constants
     public const int DEFAULT_GAME_BOARD_COUNT = 1;
 
     public const int DEFAULT_GAME_SEED = 0;
+
+    public const bool DEFAULT_HOST_MANAGED = false;
 }

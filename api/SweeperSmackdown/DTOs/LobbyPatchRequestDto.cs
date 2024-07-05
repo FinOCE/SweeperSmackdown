@@ -40,6 +40,9 @@ public class LobbyPatchRequestDto
     [JsonProperty("shareBoards")]
     public bool? ShareBoards { get; set; }
 
+    [JsonProperty("hostManaged")]
+    public bool? HostManaged { get; set; }
+
     [JsonIgnore]
     public bool IsValid
     {

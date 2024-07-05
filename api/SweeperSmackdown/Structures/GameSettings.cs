@@ -46,6 +46,10 @@ public class GameSettings
     [JsonPropertyName("seed")]
     public int Seed { get; private set; } = Constants.DEFAULT_GAME_SEED;
 
+    [JsonProperty("hostManaged")]
+    [JsonPropertyName("hostManaged")]
+    public bool HostManaged { get; private set; } = Constants.DEFAULT_HOST_MANAGED;
+
     public GameSettings() { }
 
     public GameSettings(int seed)
@@ -62,7 +66,8 @@ public class GameSettings
         int? lives,
         int? timeLimit,
         int? boardCount,
-        int? seed)
+        int? seed,
+        bool? hostManaged)
     {
         var usesDifficulty = (difficulty ?? Difficulty) is not null && mines == null;
 
@@ -87,7 +92,8 @@ public class GameSettings
             Lives = lives ?? Lives,
             TimeLimit = timeLimit ?? TimeLimit,
             BoardCount = boardCount ?? BoardCount,
-            Seed = seed ?? Seed
+            Seed = seed ?? Seed,
+            HostManaged = hostManaged ?? HostManaged
         };
     }
 }
