@@ -35,5 +35,10 @@ public static class GameCleanupFunction
             await ctx.CallActivityAsync(
                 nameof(WinAddActivityFunction),
                 new WinAddActivityFunctionProps(lobbyId, props.WinnerId));
+
+        // Regenerate seed so the same boards arent generated in next round
+        await ctx.CallActivityAsync(
+            nameof(LobbyRegenerateSeedActivityFunction),
+            new LobbyRegenerateSeedActivityFunctionProps(lobbyId));
     }
 }
