@@ -3,6 +3,14 @@
 public static class PubSubEvents
 {
     public const string LOBBY_UPDATE = "LOBBY_UPDATE";
+
+    public const string LOBBY_SETTINGS_UPDATE = "LOBBY_SETTINGS_UPDATE";
+
+    public const string LOBBY_SETTINGS_UPDATE_FAILED = "LOBBY_SETTINGS_UPDATE_FAILED";
+
+    public const string LOBBY_STATE_UPDATE = "LOBBY_STATE_UPDATE";
+
+    public const string LOBBY_STATE_UPDATE_FAILED = "LOBBY_STATE_UPDATE_FAILED";
     
     public const string USER_JOIN = "USER_JOIN";
 

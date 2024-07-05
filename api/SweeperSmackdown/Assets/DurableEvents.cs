@@ -13,4 +13,6 @@ public static class DurableEvents
     public const string GAME_START_UNLOCK = "GAME_START_UNLOCK";
 
     public const string GAME_START_CONFIRMATION = "GAME_START_CONFIRMATION";
+
+    public const string LOBBY_CONFIRMED = "LOBBY_CONFIRMED";
 }

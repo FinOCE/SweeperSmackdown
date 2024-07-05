@@ -4,23 +4,24 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
+using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators.Interactions;
 using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SweeperSmackdown.Functions.Http.Lobbies;
+namespace SweeperSmackdown.Functions.Http.Lobbies.Settings;
 
-public static class LobbyConfirmActionFunction
+public static class GameSettingsPatchFunction
 {
-    [FunctionName(nameof(LobbyConfirmActionFunction))]
+    [FunctionName(nameof(GameSettingsPatchFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "lobbies/{lobbyId}/confirm")] HttpRequest req,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}/settings")] GameSettingsUpdateRequest payload,
+        HttpRequest req,
         [CosmosDB(
             containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
             databaseName: DatabaseConstants.DATABASE_NAME,
@@ -28,6 +29,14 @@ public static class LobbyConfirmActionFunction
             Id = "{lobbyId}",
             PartitionKey = "{lobbyId}")]
             Lobby? lobby,
+        [CosmosDB(
+            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
+            databaseName: DatabaseConstants.DATABASE_NAME,
+            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
+            Connection = "CosmosDbConnectionString")]
+            IEnumerable<Player> players,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -40,8 +49,12 @@ public static class LobbyConfirmActionFunction
         if (lobby == null)
             return new NotFoundResult();
 
-        // Only allow lobby host to modify
-        if (lobby.HostId != requesterId)
+        // Only allow lobby members to modify
+        if (!players.Any(p => p.Id == requesterId))
+            return new StatusCodeResult(403);
+
+        // Only allow host to modify if host managed
+        if (lobby.HostId != requesterId && lobby.HostManaged)
             return new StatusCodeResult(403);
 
         // Short circuit if entity is in invalid state
@@ -51,14 +64,14 @@ public static class LobbyConfirmActionFunction
         if (!settings.EntityExists)
             return new NotFoundResult();
 
-        if (!GameSettingsStateMachine.ValidStatesToConfirm.Contains(settings.EntityState.State))
+        if (!GameSettingsStateMachine.ValidStatesToUpdateSettings.Contains(settings.EntityState.State))
             return new ConflictResult();
 
-        // Start confirm workflow
+        // Start settings update workflow
         await orchestrationClient.StartNewAsync(
-            nameof(GameSettingsConfirmOrchestratorFunction),
-            lobby.Id,
-            new GameSettingsConfirmOrchestratorFunctionProps(requesterId));
+            nameof(GameSettingsUpdateOrchestratorFunction),
+            lobbyId,
+            new GameSettingsUpdateOrchestratorFunctionProps(requesterId, payload));
 
         return new AcceptedResult();
     }

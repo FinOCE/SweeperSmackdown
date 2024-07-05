@@ -15,6 +15,9 @@ public class Lobby
     [JsonProperty("hostId")]
     public string HostId { get; set; }
 
+    [JsonProperty("hostManaged")]
+    public bool HostManaged { get; set; }
+
     [JsonProperty("settings")]
     public GameSettings Settings { get; set; }
 
@@ -34,6 +37,7 @@ public class Lobby
     {
         Id = id;
         HostId = hostId;
+        HostManaged = false;
         Settings = settings;
         State = ELobbyState.ConfigureUnlocked;
         StateExpiry = null;
