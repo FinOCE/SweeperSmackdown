@@ -102,6 +102,8 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
 
     private IAsyncCollector<WebPubSubAction> _ws { get; }
 
+    private string UserId => Entity.Current.EntityId.EntityKey;
+
     [DataMember]
     public GameSettings Settings { get; private set; } = null!;
 
@@ -141,11 +143,18 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
 
     public async Task UpdateSettings(GameSettingsUpdateRequest updates)
     {
-        if (!ValidStatesToUpdateSettings.Contains(State))
-            throw new InvalidOperationException();
+        try
+        {
+            if (!ValidStatesToUpdateSettings.Contains(State))
+                throw new InvalidOperationException();
 
-        Settings = updates.ApplyToModel(Settings);
-        await _ws.AddAsync(ActionFactory.UpdateLobbySettings(Entity.Current.EntityId.EntityKey, Settings));
+            Settings = updates.ApplyToModel(Settings);
+            await _ws.AddAsync(ActionFactory.UpdateLobbySettings(UserId, Settings));
+        }
+        catch (InvalidOperationException)
+        {
+            await _ws.AddAsync(ActionFactory.UpdateLobbySettingsFailed(UserId, Settings));
+        }
     }
 
     public Task<EGameSettingsStateMachineState> GetState() =>
@@ -153,43 +162,71 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
 
     public async Task Lock()
     {
-        if (!ValidStatesToLock.Contains(State))
-            throw new InvalidOperationException();
+        try
+        {
+            if (!ValidStatesToLock.Contains(State))
+                throw new InvalidOperationException();
 
-        State = EGameSettingsStateMachineState.Locked;
-        await _ws.AddAsync(ActionFactory.UpdateLobbyState(Entity.Current.EntityId.EntityKey, State));
+            State = EGameSettingsStateMachineState.Locked;
+            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+        }
+        catch (InvalidOperationException)
+        {
+            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+        }
     }
 
     public async Task Unlock()
     {
-        if (!ValidStatesToUnlock.Contains(State))
-            throw new InvalidOperationException();
+        try
+        {
+            if (!ValidStatesToUnlock.Contains(State))
+                throw new InvalidOperationException();
 
-        State = EGameSettingsStateMachineState.Unlocked;
-        await _ws.AddAsync(ActionFactory.UpdateLobbyState(Entity.Current.EntityId.EntityKey, State));
+            State = EGameSettingsStateMachineState.Unlocked;
+            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+        }
+        catch (InvalidOperationException)
+        {
+            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+        }
     }
 
     public async Task Confirm()
     {
-        if (!ValidStatesToConfirm.Contains(State))
-            throw new InvalidOperationException();
+        try
+        {
+            if (!ValidStatesToConfirm.Contains(State))
+                throw new InvalidOperationException();
 
-        State = EGameSettingsStateMachineState.Confirmed;
-        await _ws.AddAsync(ActionFactory.UpdateLobbyState(Entity.Current.EntityId.EntityKey, State));
+            State = EGameSettingsStateMachineState.Confirmed;
+            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
 
-        await _orchestrationClient.RaiseEventAsync(
-            Id.ForInstance(nameof(GameConfigureFunction), Entity.Current.EntityId.EntityKey),
-            DurableEvents.LOBBY_CONFIRMED,
-            Settings);
+            await _orchestrationClient.RaiseEventAsync(
+                Id.ForInstance(nameof(GameConfigureFunction), UserId),
+                DurableEvents.LOBBY_CONFIRMED,
+                Settings);
+        }
+        catch (InvalidOperationException)
+        {
+            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+        }
     }
 
     public async Task Open()
     {
-        if (!ValidStatesToOpen.Contains(State))
-            throw new InvalidOperationException();
+        try
+        {
+            if (!ValidStatesToOpen.Contains(State))
+                throw new InvalidOperationException();
 
-        State = EGameSettingsStateMachineState.Unlocked;
-        await _ws.AddAsync(ActionFactory.UpdateLobbyState(Entity.Current.EntityId.EntityKey, State));
+            State = EGameSettingsStateMachineState.Unlocked;
+            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+        }
+        catch (InvalidOperationException)
+        {
+            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+        }
     }
 }
 
