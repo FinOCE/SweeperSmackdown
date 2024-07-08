@@ -12,6 +12,12 @@ namespace SweeperSmackdown.Factories;
 
 public static class ActionFactory
 {
+    public static WebPubSubAction CreatedLobby(string lobbyId, string userId) =>
+        WebPubSubAction.CreateSendToUserAction(
+            userId,
+            MessageFactory.Create(PubSubEvents.LOBBY_CREATED, "SYSTEM", lobbyId),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction UpdateLobbyStatus(string lobbyId, LobbyOrchestratorStatus orchestratorStatus) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,

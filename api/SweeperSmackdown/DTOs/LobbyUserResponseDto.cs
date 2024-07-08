@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using SweeperSmackdown.Models;
+using SweeperSmackdown.Structures;
 using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;

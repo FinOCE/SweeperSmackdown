@@ -17,10 +17,10 @@ namespace SweeperSmackdown.Functions.Entities;
 public interface ILobbyStateMachine
 {
     /// <summary>
-    /// Create a new lobby state machine. Also creates the game settings state machine.
+    /// Create a new lobby state machine.
     /// </summary>
     /// <param name="hostId">The ID of the lobby's initial host</param>
-    public Task Create(string hostId);
+    public void Create(string hostId);
 
     /// <summary>
     /// Delete the lobby state machine and all associated states and orchestrators.
@@ -98,22 +98,13 @@ public class LobbyStateMachine : ILobbyStateMachine
         Players = Array.Empty<Player>();
     }
 
-    public async Task Create(string hostId)
+    public void Create(string hostId)
     {
-        if (Entity.Current.HasState)
-            throw new InvalidOperationException();
+        if (!Entity.Current.HasState)
+            return;
 
         HostId = hostId;
         HostManaged = false;
-
-        Entity.Current.SignalEntity(
-            Id.For<GameSettingsStateMachine>(LobbyId),
-            nameof(IGameSettingsStateMachine.Create),
-            new GameSettings());
-
-        // TODO: Start lobby orchestrator (figure out how to ensure game settings exist)
-
-        await AddPlayer(hostId);
     }
 
     public async Task Delete()
@@ -168,6 +159,26 @@ public class LobbyStateMachine : ILobbyStateMachine
         await _ws.AddAsync(ActionFactory.JoinLobby(LobbyId, userId));
         await _ws.AddAsync(ActionFactory.AddUserToLobby(userId, LobbyId));
         await _ws.AddAsync(ActionFactory.AddPlayer(LobbyId, player));
+
+        Entity.Current.SignalEntity(
+            Id.For<ConnectionReference>(userId),
+            nameof(IConnectionReference.SetLobbyId),
+            LobbyId);
+
+        // TODO: Handle below properly
+
+        //// Create board for new user if game is in progress or about to start
+        //if (lobby.State == ELobbyState.ConfigureCountdown || lobby.State == ELobbyState.Play)
+        //{
+        //    var boardManagerStatus = await orchestrationClient.GetStatusAsync(
+        //        Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId));
+
+        //    if (boardManagerStatus.IsInactive())
+        //        await orchestrationClient.StartNewAsync(
+        //            nameof(BoardManagerOrchestratorFunction),
+        //            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId),
+        //            new BoardManagerOrchestratorFunctionProps(lobby.Settings));
+        //}
     }
 
     public async Task RemovePlayer(string userId)
@@ -191,6 +202,11 @@ public class LobbyStateMachine : ILobbyStateMachine
             else
                 await SetHost(Players.First(p => p.Active).Id);
         }
+
+        Entity.Current.SignalEntity(
+            Id.For<ConnectionReference>(userId),
+            nameof(IConnectionReference.SetLobbyId),
+            "");
     }
 
     public async Task AddScore(string userId)

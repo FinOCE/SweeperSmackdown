@@ -1,34 +1,26 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Models;
+using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Utils;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies.Users;
 
 public static class LobbyUserGetFunction
 {
     [FunctionName(nameof(LobbyUserGetFunction))]
-    public static IActionResult Run(
+    public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}/users/{userId}")] HttpRequest req,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Lobby? lobby,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
-            Connection = "CosmosDbConnectionString")]
-            IEnumerable<Player> players,
+        [DurableClient] IDurableEntityClient entityClient,
+        string lobbyId,
         string userId)
     {
         // Only allow if user is logged in
@@ -38,18 +30,23 @@ public static class LobbyUserGetFunction
             return new StatusCodeResult(401);
 
         // Check if lobby exists
-        if (lobby == null)
+        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
+            Id.For<LobbyStateMachine>(lobbyId));
+
+        if (!lobby.EntityExists)
             return new NotFoundResult();
 
-        // Check if user is in lobby
-        if (!players.Any(p => p.Id == requesterId))
+        // Only allow lobby members to fetch
+        if (!lobby.EntityState.Players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
         // Check if player exists
-        if (!players.Any(p => p.Id == userId))
+        var player = lobby.EntityState.Players.FirstOrDefault(p => p.Id == userId);
+
+        if (player is null)
             return new NotFoundResult();
 
         // Respond to request
-        return new OkObjectResult(LobbyUserResponseDto.FromModel(players.First(p => p.Id == userId)));
+        return new OkObjectResult(LobbyUserResponseDto.FromModel(player));
     }
 }

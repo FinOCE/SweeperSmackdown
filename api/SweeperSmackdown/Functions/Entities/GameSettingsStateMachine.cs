@@ -134,7 +134,7 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
     public void Create(GameSettings initialSettings)
     {
         if (Entity.Current.HasState)
-            throw new InvalidOperationException();
+            return;
 
         Settings = initialSettings;
         State = EGameSettingsStateMachineState.Unlocked;

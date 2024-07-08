@@ -1,34 +1,26 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Models;
-using System.Collections.Generic;
+using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Functions.Orchestrators;
+using SweeperSmackdown.Utils;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
 
 public static class LobbyGetFunction
 {
     [FunctionName(nameof(LobbyGetFunction))]
-    public static IActionResult Run(
+    public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "lobbies/{lobbyId}")] HttpRequest req,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Lobby? lobby,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
-            Connection = "CosmosDbConnectionString")]
-            IEnumerable<Player> players)
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [DurableClient] IDurableEntityClient entityClient,
+        string lobbyId)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();
@@ -37,14 +29,38 @@ public static class LobbyGetFunction
             return new StatusCodeResult(401);
 
         // Check if lobby exists
-        if (lobby == null)
+        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
+            Id.For<LobbyStateMachine>(lobbyId));
+
+        if (!lobby.EntityExists)
             return new NotFoundResult();
 
         // Check if user is in lobby
-        if (!players.Any(p => p.Id == requesterId))
+        if (!lobby.EntityState.Players.Any(p => p.Id == requesterId))
             return new StatusCodeResult(403);
 
+        // Get lobby status
+        var status = await orchestrationClient.GetStatusAsync(
+            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+
+        var customStatus = status.CustomStatus.ToObject<LobbyOrchestratorStatus>();
+
+        if (customStatus is null)
+            return new StatusCodeResult(500);
+
+        // Get lobby settings
+        var settings = await entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
+            Id.For<GameSettingsStateMachine>(lobbyId));
+
+        if (!settings.EntityExists)
+            return new NotFoundResult();
+
         // Respond to request
-        return new OkObjectResult(LobbyResponseDto.FromModel(lobby, players));
+        return new OkObjectResult(
+            LobbyResponseDto.FromModel(
+                lobbyId,
+                customStatus,
+                lobby.EntityState,
+                settings.EntityState));
     }
 }

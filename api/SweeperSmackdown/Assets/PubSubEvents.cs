@@ -2,6 +2,8 @@
 
 public static class PubSubEvents
 {
+    public const string LOBBY_CREATED = "LOBBY_CREATED";
+
     public const string LOBBY_STATUS_UPDATE = "LOBBY_STATUS_UPDATE";
 
     public const string LOBBY_JOIN = "LOBBY_JOIN";

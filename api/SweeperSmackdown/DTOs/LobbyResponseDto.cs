@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
-using SweeperSmackdown.Models;
+using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Structures;
 using System;
 using System.Collections.Generic;
@@ -30,9 +31,9 @@ public class LobbyResponseDto
     [JsonPropertyName("wins")]
     public IDictionary<string, int> Wins { get; set; }
 
-    [JsonProperty("state")]
-    [JsonPropertyName("state")]
-    public ELobbyState State { get; set; }
+    [JsonProperty("status")]
+    [JsonPropertyName("status")]
+    public ELobbyStatus Status { get; set; }
 
     [JsonProperty("stateExpiry")]
     [JsonPropertyName("stateExpiry")]
@@ -48,7 +49,7 @@ public class LobbyResponseDto
         IEnumerable<string> userIds,
         IDictionary<string, int> scores,
         IDictionary<string, int> wins,
-        ELobbyState state,
+        ELobbyStatus status,
         DateTime? stateExpiry,
         GameSettings settings)
     {
@@ -57,21 +58,25 @@ public class LobbyResponseDto
         UserIds = userIds;
         Scores = scores;
         Wins = wins;
-        State = state;
+        Status = status;
         StateExpiry = stateExpiry;
         Settings = settings;
     }
 
-    public static LobbyResponseDto FromModel(Lobby lobby, IEnumerable<Player> players)
+    public static LobbyResponseDto FromModel(
+        string id,
+        LobbyOrchestratorStatus status,
+        LobbyStateMachine lobby,
+        GameSettingsStateMachine settings)
     {
         return new(
-            lobby.Id,
+            id,
             lobby.HostId,
-            players.Where(p => p.Active).Select(p => p.Id),
-            players.ToDictionary(p => p.Id, p => p.Score),
-            players.ToDictionary(p => p.Id, p => p.Wins),
-            lobby.State,
-            lobby.StateExpiry,
-            lobby.Settings);
+            lobby.Players.Where(p => p.Active).Select(p => p.Id),
+            lobby.Players.ToDictionary(p => p.Id, p => p.Score),
+            lobby.Players.ToDictionary(p => p.Id, p => p.Wins),
+            status.Status,
+            status.StatusUntil,
+            settings.Settings);
     }
 }
