@@ -4,12 +4,11 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Boards;
@@ -22,24 +21,9 @@ public static class BoardSkipActionFunction
             AuthorizationLevel.Anonymous,
             "post",
             Route = "lobbies/{lobbyId}/boards/{userId}/skip")]
-            BoardSolutionPostRequestDto payload,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Lobby? lobby,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{userId}",
-            PartitionKey = "{lobbyId}")]
-            Player? player,
+        HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
-        HttpRequest req,
         string lobbyId,
         string userId)
     {
@@ -50,15 +34,24 @@ public static class BoardSkipActionFunction
             return new StatusCodeResult(401);
 
         // Check if lobby exists
-        if (lobby == null)
+        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
+            Id.For<LobbyStateMachine>(lobbyId));
+
+        if (!lobby.EntityExists)
             return new NotFoundResult();
 
-        // Check if requester is the user
-        if (player is null || requesterId != userId)
+        // Check if requester is a lobby member and the user specified
+        if (!lobby.EntityState.Players.Any(p => p.Id == requesterId) || requesterId != userId)
             return new StatusCodeResult(403);
 
         // Check if lobby allows skips (seed existing means sharing boards enabled)
-        if (lobby.Settings.Seed != 0)
+        var settings = await entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
+            Id.For<GameSettingsStateMachine>(lobbyId));
+
+        if (!settings.EntityExists)
+            return new NotFoundResult();
+
+        if (settings.EntityState.Settings.Seed != 0)
             return new ConflictResult();
 
         // Check if board exists

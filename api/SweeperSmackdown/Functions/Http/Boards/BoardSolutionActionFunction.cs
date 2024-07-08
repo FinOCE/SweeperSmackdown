@@ -8,7 +8,6 @@ using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
 using System;
 using System.Linq;
@@ -25,20 +24,6 @@ public static class BoardSolutionActionFunction
             "post",
             Route = "lobbies/{lobbyId}/boards/{userId}/solution")]
             BoardSolutionPostRequestDto payload,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Lobby? lobby,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{userId}",
-            PartitionKey = "{lobbyId}")]
-            Player? player,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         HttpRequest req,
@@ -52,11 +37,14 @@ public static class BoardSolutionActionFunction
             return new StatusCodeResult(401);
 
         // Check if lobby exists
-        if (lobby == null)
+        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
+            Id.For<LobbyStateMachine>(lobbyId));
+
+        if (!lobby.EntityExists)
             return new NotFoundResult();
 
-        // Check if requester is the user
-        if (player is null || requesterId != userId)
+        // Check if requester is a lobby member and the user specified
+        if (!lobby.EntityState.Players.Any(p => p.Id == requesterId) || requesterId != userId)
             return new StatusCodeResult(403);
 
         // Check if board exists
