@@ -2,6 +2,14 @@
 
 public static class PubSubEvents
 {
+    public const string LOBBY_JOIN = "LOBBY_JOIN";
+
+    public const string LOBBY_LEAVE = "LOBBY_LEAVE";
+
+    public const string PLAYER_ADD = "PLAYER_ADD";
+
+    public const string PLAYER_REMOVE = "PLAYER_REMOVE";
+
     public const string LOBBY_UPDATE = "LOBBY_UPDATE";
 
     public const string LOBBY_SETTINGS_UPDATE = "LOBBY_SETTINGS_UPDATE";
@@ -11,6 +19,10 @@ public static class PubSubEvents
     public const string LOBBY_STATE_UPDATE = "LOBBY_STATE_UPDATE";
 
     public const string LOBBY_STATE_UPDATE_FAILED = "LOBBY_STATE_UPDATE_FAILED";
+
+    public const string LOBBY_HOST_UPDATE = "LOBBY_HOST_UPDATE";
+
+    public const string LOBBY_HOST_MANAGED_UPDATE = "LOBBY_HOST_MANAGED_UPDATE";
     
     public const string USER_JOIN = "USER_JOIN";
 

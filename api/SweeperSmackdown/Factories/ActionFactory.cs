@@ -19,6 +19,30 @@ public static class ActionFactory
     public static WebPubSubAction RemoveUserFromLobby(string userId, string lobbyId) =>
         WebPubSubAction.CreateRemoveUserFromGroupAction(userId, lobbyId);
 
+    public static WebPubSubAction JoinLobby(string lobbyId, string userId) =>
+        WebPubSubAction.CreateSendToUserAction(
+            userId,
+            MessageFactory.Create(PubSubEvents.LOBBY_JOIN, userId, lobbyId),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction LeaveLobby(string lobbyId, string userId) =>
+        WebPubSubAction.CreateSendToUserAction(
+            userId,
+            MessageFactory.Create(PubSubEvents.LOBBY_LEAVE, userId, lobbyId),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction AddPlayer(string lobbyId, Player player) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.PLAYER_ADD, "SYSTEM", player),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction RemovePlayer(string lobbyId, string userId) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.PLAYER_REMOVE, "SYSTEM", userId),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction UpdateLobby(string lobbyId, LobbyResponseDto lobby) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
@@ -50,16 +74,16 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.LOBBY_STATE_UPDATE_FAILED, "SYSTEM", currentState),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction AddUser(string userId, string lobbyId, Player player) =>
+    public static WebPubSubAction UpdateLobbyHost(string lobbyId, string hostId) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.USER_JOIN, userId, player),
+            MessageFactory.Create(PubSubEvents.LOBBY_HOST_UPDATE, "SYSTEM", hostId),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction RemoveUser(string userId, string lobbyId) =>
+    public static WebPubSubAction UpdateLobbyHostManaged(string lobbyId, bool hostManaged) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.USER_LEAVE, userId, ""),
+            MessageFactory.Create(PubSubEvents.LOBBY_HOST_MANAGED_UPDATE, "SYSTEM", hostManaged),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction StartLobby(string lobbyId) =>

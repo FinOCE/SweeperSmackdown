@@ -51,7 +51,7 @@ public static class LobbyDeleteActivityFunction
         // Delete lobby orchestrators
         List<string> orchestrationIds = new()
         {
-            Id.ForInstance(nameof(LobbyOrchestratorFunction), props.LobbyId),
+            Id.ForInstance(nameof(OldLobbyOrchestratorFunction), props.LobbyId),
             Id.ForInstance(nameof(GameActiveFunction), props.LobbyId),
             Id.ForInstance(nameof(GameCelebrationFunction), props.LobbyId),
             Id.ForInstance(nameof(GameCleanupFunction), props.LobbyId),

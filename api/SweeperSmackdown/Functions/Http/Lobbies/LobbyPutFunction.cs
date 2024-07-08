@@ -81,8 +81,8 @@ public static class LobbyPutFunction
 
         // Start orchestrator
         await orchestrationClient.StartNewAsync(
-            nameof(LobbyOrchestratorFunction),
-            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+            nameof(OldLobbyOrchestratorFunction),
+            Id.ForInstance(nameof(OldLobbyOrchestratorFunction), lobbyId));
 
         // Return created lobby
         return new CreatedResult($"/lobbies/{lobbyId}", LobbyResponseDto.FromModel(lobby, players));

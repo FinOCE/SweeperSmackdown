@@ -1,10 +1,10 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Functions.Activities;
-using SweeperSmackdown.Models;
+using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,58 +18,51 @@ public static class GameConfigureFunction
         [OrchestrationTrigger] IDurableOrchestrationContext ctx)
     {
         var lobbyId = Id.FromInstance(ctx.InstanceId);
+        ctx.SetCustomStatus(new GameConfigureStatus(EGameConfigureStatus.Pending));
 
-        await ctx.CallActivityAsync(
-            nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.ConfigureUnlocked));
-
-        // Wait for settings to be locked in
-        await ctx.WaitForExternalEvent(DurableEvents.GAME_START_LOCK);
-
-        await ctx.CallActivityAsync(
-            nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.ConfigureLocked));
-
-        // Either unlock changing settings or confirm
-        var unlock = ctx.WaitForExternalEvent(DurableEvents.GAME_START_UNLOCK);
-        var confirm = ctx.WaitForExternalEvent(DurableEvents.GAME_START_CONFIRMATION);
-
-        var winner = await Task.WhenAny(unlock, confirm);
-
-        // Restart orchestration if unlocking
-        if (winner == unlock)
-        {
-            ctx.ContinueAsNew(null);
-            return new GameSettings(); // Empty response to continue as new
-        }
+        // Wait for game settings to be confirmed
+        var confirm = ctx.WaitForExternalEvent(DurableEvents.LOBBY_CONFIRMED);
 
         // Set lobby state to countdown to share timer expiry
         var expiry = ctx.CurrentUtcDateTime.AddSeconds(Constants.SETUP_COUNTDOWN_DURATION);
-
-        await ctx.CallActivityAsync(
-            nameof(LobbyStateSetActivityFunction),
-            new LobbyStateSetActivityFunctionProps(lobbyId, ELobbyState.ConfigureCountdown, expiry));
+        ctx.SetCustomStatus(new GameConfigureStatus(EGameConfigureStatus.Confirmed));
 
         // Fetch lobby settings
-        var lobby = await ctx.CallActivityAsync<Lobby>(
-            nameof(LobbyFetchActivityFunction),
-            new LobbyFetchActivityFunctionProps(lobbyId));
+        var settings = await ctx.CallEntityAsync<GameSettings>(
+            Id.For<GameSettingsStateMachine>(lobbyId),
+            nameof(IGameSettingsStateMachine.GetSettings));
 
         // Create board manager for each user
-        var players = await ctx.CallActivityAsync<IEnumerable<Player>>(
-            nameof(LobbyPlayersFetchActivityFunction),
-            new LobbyPlayersFetchActivityFunctionProps(lobbyId));
+        var players = await ctx.CallEntityAsync<IEnumerable<Player>>(
+            Id.For<LobbyStateMachine>(lobbyId),
+            nameof(ILobbyStateMachine.GetPlayers));
 
         foreach (var player in players)
             _ = ctx.StartNewOrchestration(
                 nameof(BoardManagerOrchestratorFunction),
-                new BoardManagerOrchestratorFunctionProps(lobby.Settings),
+                new BoardManagerOrchestratorFunctionProps(settings),
                 Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobbyId, player.Id));
 
         // Start countdown
         using var timeoutCts = new CancellationTokenSource();
         await ctx.CreateTimer(expiry, timeoutCts.Token);
 
-        return lobby.Settings;
+        return settings;
     }
+}
+
+public class GameConfigureStatus
+{
+    public EGameConfigureStatus Status { get; set; }
+
+    public GameConfigureStatus(EGameConfigureStatus status)
+    {
+        Status = status;
+    }
+}
+
+public enum EGameConfigureStatus
+{
+    Pending,
+    Confirmed
 }
