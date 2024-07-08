@@ -38,6 +38,11 @@ public static class LobbyCreateOrchestratorFunction
             nameof(IGameSettingsStateMachine.Create),
             new GameSettings());
 
+        ctx.StartNewOrchestration(
+            nameof(LobbyOrchestratorFunction),
+            null,
+            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+
         await ctx.CallActivityAsync(
             nameof(NotifyActivityFunction),
             new NotifyActivityFunctionProps(ActionFactory.CreatedLobby(lobbyId, props.HostId)));

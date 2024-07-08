@@ -67,6 +67,8 @@ public class LobbyStateMachine : ILobbyStateMachine
 {
     private IDurableOrchestrationClient _orchestrationClient { get; }
 
+    private IDurableEntityClient _entityClient { get; }
+
     private IAsyncCollector<WebPubSubAction> _ws { get; }
 
     private string LobbyId => Entity.Current.EntityId.EntityKey;
@@ -84,15 +86,18 @@ public class LobbyStateMachine : ILobbyStateMachine
     public static Task Run(
         [EntityTrigger] IDurableEntityContext ctx,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
+        [DurableClient] IDurableEntityClient entityClient,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws
     ) =>
-        ctx.DispatchAsync<LobbyStateMachine>(orchestrationClient, ws);
+        ctx.DispatchAsync<LobbyStateMachine>(orchestrationClient, entityClient, ws);
 
     public LobbyStateMachine(
         IDurableOrchestrationClient orchestrationClient,
+        IDurableEntityClient entityClient,
         IAsyncCollector<WebPubSubAction> ws)
     {
         _orchestrationClient = orchestrationClient;
+        _entityClient = entityClient;
         _ws = ws;
 
         Players = Array.Empty<Player>();
@@ -111,14 +116,6 @@ public class LobbyStateMachine : ILobbyStateMachine
     {
         foreach (var player in Players.Where(p => p.Active))
             await RemovePlayer(player.Id);
-
-        await _orchestrationClient.StartNewAsync(
-            nameof(LobbyDeleteOrchestratorFunction),
-            Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), LobbyId));
-
-        Entity.Current.SignalEntity(
-            Id.For<GameSettingsStateMachine>(LobbyId),
-            nameof(IGameSettingsStateMachine.Delete));
 
         Entity.Current.DeleteState();
     }
@@ -165,20 +162,21 @@ public class LobbyStateMachine : ILobbyStateMachine
             nameof(IConnectionReference.SetLobbyId),
             LobbyId);
 
-        // TODO: Handle below properly
+        var status = await _orchestrationClient.GetStatusAsync(
+            Id.ForInstance(nameof(LobbyOrchestratorFunction), LobbyId));
 
-        //// Create board for new user if game is in progress or about to start
-        //if (lobby.State == ELobbyState.ConfigureCountdown || lobby.State == ELobbyState.Play)
-        //{
-        //    var boardManagerStatus = await orchestrationClient.GetStatusAsync(
-        //        Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId));
+        var customStatus = status.CustomStatus.ToObject<LobbyOrchestratorStatus>()!;
 
-        //    if (boardManagerStatus.IsInactive())
-        //        await orchestrationClient.StartNewAsync(
-        //            nameof(BoardManagerOrchestratorFunction),
-        //            Id.ForInstance(nameof(BoardManagerOrchestratorFunction), lobby.Id, userId),
-        //            new BoardManagerOrchestratorFunctionProps(lobby.Settings));
-        //}
+        if (customStatus.Status == ELobbyStatus.Starting || customStatus.Status == ELobbyStatus.Playing)
+        {
+            var settings = await _entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
+                Id.For<GameSettingsStateMachine>(LobbyId));
+
+            await _orchestrationClient.StartNewAsync(
+                nameof(BoardManagerOrchestratorFunction),
+                Id.ForInstance(nameof(BoardManagerOrchestratorFunction), LobbyId, userId),
+                new BoardManagerOrchestratorFunctionProps(settings.EntityState.Settings));
+        }
     }
 
     public async Task RemovePlayer(string userId)
@@ -198,7 +196,9 @@ public class LobbyStateMachine : ILobbyStateMachine
         if (HostId == userId)
         {
             if (Players.All(p => !p.Active))
-                await Delete();
+                await _orchestrationClient.StartNewAsync(
+                    nameof(LobbyDeleteOrchestratorFunction),
+                    Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), LobbyId));
             else
                 await SetHost(Players.First(p => p.Active).Id);
         }

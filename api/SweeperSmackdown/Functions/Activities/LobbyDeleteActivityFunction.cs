@@ -66,5 +66,14 @@ public static class LobbyDeleteActivityFunction
                 .SignalEntityAsync<IBoard>(
                     Id.For<Board>(player.Id),
                     board => board.Delete())));
+
+        // Delete state machines
+        await entityClient.SignalEntityAsync(
+            Id.For<GameSettingsStateMachine>(props.LobbyId),
+            nameof(IGameSettingsStateMachine.Delete));
+
+        await entityClient.SignalEntityAsync(
+            Id.For<LobbyStateMachine>(props.LobbyId),
+            nameof(ILobbyStateMachine.Delete));
     }
 }
