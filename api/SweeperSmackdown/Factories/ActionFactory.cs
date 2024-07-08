@@ -4,15 +4,20 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.DTOs.Websocket;
 using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Models;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Structures;
-using System;
 using System.Text;
 
 namespace SweeperSmackdown.Factories;
 
 public static class ActionFactory
 {
+    public static WebPubSubAction UpdateLobbyStatus(string lobbyId, LobbyOrchestratorStatus orchestratorStatus) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.LOBBY_STATUS_UPDATE, "SYSTEM", orchestratorStatus),
+            WebPubSubDataType.Json);
+
     public static WebPubSubAction AddUserToLobby(string userId, string lobbyId) =>
         WebPubSubAction.CreateAddUserToGroupAction(userId, lobbyId);
 
@@ -34,13 +39,19 @@ public static class ActionFactory
     public static WebPubSubAction AddPlayer(string lobbyId, Player player) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.PLAYER_ADD, "SYSTEM", player),
+            MessageFactory.Create(PubSubEvents.PLAYER_ADD, player.Id, player),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction RemovePlayer(string lobbyId, string userId) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.PLAYER_REMOVE, "SYSTEM", userId),
+            MessageFactory.Create(PubSubEvents.PLAYER_REMOVE, userId, ""),
+            WebPubSubDataType.Json);
+
+    public static WebPubSubAction UpdatePlayer(string lobbyId, Player player) =>
+        WebPubSubAction.CreateSendToGroupAction(
+            lobbyId,
+            MessageFactory.Create(PubSubEvents.PLAYER_UPDATE, player.Id, player),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction UpdateLobby(string lobbyId, LobbyResponseDto lobby) =>
@@ -62,13 +73,13 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.LOBBY_SETTINGS_UPDATE_FAILED, "SYSTEM", settings), // TODO: Create settings response dto
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction UpdateLobbyState(string lobbyId, EGameSettingsStateMachineState state) =>
+    public static WebPubSubAction UpdateConfigureState(string lobbyId, EGameSettingsStateMachineState state) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
             MessageFactory.Create(PubSubEvents.LOBBY_STATE_UPDATE, "SYSTEM", state),
             WebPubSubDataType.Json);
     
-    public static WebPubSubAction UpdateLobbyStateFailed(string userId, EGameSettingsStateMachineState currentState) =>
+    public static WebPubSubAction UpdateConfigureStateFailed(string userId, EGameSettingsStateMachineState currentState) =>
         WebPubSubAction.CreateSendToUserAction(
             userId,
             MessageFactory.Create(PubSubEvents.LOBBY_STATE_UPDATE_FAILED, "SYSTEM", currentState),
@@ -121,9 +132,4 @@ public static class ActionFactory
             lobbyId,
             MessageFactory.Create(PubSubEvents.GAME_WON, userId, ""),
             WebPubSubDataType.Json);
-
-    public static WebPubSubAction DeleteLobby(string lobbyId) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.LOBBY_DELETE, "SYSTEM", ""));
 }

@@ -43,7 +43,7 @@ public static class BoardManagerOrchestratorFunction
             ? props.Settings.Seed + iteration
             : ctx.NewGuid().GetHashCode();
 
-        // Generate boards
+        // Generate board
         var gameState = GameStateFactory.Create(seed, props.Settings);
         var lives = props.Settings.Lives == 0 ? -1 : props.Settings.Lives;
 
@@ -54,8 +54,8 @@ public static class BoardManagerOrchestratorFunction
 
         // Notify users the board was created
         await ctx.CallActivityAsync(
-            nameof(BoardCreatedActivityFunction),
-            new BoardCreatedActivityFunctionProps(lobbyId, userId, gameState));
+            nameof(NotifyActivityFunction),
+            new NotifyActivityFunctionProps(ActionFactory.CreateBoard(userId, lobbyId, gameState, false)));
 
         // Wait for new board to be completed
         var skippedTask = ctx.WaitForExternalEvent(DurableEvents.BOARD_SKIPPED);
@@ -66,9 +66,10 @@ public static class BoardManagerOrchestratorFunction
 
         // Add score if completed
         if (winner == completedTask)
-            await ctx.CallActivityAsync(
-                nameof(ScoreAddActivityFunction),
-                new ScoreAddActivityFunctionProps(lobbyId, userId));
+            ctx.SignalEntity(
+                Id.For<LobbyStateMachine>(lobbyId),
+                nameof(ILobbyStateMachine.AddScore),
+                userId);
 
         // Start new board if boards still remaining or notify orchestrator of completion
         props.Remaining = Math.Max(props.Remaining - decrement, -1);

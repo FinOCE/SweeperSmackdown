@@ -2,6 +2,8 @@
 
 public static class PubSubEvents
 {
+    public const string LOBBY_STATUS_UPDATE = "LOBBY_STATUS_UPDATE";
+
     public const string LOBBY_JOIN = "LOBBY_JOIN";
 
     public const string LOBBY_LEAVE = "LOBBY_LEAVE";
@@ -9,6 +11,8 @@ public static class PubSubEvents
     public const string PLAYER_ADD = "PLAYER_ADD";
 
     public const string PLAYER_REMOVE = "PLAYER_REMOVE";
+
+    public const string PLAYER_UPDATE = "PLAYER_UPDATE";
 
     public const string LOBBY_UPDATE = "LOBBY_UPDATE";
 

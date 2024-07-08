@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using SweeperSmackdown.Assets;
 using SweeperSmackdown.Factories;
-using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using SweeperSmackdown.DTOs;
 using System.Collections.Generic;
 using System.Linq;
+using SweeperSmackdown.Functions.Orchestrators;
 
 namespace SweeperSmackdown.Functions.Entities;
 
@@ -42,6 +42,11 @@ public interface IGameSettingsStateMachine
     /// </summary>
     /// <param name="settings">The new settings to use</param>
     Task UpdateSettings(GameSettingsUpdateRequest updates);
+
+    /// <summary>
+    /// Regenerate a new random seed for the lobby.
+    /// </summary>
+    Task RegenerateSeed();
 
     /// <summary>
     /// Gets the current state of the state machine.
@@ -157,6 +162,14 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
         }
     }
 
+    public Task RegenerateSeed()
+    {
+        if (Settings.Seed == 0)
+            return Task.CompletedTask;
+
+        return UpdateSettings(new() { ShareBoards = true });
+    }
+
     public Task<EGameSettingsStateMachineState> GetState() =>
         Task.FromResult(State);
 
@@ -168,11 +181,11 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
                 throw new InvalidOperationException();
 
             State = EGameSettingsStateMachineState.Locked;
-            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureState(UserId, State));
         }
         catch (InvalidOperationException)
         {
-            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureStateFailed(UserId, State));
         }
     }
 
@@ -184,11 +197,11 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
                 throw new InvalidOperationException();
 
             State = EGameSettingsStateMachineState.Unlocked;
-            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureState(UserId, State));
         }
         catch (InvalidOperationException)
         {
-            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureStateFailed(UserId, State));
         }
     }
 
@@ -200,16 +213,16 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
                 throw new InvalidOperationException();
 
             State = EGameSettingsStateMachineState.Confirmed;
-            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureState(UserId, State));
 
             await _orchestrationClient.RaiseEventAsync(
-                Id.ForInstance(nameof(GameConfigureFunction), UserId),
+                Id.ForInstance(nameof(LobbyOrchestratorFunction), UserId),
                 DurableEvents.LOBBY_CONFIRMED,
                 Settings);
         }
         catch (InvalidOperationException)
         {
-            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureStateFailed(UserId, State));
         }
     }
 
@@ -221,11 +234,11 @@ public class GameSettingsStateMachine : IGameSettingsStateMachine
                 throw new InvalidOperationException();
 
             State = EGameSettingsStateMachineState.Unlocked;
-            await _ws.AddAsync(ActionFactory.UpdateLobbyState(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureState(UserId, State));
         }
         catch (InvalidOperationException)
         {
-            await _ws.AddAsync(ActionFactory.UpdateLobbyStateFailed(UserId, State));
+            await _ws.AddAsync(ActionFactory.UpdateConfigureStateFailed(UserId, State));
         }
     }
 }

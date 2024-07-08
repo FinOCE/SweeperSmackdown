@@ -57,6 +57,10 @@ public interface ILobbyStateMachine
     /// </summary>
     /// <param name="userId">The ID of the player to remove</param>
     public Task RemovePlayer(string userId);
+
+    public Task AddScore(string userId);
+
+    public Task AddWin(string userId);
 }
 
 [DataContract]
@@ -107,6 +111,8 @@ public class LobbyStateMachine : ILobbyStateMachine
             Id.For<GameSettingsStateMachine>(LobbyId),
             nameof(IGameSettingsStateMachine.Create),
             new GameSettings());
+
+        // TODO: Start lobby orchestrator (figure out how to ensure game settings exist)
 
         await AddPlayer(hostId);
     }
@@ -186,5 +192,29 @@ public class LobbyStateMachine : ILobbyStateMachine
             else
                 await SetHost(Players.First(p => p.Active).Id);
         }
+    }
+
+    public async Task AddScore(string userId)
+    {
+        var player = Players.FirstOrDefault(p => p.Id == userId)
+            ?? throw new InvalidOperationException();
+
+        player.Score += 1;
+
+        Players = Players.Where(p => p.Id != userId).Append(player);
+
+        await _ws.AddAsync(ActionFactory.UpdatePlayer(LobbyId, player));
+    }
+
+    public async Task AddWin(string userId)
+    {
+        var player = Players.FirstOrDefault(p => p.Id == userId)
+            ?? throw new InvalidOperationException();
+
+        player.Wins += 1;
+
+        Players = Players.Where(p => p.Id != userId).Append(player);
+
+        await _ws.AddAsync(ActionFactory.UpdatePlayer(LobbyId, player));
     }
 }
