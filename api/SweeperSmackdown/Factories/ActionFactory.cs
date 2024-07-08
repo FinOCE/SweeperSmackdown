@@ -97,12 +97,6 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.LOBBY_HOST_MANAGED_UPDATE, "SYSTEM", hostManaged),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction StartLobby(string lobbyId) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.LOBBY_START, "SYSTEM", ""),
-            WebPubSubDataType.Json);
-
     public static WebPubSubAction CreateBoard(string userId, string lobbyId, byte[] gameState, bool reset) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,

@@ -9,7 +9,6 @@ using SweeperSmackdown.Factories;
 using SweeperSmackdown.Utils;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 
