@@ -60,23 +60,17 @@ public static class ActionFactory
             MessageFactory.Create(PubSubEvents.PLAYER_UPDATE, player.Id, player),
             WebPubSubDataType.Json);
 
-    public static WebPubSubAction UpdateLobby(string lobbyId, LobbyResponseDto lobby) =>
-        WebPubSubAction.CreateSendToGroupAction(
-            lobbyId,
-            MessageFactory.Create(PubSubEvents.LOBBY_UPDATE, "SYSTEM", lobby),
-            WebPubSubDataType.Json);
-
     public static WebPubSubAction UpdateLobbySettings(string lobbyId, GameSettings settings) =>
         WebPubSubAction.CreateSendToGroupAction(
             lobbyId,
-            MessageFactory.Create(PubSubEvents.LOBBY_SETTINGS_UPDATE, "SYSTEM", settings), // TODO: Create settings response dto
+            MessageFactory.Create(PubSubEvents.LOBBY_SETTINGS_UPDATE, "SYSTEM", GameSettingsResponse.FromModel(settings)),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction UpdateLobbySettingsFailed(string userId, GameSettings settings) =>
 
         WebPubSubAction.CreateSendToUserAction(
             userId,
-            MessageFactory.Create(PubSubEvents.LOBBY_SETTINGS_UPDATE_FAILED, "SYSTEM", settings), // TODO: Create settings response dto
+            MessageFactory.Create(PubSubEvents.LOBBY_SETTINGS_UPDATE_FAILED, "SYSTEM", GameSettingsResponse.FromModel(settings)),
             WebPubSubDataType.Json);
 
     public static WebPubSubAction UpdateConfigureState(string lobbyId, EGameSettingsStateMachineState state) =>
