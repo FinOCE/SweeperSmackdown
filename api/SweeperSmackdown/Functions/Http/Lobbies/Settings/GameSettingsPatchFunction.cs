@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using SweeperSmackdown.Bindings.Entity;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Utils;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies.Settings;
@@ -18,38 +18,24 @@ public static class GameSettingsPatchFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}/settings")] GameSettingsUpdateRequest payload,
         HttpRequest req,
+        [Entity("{lobbyId}")] LobbyStateMachine? lobby,
+        [Entity("{lobbyId}")] GameSettingsStateMachine? settings,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
-        // Only allow if user is logged in
+        // Validate request
         var requesterId = req.GetUserId();
 
-        if (requesterId == null)
+        if (requesterId is null)
             return new StatusCodeResult(401);
 
-        // Check if lobby exists
-        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
-            Id.For<LobbyStateMachine>(lobbyId));
-
-        if (!lobby.EntityExists)
+        if (lobby is null || settings is null)
             return new NotFoundResult();
 
-        // Only allow lobby members to modify
-        if (!lobby.EntityState.Players.Any(p => p.Id == requesterId))
+        if (!lobby.IsAllowedToModifySettings(requesterId))
             return new StatusCodeResult(403);
 
-        // Only allow host to modify if host managed
-        if (lobby.EntityState.HostId != requesterId && lobby.EntityState.HostManaged)
-            return new StatusCodeResult(403);
-
-        // Short circuit if entity is in invalid state
-        var settings = await entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
-            Id.For<GameSettingsStateMachine>(lobbyId));
-
-        if (!settings.EntityExists)
-            return new NotFoundResult();
-
-        if (!GameSettingsStateMachine.ValidStatesToUpdateSettings.Contains(settings.EntityState.State))
+        if (!settings.IsConfigurable())
             return new ConflictResult();
 
         // Update lobby settings
@@ -58,6 +44,7 @@ public static class GameSettingsPatchFunction
             nameof(IGameSettingsStateMachine.UpdateSettings),
             payload);
 
+        // Respond to request
         return new AcceptedResult();
     }
 }
