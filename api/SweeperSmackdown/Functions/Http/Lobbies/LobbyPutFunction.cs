@@ -61,7 +61,8 @@ public static class LobbyPutFunction
             // Start create orchestrator and return 202
             await orchestrationClient.StartNewAsync(
                 nameof(LobbyCreateOrchestratorFunction),
-                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId));
+                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
+                new LobbyCreateOrchestratorFunctionProps(requesterId));
 
             return new AcceptedResult();
         }

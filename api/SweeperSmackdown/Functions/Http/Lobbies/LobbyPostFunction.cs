@@ -18,7 +18,7 @@ public static class LobbyPostFunction
 {
     [FunctionName(nameof(LobbyPostFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "lobbies")] HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient)
     {
@@ -46,7 +46,8 @@ public static class LobbyPostFunction
         // Start create orchestrator and return 202
         await orchestrationClient.StartNewAsync(
             nameof(LobbyCreateOrchestratorFunction),
-            Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId));
+            Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
+            new LobbyCreateOrchestratorFunctionProps(requesterId));
 
         return new AcceptedResult();
     }

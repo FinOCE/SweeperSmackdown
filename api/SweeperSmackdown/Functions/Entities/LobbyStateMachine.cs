@@ -105,9 +105,6 @@ public class LobbyStateMachine : ILobbyStateMachine
 
     public void Create(string hostId)
     {
-        if (!Entity.Current.HasState)
-            return;
-
         HostId = hostId;
         HostManaged = false;
     }
