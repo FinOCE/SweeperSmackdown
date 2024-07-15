@@ -2,7 +2,7 @@
 
 namespace SweeperSmackdown.DTOs;
 
-public class BoardSolutionPostRequestDto
+public class BoardSolutionRequest
 {
     [JsonProperty("gameState")]
     public string GameState { get; set; } = null!;

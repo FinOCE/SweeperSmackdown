@@ -23,7 +23,7 @@ public static class BoardSolutionActionFunction
             AuthorizationLevel.Anonymous,
             "post",
             Route = "lobbies/{lobbyId}/boards/{userId}/solution")]
-            BoardSolutionPostRequestDto payload,
+            BoardSolutionRequest payload,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         HttpRequest req,

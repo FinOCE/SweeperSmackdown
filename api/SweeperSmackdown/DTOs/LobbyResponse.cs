@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;
 
-public class LobbyResponseDto
+public class LobbyResponse
 {
     [JsonProperty("lobbyId")]
     [JsonPropertyName("lobbyId")]
@@ -43,7 +43,7 @@ public class LobbyResponseDto
     [JsonPropertyName("settings")]
     public GameSettings Settings { get; set; }
 
-    public LobbyResponseDto(
+    public LobbyResponse(
         string lobbyId,
         string hostId,
         IEnumerable<string> userIds,
@@ -63,7 +63,7 @@ public class LobbyResponseDto
         Settings = settings;
     }
 
-    public static LobbyResponseDto FromModel(
+    public static LobbyResponse FromModel(
         string id,
         LobbyOrchestratorStatus status,
         LobbyStateMachine lobby,

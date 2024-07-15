@@ -57,7 +57,7 @@ public static class LobbyGetFunction
 
         // Respond to request
         return new OkObjectResult(
-            LobbyResponseDto.FromModel(
+            LobbyResponse.FromModel(
                 lobbyId,
                 customStatus,
                 lobby.EntityState,

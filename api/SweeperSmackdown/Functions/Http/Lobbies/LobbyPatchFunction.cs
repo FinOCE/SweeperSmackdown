@@ -15,7 +15,7 @@ public static class LobbyPatchFunction
 {
     [FunctionName(nameof(LobbyPatchFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequestDto payload,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequest payload,
         HttpRequest req,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)

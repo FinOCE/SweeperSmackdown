@@ -7,73 +7,147 @@ export namespace Websocket {
     data?: T
   }
 
-  export namespace Response {
-    export type LobbyUpdate = {
-      eventName: "LOBBY_UPDATE"
-      userId: string
+  export namespace Request {
+    export type OnMoveData = {
+      lobbyId: string
+      reveals?: number[]
+      flagAdd?: number
+      flagRemove?: number
+    }
+  }
 
-      /** Updated lobby */
-      data: Api.Lobby
+  export namespace Response {
+    export type CreatedLobby = {
+      eventName: "LOBBY_CREATED"
+      userId: "SYSTEM"
+
+      /** The ID of the lobby created */
+      data: string
     }
 
-    export type UserJoin = {
-      eventName: "USER_JOIN"
+    export type UpdateLobbyStatus = {
+      eventName: "LOBBY_STATUS_UPDATE"
+      userId: "SYSTEM"
+
+      data: Api.LobbyOrchestratorStatus
+    }
+
+    export type JoinLobby = {
+      eventName: "LOBBY_JOIN"
       userId: string
 
-      /** The data for the player who joined */
+      /** The ID of the lobby joined */
+      data: string
+    }
+
+    export type LeaveLobby = {
+      eventName: "LOBBY_LEAVE"
+      userId: string
+
+      /** The ID of the lobby left */
+      data: string
+    }
+
+    export type AddPlayer = {
+      eventName: "PLAYER_ADD"
+      userId: string
+
       data: Api.Player
     }
 
-    export type UserLeave = {
-      eventName: "USER_LEAVE"
+    export type RemovePlayer = {
+      eventName: "PLAYER_REMOVE"
       userId: string
     }
 
-    export type LobbyStart = {
-      eventName: "LOBBY_START"
-      userId: "SYSTEM"
+    export type UpdatePlayer = {
+      eventName: "PLAYER_UPDATE"
+      userId: string
+
+      data: Api.Player
     }
 
-    export type BoardCreate = {
+    export type UpdateLobbySettings = {
+      eventName: "LOBBY_UPDATE_SETTINGS"
+      userId: "SYSTEM"
+
+      data: Api.GameSettings
+    }
+
+    export type UpdateLobbySettingsFailed = {
+      eventName: "LOBBY_UPDATE_SETTINGS_FAILED"
+      userId: "SYSTEM"
+
+      /** The correct current game settings */
+      data: Api.GameSettings
+    }
+
+    export type UpdateConfigureState = {
+      eventName: "LOBBY_STATE_UPDATE"
+      userId: "SYSTEM"
+
+      data: Api.Enums.EGameSettingsStateMachineState
+    }
+
+    export type UpdateConfigureStateFailed = {
+      eventName: "LOBBY_STATE_UPDATE_FAILED"
+      userId: "SYSTEM"
+
+      /** The correct current configure state */
+      data: Api.Enums.EGameSettingsStateMachineState
+    }
+
+    export type UpdateLobbyHost = {
+      eventName: "LOBBY_HOST_UPDATE"
+      userId: "SYSTEM"
+
+      /** The ID of the new host */
+      data: string
+    }
+
+    export type UpdateLobbyHostManaged = {
+      eventName: "LOBBY_HOST_MANAGED_UPDATE"
+      userId: "SYSTEM"
+
+      /** Whether or not the lobby is now host managed */
+      data: boolean
+    }
+
+    export type CreateBoard = {
       eventName: "BOARD_CREATE"
       userId: string
 
-      /** Serialized game state and whether or not it was a reset */
-      data: { gameState: string; reset: boolean }
+      /** The updated state of the board and whether it was created due to reset */
+      data: {
+        gameState: string
+        reset: boolean
+      }
     }
 
-    export type MoveAdd = {
+    export type MakeMove = {
       eventName: "MOVE_ADD"
       userId: string
 
-      /** The indices of tiles that were revealed by the move */
-      data: { lobbyId: string } & ({ reveals: number[] } | { flagAdd: number } | { flagRemove: number })
+      data: Request.OnMoveData
+    }
+
+    export type RejectMove = {
+      eventName: "MOVE_REJECT"
+      userId: string
+
+      data: Request.OnMoveData
+    }
+
+    export type UpdatePlayerState = {
+      eventName: "PLAYER_STATE_UPDATE"
+      userId: string
+
+      data: Api.PlayerState
     }
 
     export type GameWon = {
       eventName: "GAME_WON"
       userId: string
-    }
-
-    export type GameStarting = {
-      eventName: "GAME_STARTING"
-      userId: "SYSTEM"
-
-      /** The time the game will start as an ISO string */
-      data: string
-    }
-
-    export type GameCelebrationStarting = {
-      eventName: "GAME_CELEBRATION_STARTING"
-      userId: "SYSTEM"
-
-      /** The time the game celebration will complete as an ISO string */
-      data: string
-    }
-
-    export type LobbyDelete = {
-      eventName: "LOBBY_DELETE"
-      userId: "SYSTEM"
     }
   }
 }

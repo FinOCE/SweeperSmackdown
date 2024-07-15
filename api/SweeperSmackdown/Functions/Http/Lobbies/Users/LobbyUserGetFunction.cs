@@ -47,6 +47,6 @@ public static class LobbyUserGetFunction
             return new NotFoundResult();
 
         // Respond to request
-        return new OkObjectResult(LobbyUserResponseDto.FromModel(player));
+        return new OkObjectResult(PlayerResponse.FromModel(player));
     }
 }

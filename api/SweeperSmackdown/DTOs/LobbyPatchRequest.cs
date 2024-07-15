@@ -2,7 +2,7 @@
 
 namespace SweeperSmackdown.DTOs;
 
-public class LobbyPatchRequestDto
+public class LobbyPatchRequest
 {
     [JsonProperty("hostId")]
     public string? HostId { get; set; }

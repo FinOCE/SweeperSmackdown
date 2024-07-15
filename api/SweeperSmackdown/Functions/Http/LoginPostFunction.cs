@@ -13,7 +13,7 @@ public static class LoginPostFunction
 {
     [FunctionName(nameof(LoginPostFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "login")] LoginPostRequestDto payload)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "login")] LoginRequest payload)
     {
         string id;
         if (payload.Mocked)
@@ -42,6 +42,6 @@ public static class LoginPostFunction
         var hash = Hash.Compute(id);
 
         // Return the generated token
-        return new OkObjectResult(new LoginPostResponseDto($"{id}:{hash}"));
+        return new OkObjectResult(new LoginResponse($"{id}:{hash}"));
     }
 }

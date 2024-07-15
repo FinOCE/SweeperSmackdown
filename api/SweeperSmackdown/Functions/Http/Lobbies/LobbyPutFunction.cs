@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
-using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
@@ -50,7 +48,7 @@ public static class LobbyPutFunction
             if (customStatus is null)
                 return new StatusCodeResult(500);
 
-            return new OkObjectResult(LobbyResponseDto.FromModel(
+            return new OkObjectResult(LobbyResponse.FromModel(
                 lobbyId,
                 customStatus,
                 lobby.EntityState,
@@ -61,8 +59,7 @@ public static class LobbyPutFunction
             // Start create orchestrator and return 202
             await orchestrationClient.StartNewAsync(
                 nameof(LobbyCreateOrchestratorFunction),
-                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
-                new LobbyCreateOrchestratorFunctionProps(requesterId));
+                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId));
 
             return new AcceptedResult();
         }
