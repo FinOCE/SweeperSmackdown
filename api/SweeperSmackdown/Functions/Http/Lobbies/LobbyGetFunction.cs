@@ -7,6 +7,7 @@ using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Linq;
 using System.Threading.Tasks;
@@ -59,7 +60,7 @@ public static class LobbyGetFunction
         return new OkObjectResult(
             LobbyResponse.FromModel(
                 lobbyId,
-                customStatus,
+                new PreciseLobbyStatus(customStatus, customStatus.Status == ELobbyStatus.Configuring ? settings.EntityState.State : null),
                 lobby.EntityState,
                 settings.EntityState));
     }

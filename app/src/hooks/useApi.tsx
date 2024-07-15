@@ -91,10 +91,10 @@ function getApi(baseUrl: string | null, token: string | null) {
           .then(accept(202))
           .then(result()),
 
-      lobbySettingsPatch: (lobbyId: string, updates: Api.Request.LobbyPatch) =>
+      lobbySettingsPatch: (lobbyId: string, settings: Api.Request.GameSettingsPatch) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/settings`, {
           method: "PATCH",
-          body: JSON.stringify(updates),
+          body: JSON.stringify(settings),
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
           .then(accept(202))

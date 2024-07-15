@@ -10,15 +10,19 @@ export namespace Api {
     seed: number
   }
 
-  export type Lobby = {
-    lobbyId: string
-    hostId: string
-    userIds: string[]
-    scores: Record<string, number>
-    wins: Record<string, number>
+  export type PreciseLobbyStatus = {
     status: Enums.ELobbyStatus
-    stateExpiry: string
-    settings: Api.GameSettings
+    statusUntil: string
+    configureState?: Enums.EGameSettingsStateMachineState
+  }
+
+  export type Lobby = {
+    id: string
+    hostId: string
+    hostManaged: boolean
+    players: Player[]
+    status: PreciseLobbyStatus
+    settings: GameSettings
   }
 
   export type Player = {

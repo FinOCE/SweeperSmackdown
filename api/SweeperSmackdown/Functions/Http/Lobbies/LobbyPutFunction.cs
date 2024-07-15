@@ -7,6 +7,7 @@ using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
+using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 
@@ -50,7 +51,7 @@ public static class LobbyPutFunction
 
             return new OkObjectResult(LobbyResponse.FromModel(
                 lobbyId,
-                customStatus,
+                new PreciseLobbyStatus(customStatus, customStatus.Status == ELobbyStatus.Configuring ? settings.EntityState.State : null),
                 lobby.EntityState,
                 settings.EntityState));
         }
@@ -59,7 +60,8 @@ public static class LobbyPutFunction
             // Start create orchestrator and return 202
             await orchestrationClient.StartNewAsync(
                 nameof(LobbyCreateOrchestratorFunction),
-                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId));
+                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
+                new LobbyCreateOrchestratorFunctionProps(requesterId));
 
             return new AcceptedResult();
         }
