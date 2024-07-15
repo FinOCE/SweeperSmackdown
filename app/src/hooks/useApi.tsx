@@ -50,71 +50,62 @@ function getApi(baseUrl: string | null, token: string | null) {
   return {
     hasToken: token !== null,
     api: {
-      lobbyGet: (lobbyId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}`, {
+      boardGetAll: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => result(true)<Api.Response.LobbyGet>(res)),
+          .then(res => result(true)<Api.Response.BoardGetAll>(res)),
 
-      lobbyPatch: (lobbyId: string, settings: Api.Request.LobbyPatch) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}`, {
-          method: "PATCH",
-          body: JSON.stringify(settings),
+      boardGet: (lobbyId: string, userId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(200))
+          .then(res => result(true)<Api.Response.BoardGet>(res)),
+
+      boardReset: (lobbyId: string, userId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/reset`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(202))
+          .then(result()),
+
+      boardSkip: (lobbyId: string, userId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/skip`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(202))
+          .then(result()),
+
+      boardSolution: (lobbyId: string, userId: string, gameState: Uint8Array) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/solution`, {
+          method: "POST",
+          body: JSON.stringify({ gameState: new TextDecoder("utf-8").decode(gameState) }),
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.LobbyPatch>(res)),
+          .then(accept(202))
+          .then(result()),
 
-      lobbyPut: (lobbyId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
+      lobbySettingsPatch: (lobbyId: string, updates: Api.Request.LobbyPatch) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/settings`, {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
-          .then(accept(200, 201))
-          .then(res => result(true)<Api.Response.LobbyPut>(res)),
-
-      lobbyPost: () =>
-        fetch(baseUrl + "/lobbies", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(201))
-          .then(res => result(true)<Api.Response.LobbyPost>(res)),
-
-      negotiate: async (userId: string) =>
-        await fetch(baseUrl + `/negotiate?userId=${userId}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.Negotiate>(res)),
-
-      token: async (code: string, mocked: boolean) =>
-        fetch(baseUrl + "/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, mocked })
-        })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.Token>(res)),
-
-      login: async (accessToken: string, mocked: boolean) =>
-        fetch(baseUrl + "/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accessToken, mocked })
-        })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.Login>(res)),
+          .then(accept(202))
+          .then(result()),
 
       lobbyUserDelete: (lobbyId: string, userId: string) =>
         fetch(baseUrl + `/lobbies/${lobbyId}/users/${userId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` }
         })
-          .then(accept(204, 404))
+          .then(accept(202, 404))
           .then(result()),
 
       lobbyUserGet: (lobbyId: string, userId: string) =>
@@ -130,48 +121,56 @@ function getApi(baseUrl: string | null, token: string | null) {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` }
         })
-          .then(accept(200, 201))
-          .then(res => result(true)<Api.Response.LobbyUserPut>(res)),
+          .then(accept(202))
+          .then(result()),
 
-      boardGet: (lobbyId: string, userId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}`, {
+      lobbyDelete: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(202, 404))
+          .then(result()),
+
+      lobbyGet: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(accept(200))
-          .then(res => result(true)<Api.Response.BoardGet>(res)),
+          .then(res => result(true)<Api.Response.LobbyGet>(res)),
 
-      boardGetAll: (lobbyId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/boards`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(200))
-          .then(res => result(true)<Api.Response.BoardGet>(res)),
-
-      boardReset: (lobbyId: string, userId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/reset`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(204))
-          .then(result()),
-
-      boardSkip: (lobbyId: string, userId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/skip`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(accept(204))
-          .then(result()),
-
-      boardSolution: (lobbyId: string, userId: string, gameState: Uint8Array) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/boards/${userId}/solution`, {
-          method: "POST",
-          body: JSON.stringify({ gameState: new TextDecoder("utf-8").decode(gameState) }),
+      lobbyPatch: (lobbyId: string, settings: Api.Request.LobbyPatch) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}`, {
+          method: "PATCH",
+          body: JSON.stringify(settings),
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
         })
-          .then(accept(204))
+          .then(accept(202))
+          .then(result()),
+
+      lobbyPost: () =>
+        fetch(baseUrl + "/lobbies", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(202))
+          .then(result()),
+
+      lobbyPut: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}`, {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(200, 202))
+          .then(result()),
+
+      lobbyConfirm: (lobbyId: string) =>
+        fetch(baseUrl + `/lobbies/${lobbyId}/confirm`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(accept(202))
           .then(result()),
 
       lobbyLock: (lobbyId: string) =>
@@ -190,13 +189,31 @@ function getApi(baseUrl: string | null, token: string | null) {
           .then(accept(202))
           .then(result()),
 
-      lobbyConfirm: (lobbyId: string) =>
-        fetch(baseUrl + `/lobbies/${lobbyId}/confirm`, {
+      negotiate: async (userId: string) =>
+        await fetch(baseUrl + `/negotiate?userId=${userId}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
         })
-          .then(accept(202))
-          .then(result())
+          .then(accept(200))
+          .then(res => result(true)<Api.Response.NegotiatePost>(res)),
+
+      token: async (code: string, mocked: boolean) =>
+        fetch(baseUrl + "/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, mocked })
+        })
+          .then(accept(200))
+          .then(res => result(true)<Api.Response.TokenPost>(res)),
+
+      login: async (accessToken: string, mocked: boolean) =>
+        fetch(baseUrl + "/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accessToken, mocked })
+        })
+          .then(accept(200))
+          .then(res => result(true)<Api.Response.LoginPost>(res))
     }
   }
 }

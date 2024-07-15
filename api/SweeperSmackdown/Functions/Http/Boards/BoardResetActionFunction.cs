@@ -62,6 +62,6 @@ public static class BoardResetActionFunction
         await ws.AddAsync(ActionFactory.CreateBoard(userId, lobbyId, entity.EntityState.InitialState, true));
 
         // Respond to request
-        return new NoContentResult();
+        return new AcceptedResult();
     }
 }

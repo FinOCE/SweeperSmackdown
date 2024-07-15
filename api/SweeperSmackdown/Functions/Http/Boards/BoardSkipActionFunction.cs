@@ -69,6 +69,6 @@ public static class BoardSkipActionFunction
             DurableEvents.BOARD_SKIPPED);
 
         // Respond to request
-        return new NoContentResult();
+        return new AcceptedResult();
     }
 }

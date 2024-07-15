@@ -78,6 +78,6 @@ public static class BoardSolutionActionFunction
             DurableEvents.BOARD_COMPLETED);
 
         // Respond to request
-        return new NoContentResult();
+        return new AcceptedResult();
     }
 }
