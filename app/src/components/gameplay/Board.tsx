@@ -13,7 +13,7 @@ type BoardProps = {
   setLocalState: Dispatch<SetStateAction<Uint8Array | undefined>>
   lost: boolean
   setLost: Dispatch<SetStateAction<boolean>>
-  notifyMoveAdd: (data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) => void
+  notifyMoveAdd: (data: Omit<Websocket.Response.MakeMove["data"], "lobbyId">) => void
 }
 
 export function Board(props: BoardProps) {

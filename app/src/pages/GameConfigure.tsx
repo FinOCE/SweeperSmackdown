@@ -15,14 +15,6 @@ import { Settings } from "../components/ui/controls/Settings"
 import { getDisplayDetails } from "../utils/getDisplayDetails"
 import { ProfilePicture } from "../components/ui/users/ProfilePicture"
 import { useLobby } from "../hooks/resources/useLobby"
-import { useSettings } from "../hooks/resources/useSettings"
-import { useWins } from "../hooks/resources/useWins"
-import { useScores } from "../hooks/resources/useScores"
-import { useMembers } from "../hooks/resources/useMembers"
-import { useWebsocket } from "../hooks/useWebsocket"
-import { isEvent } from "../utils/isEvent"
-import { Websocket } from "../types/Websocket"
-import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 import { useDelay } from "../hooks/useDelay"
 
 type GameConfigureProps = {
@@ -32,12 +24,7 @@ type GameConfigureProps = {
 export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const { api } = useApi()
   const { participants, user } = useEmbeddedAppSdk()
-  const { ws } = useWebsocket()
-  const { lobby, leaveLobby, lockLobby, unlockLobby, confirmLobby } = useLobby()
-  const { settings } = useSettings()
-  const { wins } = useWins()
-  const { scores } = useScores()
-  const { members } = useMembers()
+  const { lobby, controls } = useLobby()
   const { navigate } = useNavigation()
   const { countdown, start, stop } = useCountdown(() => {
     setCountdownCompleted(true)
@@ -45,7 +32,7 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   })
 
   // Create function to handle translatin between game settings and payloads
-  type LocalSettings = Required<Omit<Api.Request.LobbyPatch, "hostId">>
+  type LocalSettings = Required<Omit<Api.Request.GameSettingsPatch, "difficulty">>
 
   function settingsToPayload(settings: Api.GameSettings | null): LocalSettings {
     const base = {
@@ -77,17 +64,17 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   }
 
   // Setup local state
-  const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(settings))
+  const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(lobby.settings))
   const [changes, setChanges] = useState<Api.Request.LobbyPatch>({})
   const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
   const [countdownCompleted, setCountdownCompleted] = useState(false)
 
   // Update local state whenever server state changes
   useEffect(() => {
-    if (!settings) return
+    if (!lobby.resolved) return
 
-    setLocalSettings(settingsToPayload(settings))
-  }, [settings])
+    setLocalSettings(settingsToPayload(lobby.settings))
+  }, [lobby])
 
   // Update server state whenever local state changes
   useDelay(
@@ -103,31 +90,11 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
 
   // Handle countdown timer
   useEffect(() => {
-    if (!ws) return
+    if (!lobby.resolved) return
+    if (lobby.status.status !== Api.Enums.ELobbyStatus.Starting || !lobby.status.statusUntil) return
 
-    function onGameStarting(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.GameStarting>("GAME_STARTING", data)) return
-
-      setCountdownExpiry(new Date(data.data))
-    }
-
-    function onLobbyDelete(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyDelete>("LOBBY_DELETE", data)) return
-
-      alert("Your lobby has been closed due to inactivity") // TODO: Send proper alert (also shared in other game pages)
-      navigate("MainMenu", {})
-    }
-
-    ws.on("group-message", onGameStarting)
-    ws.on("group-message", onLobbyDelete)
-
-    return () => {
-      ws.off("group-message", onGameStarting)
-      ws.off("group-message", onLobbyDelete)
-    }
-  }, [ws])
+    setCountdownExpiry(new Date(lobby.status.statusUntil))
+  }, [lobby.status?.status, lobby.status?.statusUntil])
 
   useEffect(() => {
     if (!countdownExpiry) return
@@ -137,18 +104,19 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   }, [countdownExpiry])
 
   useEffect(() => {
-    if (!lobby || !user) return
+    if (!lobby.resolved || !user) return
+    if (lobby.status.status !== Api.Enums.ELobbyStatus.Playing) return
 
-    if (lobby.state === Api.Enums.ELobbyState.Play) navigate("GameActive", { lobbyId, userId: user.id })
-  }, [lobby])
+    navigate("GameActive", { lobbyId, userId: user.id })
+  }, [lobby.status?.status, user])
 
   // Show loading if not ready
-  if (!participants || !user || !lobby || !settings || !wins || !scores) return <Loading />
+  if (!participants || !user || !lobby.resolved) return <Loading />
 
   // Setup UI functions
   async function lock() {
     try {
-      await lockLobby()
+      await controls.lock()
     } catch (err) {
       // TODO: Handle error
     }
@@ -156,7 +124,7 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
 
   async function unlock() {
     try {
-      await unlockLobby()
+      await controls.unlock()
     } catch (err) {
       // TODO: Handle error
     }
@@ -164,14 +132,14 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
 
   async function confirm() {
     try {
-      await confirmLobby()
+      await controls.confirm()
     } catch (err) {
       // TODO: Handle error
     }
   }
 
   async function leave() {
-    await leaveLobby()
+    await controls.leave()
     navigate("MainMenu", {})
   }
 
@@ -186,8 +154,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
 
       <div id="game-configure-participants">
         <div className="game-configure-participants-list">
-          {(members ?? [])
-            .map(member => getDisplayDetails(member.id, user, participants, wins, scores))
+          {lobby.players
+            .map(player => getDisplayDetails(player, user, participants))
             .map(({ id, displayName, avatarUrl }) => (
               <ProfilePicture {...{ id, displayName, avatarUrl }} key={id} />
             ))}
@@ -325,15 +293,24 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
           <>{/* This state is when countdown has been triggered then completed to show nothing here */}</>
         ) : lobby.hostId === user.id ? (
           <>
-            <Box onClick={lock} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureUnlocked}>
+            <Box
+              onClick={lock}
+              disabled={lobby.status.configureState !== Api.Enums.EGameSettingsStateMachineState.Unlocked}
+            >
               <Text type="big">Ready</Text>
             </Box>
 
-            <Box onClick={unlock} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureLocked}>
+            <Box
+              onClick={unlock}
+              disabled={lobby.status.configureState !== Api.Enums.EGameSettingsStateMachineState.Locked}
+            >
               <Text type="big">Unready</Text>
             </Box>
 
-            <Box onClick={confirm} disabled={lobby.state !== Api.Enums.ELobbyState.ConfigureLocked}>
+            <Box
+              onClick={confirm}
+              disabled={lobby.status.configureState !== Api.Enums.EGameSettingsStateMachineState.Locked}
+            >
               <Text type="big">Confirm</Text>
             </Box>
 

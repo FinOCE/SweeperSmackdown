@@ -15,9 +15,6 @@ import { BoardPreview } from "../components/gameplay/BoardPreview"
 import { useCountdown } from "../hooks/useCountdown"
 import { Settings } from "../components/ui/controls/Settings"
 import { useLobby } from "../hooks/resources/useLobby"
-import { useSettings } from "../hooks/resources/useSettings"
-import { useScores } from "../hooks/resources/useScores"
-import { useWins } from "../hooks/resources/useWins"
 import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 import { Api } from "../types/Api"
 
@@ -28,10 +25,7 @@ type GameActiveProps = {
 
 export function GameActive({ lobbyId, userId }: GameActiveProps) {
   const { api } = useApi()
-  const { lobby, leaveLobby } = useLobby()
-  const { settings } = useSettings()
-  const { wins } = useWins()
-  const { scores } = useScores()
+  const { lobby, controls } = useLobby()
   const { ws } = useWebsocket()
   const { navigate } = useNavigation()
 
@@ -60,9 +54,9 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
       if (Object.keys(boards).length > 0) {
         const states = Object.entries(boards)
-          .map(([id, gameState]) => ({
+          .map(([id, state]) => ({
             userId: id,
-            gameState: new TextEncoder().encode(gameState)
+            gameState: new TextEncoder().encode(state.boardState)
           }))
           .filter(({ userId: id }) => id !== userId)
           .reduce((pre, cur) => ({ ...pre, [cur.userId]: cur.gameState }), {} as Record<string, Uint8Array>)
@@ -71,7 +65,7 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       }
 
       if (userId in boards) {
-        const gameState = new TextEncoder().encode(boards[userId])
+        const gameState = new TextEncoder().encode(boards[userId].boardState)
         setInitialGameState(gameState.map(v => State.unreveal(v)))
         setLocalGameState(gameState)
         // TODO: Handle lost/won states
@@ -89,14 +83,14 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
   // Keep expected mine count up to date
   useEffect(() => {
-    if (!localGameState || !settings) return
+    if (!localGameState || !lobby.resolved) return
 
     const mines = localGameState.reduce(
       (c, v) => (State.isFlagged(v) || (State.isBomb(v) && State.isRevealed(v)) ? c + 1 : c),
       0
     )
-    setMinesRemaining(settings.mines - mines)
-  }, [localGameState, settings])
+    setMinesRemaining(lobby.settings.mines - mines)
+  }, [localGameState, lobby])
 
   // Send solution to server if game has been won
   useEffect(() => {
@@ -145,15 +139,15 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
   // TODO: Fix how transitioning to celebration works so this can be deleted
 
   // Handle websocket events
-  function isReveals(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; reveals: number[] } {
+  function isReveals(data: Websocket.Response.MakeMove["data"]): data is { lobbyId: string; reveals: number[] } {
     return "reveals" in data && data.reveals !== null
   }
 
-  function isFlagAdd(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; flagAdd: number } {
+  function isFlagAdd(data: Websocket.Response.MakeMove["data"]): data is { lobbyId: string; flagAdd: number } {
     return "flagAdd" in data && data.flagAdd !== null
   }
 
-  function isFlagRemove(data: Websocket.Response.MoveAdd["data"]): data is { lobbyId: string; flagRemove: number } {
+  function isFlagRemove(data: Websocket.Response.MakeMove["data"]): data is { lobbyId: string; flagRemove: number } {
     return "flagRemove" in data && data.flagRemove !== null
   }
 
@@ -162,7 +156,7 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
     function onBoardCreate(e: OnGroupDataMessageArgs) {
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.BoardCreate>("BOARD_CREATE", data)) return
+      if (!isEvent<Websocket.Response.CreateBoard>("BOARD_CREATE", data)) return
 
       if (data.userId === userId) {
         if (data.data.reset) return
@@ -179,7 +173,7 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
     function onMoveAdd(e: OnGroupDataMessageArgs) {
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.MoveAdd>("MOVE_ADD", data)) return
+      if (!isEvent<Websocket.Response.MakeMove>("MOVE_ADD", data)) return
 
       if (data.userId === userId) return
 
@@ -213,11 +207,11 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       // TODO: Change to stop control and tell everyone the game is over on a countdown
     }
 
-    function onUserJoin(e: OnGroupDataMessageArgs) {
+    function onPlayerAdd(e: OnGroupDataMessageArgs) {
       if (!competitionState) return
 
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.UserJoin>("USER_JOIN", data)) return // TODO: Move below into a resource hook
+      if (!isEvent<Websocket.Response.AddPlayer>("PLAYER_ADD", data)) return // TODO: Move below into a resource hook
       ;(async () => {
         const [err, boards] = await api
           .boardGet(lobbyId, data.userId)
@@ -228,14 +222,14 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
         if (competitionState[data.userId]) return
 
-        const state = new TextEncoder().encode(boards[data.userId])
+        const state = new TextEncoder().encode(boards[data.userId].boardState)
         setCompetitionState(prev => ({ ...prev, [data.userId]: state }))
       })()
     }
 
-    function onUserLeave(e: OnGroupDataMessageArgs) {
+    function onPlayerRemove(e: OnGroupDataMessageArgs) {
       const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.UserLeave>("USER_LEAVE", data)) return
+      if (!isEvent<Websocket.Response.RemovePlayer>("PLAYER_REMOVE", data)) return
 
       setCompetitionState(prev => {
         const newState = { ...prev }
@@ -244,44 +238,32 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       })
     }
 
-    function onLobbyUpdate(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyUpdate>("LOBBY_UPDATE", data)) return
-
-      if (data.data.state === Api.Enums.ELobbyState.Celebrate) setCelebrationState(true) // TODO: Fix needing to do this and the onGameWon
-    }
-
-    function onLobbyDelete(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyDelete>("LOBBY_DELETE", data)) return
-
-      alert("Your lobby has been closed due to inactivity") // TODO: Send proper alert (also shared in other game pages)
-      navigate("MainMenu", {})
-    }
-
     ws.on("group-message", onBoardCreate)
     ws.on("group-message", onMoveAdd)
     ws.on("group-message", onGameWon)
-    ws.on("group-message", onUserJoin)
-    ws.on("group-message", onUserLeave)
-    ws.on("group-message", onLobbyUpdate)
-    ws.on("group-message", onLobbyDelete)
+    ws.on("group-message", onPlayerAdd)
+    ws.on("group-message", onPlayerRemove)
 
     return () => {
       ws.off("group-message", onBoardCreate)
       ws.off("group-message", onMoveAdd)
       ws.off("group-message", onGameWon)
-      ws.off("group-message", onUserJoin)
-      ws.off("group-message", onUserLeave)
-      ws.off("group-message", onLobbyUpdate)
-      ws.off("group-message", onLobbyDelete)
+      ws.off("group-message", onPlayerAdd)
+      ws.off("group-message", onPlayerRemove)
     }
   }, [ws, competitionState])
 
-  // Only render once all dependencies are loaded
-  if (!lobby || !settings || !wins || !scores) return <Loading />
+  useEffect(() => {
+    if (!lobby.resolved) return
+    if (lobby.status.status !== Api.Enums.ELobbyStatus.Celebrating) return
 
-  function notifyMoveAdd(data: Omit<Websocket.Response.MoveAdd["data"], "lobbyId">) {
+    setCelebrationState(true) // TODO: Fix needing to do this and the onGameWon
+  }, [lobby.status?.status])
+
+  // Only render once all dependencies are loaded
+  if (!lobby.resolved) return <Loading />
+
+  function notifyMoveAdd(data: Omit<Websocket.Response.MakeMove["data"], "lobbyId">) {
     if (!ws) return
 
     ws.sendEvent(
@@ -306,7 +288,7 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
   }
 
   async function leave() {
-    await leaveLobby()
+    await controls.leave()
     navigate("MainMenu", {})
   }
 
@@ -320,8 +302,8 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
         <div id="game-active-play-area">
           <div id="game-active-current-board-container">
             <Board
-              height={settings.height}
-              width={settings.width}
+              height={lobby.settings.height}
+              width={lobby.settings.width}
               localState={localGameState}
               setLocalState={setLocalGameState}
               lost={lost}
@@ -340,10 +322,11 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
             {Object.entries(competitionState).map(([userId, state]) => (
               <div key={userId}>
                 <Text type="small">
-                  {userId} - {scores[userId] ?? 0} ({wins[userId] ?? 0})
+                  {userId} - {lobby.players.find(p => p.id === userId)?.score ?? 0} (
+                  {lobby.players.find(p => p.id === userId)?.wins ?? 0})
                 </Text>
                 <br />
-                <BoardPreview {...{ userId, settings, state }} />
+                <BoardPreview {...{ userId, settings: lobby.settings, state }} />
               </div>
             ))}
           </div>
@@ -359,7 +342,7 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
             <Box onClick={reset}>
               <Text type="big">Reset</Text>
             </Box>
-            <Box onClick={skip} disabled={settings.seed !== 0}>
+            <Box onClick={skip} disabled={lobby.settings.seed !== 0}>
               <Text type="big">Skip</Text>
             </Box>
           </ButtonList>

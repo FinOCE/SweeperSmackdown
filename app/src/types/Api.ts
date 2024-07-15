@@ -12,7 +12,7 @@ export namespace Api {
 
   export type PreciseLobbyStatus = {
     status: Enums.ELobbyStatus
-    statusUntil: string
+    statusUntil?: string
     configureState?: Enums.EGameSettingsStateMachineState
   }
 
