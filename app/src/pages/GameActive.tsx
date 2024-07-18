@@ -307,9 +307,11 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
       <Settings>
         <ButtonList>
-          <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
-            <Text type="big">Solve (DEV)</Text>
-          </Box>
+          {process.env.PUBLIC_ENV__DEV_SOLVE_BUTTON && (
+            <Box onClick={() => setLocalGameState(localGameState.map(v => (State.isBomb(v) ? v : State.reveal(v))))}>
+              <Text type="big">Solve (DEV)</Text>
+            </Box>
+          )}
           <ButtonList horizontal>
             <Box onClick={reset}>
               <Text type="big">Reset</Text>
