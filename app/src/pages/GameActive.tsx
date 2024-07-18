@@ -128,16 +128,6 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
     return stop
   }, [lost])
 
-  // Handle game over (TEMPORARY)
-  const [celebrationState, setCelebrationState] = useState(false)
-  const [gameWon, setGameWon] = useState(false)
-
-  useEffect(() => {
-    if (celebrationState && gameWon) navigate("GameCelebration", { lobbyId })
-  }, [celebrationState, gameWon])
-
-  // TODO: Fix how transitioning to celebration works so this can be deleted
-
   // Handle websocket events
   function isReveals(data: Websocket.Response.MakeMove["data"]): data is { lobbyId: string; reveals: number[] } {
     return "reveals" in data && data.reveals !== null
@@ -198,15 +188,6 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
       }
     }
 
-    function onGameWon(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.GameWon>("GAME_WON", data)) return
-
-      setGameWon(true) // TODO: Fix needing to do this and the onLobbyUpdate
-
-      // TODO: Change to stop control and tell everyone the game is over on a countdown
-    }
-
     function onPlayerAdd(e: OnGroupDataMessageArgs) {
       if (!competitionState) return
 
@@ -240,25 +221,16 @@ export function GameActive({ lobbyId, userId }: GameActiveProps) {
 
     ws.on("group-message", onBoardCreate)
     ws.on("group-message", onMoveAdd)
-    ws.on("group-message", onGameWon)
     ws.on("group-message", onPlayerAdd)
     ws.on("group-message", onPlayerRemove)
 
     return () => {
       ws.off("group-message", onBoardCreate)
       ws.off("group-message", onMoveAdd)
-      ws.off("group-message", onGameWon)
       ws.off("group-message", onPlayerAdd)
       ws.off("group-message", onPlayerRemove)
     }
   }, [ws, competitionState])
-
-  useEffect(() => {
-    if (!lobby.resolved) return
-    if (lobby.status.status !== Api.Enums.ELobbyStatus.Celebrating) return
-
-    setCelebrationState(true) // TODO: Fix needing to do this and the onGameWon
-  }, [lobby.status?.status])
 
   // Only render once all dependencies are loaded
   if (!lobby.resolved) return <Loading />

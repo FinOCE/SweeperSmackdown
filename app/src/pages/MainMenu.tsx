@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react"
 import "./MainMenu.scss"
-import { useNavigation } from "../hooks/useNavigation"
 import { Loading } from "../components/Loading"
 import { Text } from "../components/ui/Text"
 import { Box } from "../components/ui/Box"
@@ -8,43 +7,21 @@ import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { useOrigin } from "../hooks/useOrigin"
 import { ButtonList } from "../components/ui/ButtonList"
 import { useLobby } from "../hooks/resources/useLobby"
-import { Api } from "../types/Api"
 
 type MainMenuProps = {}
 
 export function MainMenu({}: MainMenuProps) {
   const { origin } = useOrigin()
   const { sdk, user } = useEmbeddedAppSdk()
-  const { lobby, controls } = useLobby()
-  const { navigate } = useNavigation()
+  const { controls } = useLobby()
 
   const [lobbyId, setLobbyId] = useState("")
   const [error, setError] = useState<string>()
-  const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
     if (!error) return
     alert(error)
   }, [error])
-
-  // Go to lobby if already in one
-  useEffect(() => {
-    if (!redirecting || !lobby.resolved || !user) return
-
-    switch (lobby.status.status) {
-      case Api.Enums.ELobbyStatus.Configuring:
-      case Api.Enums.ELobbyStatus.Starting:
-        navigate("GameConfigure", { lobbyId: lobby.id })
-        return
-      case Api.Enums.ELobbyStatus.Playing:
-      case Api.Enums.ELobbyStatus.Concluding:
-        navigate("GameActive", { lobbyId: lobby.id, userId: user.id })
-        return
-      case Api.Enums.ELobbyStatus.Celebrating:
-        navigate("GameCelebration", { lobbyId: lobby.id })
-        return
-    }
-  }, [redirecting, lobby, user])
 
   async function joinOrCreate(id: string) {
     try {
@@ -57,14 +34,11 @@ export function MainMenu({}: MainMenuProps) {
         return
       }
     }
-
-    setRedirecting(true)
   }
 
   async function create() {
     try {
       await controls.create()
-      setRedirecting(true)
     } catch (err) {
       setError("Failed to create a lobby. Please try again later.")
     }
@@ -73,7 +47,6 @@ export function MainMenu({}: MainMenuProps) {
   async function join(id: string) {
     try {
       await controls.join(id)
-      setRedirecting(true)
     } catch (err) {
       setError("Could not find the lobby.")
     }

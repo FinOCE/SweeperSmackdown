@@ -103,13 +103,6 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
     return () => stop()
   }, [countdownExpiry])
 
-  useEffect(() => {
-    if (!lobby.resolved || !user) return
-    if (lobby.status.status !== Api.Enums.ELobbyStatus.Playing) return
-
-    navigate("GameActive", { lobbyId, userId: user.id })
-  }, [lobby.status?.status, user])
-
   // Show loading if not ready
   if (!participants || !user || !lobby.resolved) return <Loading />
 

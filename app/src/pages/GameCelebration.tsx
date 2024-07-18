@@ -40,13 +40,6 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
     return () => stop()
   }, [countdownExpiry])
 
-  useEffect(() => {
-    if (!lobby.resolved || !user) return
-    if (lobby.status.status !== Api.Enums.ELobbyStatus.Celebrating) return
-
-    navigate("GameConfigure", { lobbyId })
-  }, [lobby.status?.status, user])
-
   // Load page until ready
   if (!user || !participants) return <Loading hide />
 
