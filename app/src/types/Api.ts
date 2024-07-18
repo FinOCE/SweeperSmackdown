@@ -5,6 +5,7 @@ export namespace Api {
     width: number
     mines: number
     lives: number
+    difficulty: number
     timeLimit: number
     boardCount: number
     seed: number

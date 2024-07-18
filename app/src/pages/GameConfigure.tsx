@@ -26,85 +26,41 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const { participants, user } = useEmbeddedAppSdk()
   const { lobby, controls } = useLobby()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => {
-    setCountdownCompleted(true)
-    setCountdownExpiry(null)
-  })
+  const { countdown, completed, start } = useCountdown()
 
-  // Create function to handle translatin between game settings and payloads
-  type LocalSettings = Required<Omit<Api.Request.GameSettingsPatch, "difficulty">>
-
-  function settingsToPayload(settings: Api.GameSettings | null): LocalSettings {
-    const base = {
-      mode: 0,
-      height: 16,
-      width: 16,
-      mines: 40,
-      lives: 0,
-      timeLimit: 0,
-      boardCount: 0,
-      shareBoards: false
-    }
-
-    return {
-      mode: settings?.mode ?? base.mode,
-      height: settings?.height ?? base.height,
-      width: settings?.width ?? base.width,
-      mines: settings?.mines ?? base.mines,
-      lives: settings?.lives ?? base.lives,
-      timeLimit: settings?.timeLimit ?? base.timeLimit,
-      boardCount: settings?.boardCount ?? base.boardCount,
-      shareBoards: settings?.seed ? settings.seed !== 0 : base.shareBoards
-    }
-  }
-
-  function change(changes: { [K in keyof LocalSettings]?: LocalSettings[K] }) {
-    setChanges(prev => ({ ...prev, ...changes }))
-    setLocalSettings(prev => ({ ...prev, ...changes }))
-  }
-
-  // Setup local state
-  const [localSettings, setLocalSettings] = useState<LocalSettings>(settingsToPayload(lobby.settings))
-  const [changes, setChanges] = useState<Api.Request.LobbyPatch>({})
-  const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
-  const [countdownCompleted, setCountdownCompleted] = useState(false)
-
-  // Update local state whenever server state changes
-  useEffect(() => {
-    if (!lobby.resolved) return
-
-    setLocalSettings(settingsToPayload(lobby.settings))
-  }, [lobby])
+  const [overrides, setOverrides] = useState<Partial<Api.GameSettings>>({})
 
   // Update server state whenever local state changes
   useDelay(
     () => {
-      if (Object.keys(changes).length === 0) return
+      if (!lobby.resolved) return
+      if (Object.keys(overrides).length === 0) return
 
-      api.lobbyPatch(lobbyId, changes)
-      setChanges({})
+      api.lobbySettingsPatch(lobbyId, {
+        mode: overrides.mode,
+        height: overrides.height,
+        width: overrides.width,
+        mines: overrides.mines,
+        difficulty: overrides.difficulty,
+        lives: overrides.lives,
+        timeLimit: overrides.timeLimit,
+        boardCount: overrides.boardCount,
+        shareBoards: overrides.seed !== 0
+      })
+
+      setOverrides({})
     },
     500,
-    [changes]
+    [overrides, lobby.resolved]
   )
 
-  // Handle countdown timer
+  // Start countdown when lobby starting
   useEffect(() => {
     if (!lobby.resolved) return
     if (lobby.status.status !== Api.Enums.ELobbyStatus.Starting || !lobby.status.statusUntil) return
 
-    setCountdownExpiry(new Date(lobby.status.statusUntil))
+    start(new Date(lobby.status.statusUntil).getTime() - Date.now())
   }, [lobby.status?.status, lobby.status?.statusUntil])
-
-  useEffect(() => {
-    if (!countdownExpiry) return
-
-    start(countdownExpiry.getTime() - Date.now())
-    return () => stop()
-  }, [countdownExpiry])
-
-  // Show loading if not ready
-  if (!participants || !user || !lobby.resolved) return <Loading />
 
   // Setup UI functions
   async function lock() {
@@ -135,6 +91,11 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
     await controls.leave()
     navigate("MainMenu", {})
   }
+
+  // TODO: Add button to transfer host (show when hovering user in list??)
+
+  // Show loading if not ready
+  if (!participants || !user || !lobby.resolved) return <Loading />
 
   // Render page
   return (
@@ -167,8 +128,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
               name="mode"
               id="mode-0"
               value="0"
-              checked={localSettings.mode === 0}
-              onChange={() => change({ mode: 0 })}
+              checked={(overrides.mode ?? lobby.settings.mode) === 0}
+              onChange={() => setOverrides(prev => ({ ...prev, mode: 0 }))}
             />
             <label htmlFor="mode-0">
               <Text type="small">Classic</Text>
@@ -186,8 +147,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="height"
             min={7}
             max={32}
-            value={localSettings.height}
-            onChange={e => change({ height: e })}
+            value={overrides.height ?? lobby.settings.height}
+            onChange={e => setOverrides(prev => ({ ...prev, height: e }))}
           />
         </fieldset>
 
@@ -201,8 +162,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="width"
             min={7}
             max={32}
-            value={localSettings.width}
-            onChange={e => change({ width: e })}
+            value={overrides.width ?? lobby.settings.width}
+            onChange={e => setOverrides(prev => ({ ...prev, width: e }))}
           />
         </fieldset>
 
@@ -216,8 +177,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="lives"
             min={0}
             max={10}
-            value={localSettings.lives}
-            onChange={e => change({ lives: e })}
+            value={overrides.lives ?? lobby.settings.lives}
+            onChange={e => setOverrides(prev => ({ ...prev, lives: e }))}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
         </fieldset>
@@ -233,8 +194,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             min={0}
             max={600}
             step={10}
-            value={localSettings.timeLimit}
-            onChange={e => change({ timeLimit: e })}
+            value={overrides.timeLimit ?? lobby.settings.timeLimit}
+            onChange={e => setOverrides(prev => ({ ...prev, timeLimit: e }))}
             display={v => (v !== 0 ? `${v}s` : "Unlimited")}
           />
         </fieldset>
@@ -249,8 +210,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="boardCount"
             min={0}
             max={25}
-            value={localSettings.boardCount}
-            onChange={e => change({ boardCount: e })}
+            value={overrides.boardCount ?? lobby.settings.boardCount}
+            onChange={e => setOverrides(prev => ({ ...prev, boardCount: e }))}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
         </fieldset>
@@ -265,8 +226,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
               type="checkbox"
               name="shareBoards"
               id="shareBoards"
-              checked={localSettings.shareBoards}
-              onChange={e => change({ shareBoards: e.target.checked })}
+              checked={(overrides.seed ?? lobby.settings.seed) !== 0}
+              onChange={e => setOverrides(prev => ({ ...prev, seed: e.target.checked ? 1 : 0 }))}
             />
             <label htmlFor="shareBoards">
               <Text type="small">Share Boards</Text>
@@ -282,32 +243,26 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
           <div className="game-configure-countdown-container">
             <Text type="title">Starting in {countdown}</Text>
           </div>
-        ) : countdownCompleted ? (
-          <>{/* This state is when countdown has been triggered then completed to show nothing here */}</>
-        ) : lobby.hostId === user.id ? (
+        ) : completed ? (
+          <Text type="title">Starting...</Text>
+        ) : user.id === lobby.hostId ? (
           <>
-            <Box
-              onClick={lock}
-              disabled={lobby.status.configureState !== Api.Enums.EGameSettingsStateMachineState.Unlocked}
-            >
-              <Text type="big">Ready</Text>
-            </Box>
+            {lobby.status.configureState === Api.Enums.EGameSettingsStateMachineState.Unlocked && (
+              <Box onClick={lock}>
+                <Text type="big">Ready</Text>
+              </Box>
+            )}
+            {lobby.status.configureState === Api.Enums.EGameSettingsStateMachineState.Locked && (
+              <ButtonList horizontal>
+                <Box onClick={unlock}>
+                  <Text type="big">Unready</Text>
+                </Box>
 
-            <Box
-              onClick={unlock}
-              disabled={lobby.status.configureState !== Api.Enums.EGameSettingsStateMachineState.Locked}
-            >
-              <Text type="big">Unready</Text>
-            </Box>
-
-            <Box
-              onClick={confirm}
-              disabled={lobby.status.configureState !== Api.Enums.EGameSettingsStateMachineState.Locked}
-            >
-              <Text type="big">Confirm</Text>
-            </Box>
-
-            {/* TODO: Clean up above to only show when needed and neater */}
+                <Box onClick={confirm}>
+                  <Text type="big">Confirm</Text>
+                </Box>
+              </ButtonList>
+            )}
           </>
         ) : (
           <Text type="title">Waiting for host to start...</Text>

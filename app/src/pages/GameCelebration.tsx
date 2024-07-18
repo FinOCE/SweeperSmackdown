@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import "./GameCelebration.scss"
 import { Loading } from "../components/Loading"
 import { useNavigation } from "../hooks/useNavigation"
@@ -21,24 +21,15 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
   const { user, participants } = useEmbeddedAppSdk()
   const { lobby, controls } = useLobby()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => {})
-
-  const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
+  const { countdown, completed, start } = useCountdown()
 
   // Handle countdown timer
   useEffect(() => {
     if (!lobby.resolved) return
     if (lobby.status.status !== Api.Enums.ELobbyStatus.Celebrating || !lobby.status.statusUntil) return
 
-    setCountdownExpiry(new Date(lobby.status.statusUntil))
+    start(new Date(lobby.status.statusUntil).getTime() - Date.now())
   }, [lobby.status?.status, lobby.status?.statusUntil])
-
-  useEffect(() => {
-    if (!countdownExpiry) return
-
-    start(countdownExpiry.getTime() - Date.now())
-    return () => stop()
-  }, [countdownExpiry])
 
   // Load page until ready
   if (!user || !participants) return <Loading hide />
@@ -107,10 +98,12 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
         </table>
       </div>
 
-      {countdown && (
+      {countdown ? (
         <div className="game-celebration-countdown-container">
           <Text type="normal">Next round will begin in {countdown}</Text>
         </div>
+      ) : (
+        completed && <Text type="normal">Starting...</Text>
       )}
 
       <Settings>
