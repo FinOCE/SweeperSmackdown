@@ -5,7 +5,7 @@ export namespace Api {
     width: number
     mines: number
     lives: number
-    difficulty: number
+    difficulty: Enums.EDifficulty
     timeLimit: number
     boardCount: number
     seed: number
@@ -59,6 +59,13 @@ export namespace Api {
       Locked,
       Confirmed
     }
+
+    export enum EDifficulty {
+      Easy,
+      Normal,
+      Hard,
+      Hell
+    }
   }
 
   export namespace Request {
@@ -82,7 +89,7 @@ export namespace Api {
       height?: number
       width?: number
       mines?: number
-      difficulty?: number
+      difficulty?: Enums.EDifficulty
       lives?: number
       timeLimit?: number
       boardCount?: number

@@ -29,6 +29,7 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const { countdown, completed, start } = useCountdown()
 
   const [overrides, setOverrides] = useState<Partial<Api.GameSettings>>({})
+  const [lobbyOverrides, setLobbyOverrides] = useState<Partial<{ hostManaged: boolean; hostId: string }>>({})
 
   // Update server state whenever local state changes
   useDelay(
@@ -52,6 +53,22 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
     },
     500,
     [overrides, lobby.resolved]
+  )
+
+  useDelay(
+    () => {
+      if (!lobby.resolved || !user) return
+      if (Object.keys(lobbyOverrides).length === 0 || lobby.hostId !== user.id) return
+
+      api.lobbyPatch(lobbyId, {
+        hostId: lobbyOverrides.hostId,
+        hostManaged: lobbyOverrides.hostManaged
+      })
+
+      setLobbyOverrides({})
+    },
+    500,
+    [lobbyOverrides, lobby.resolved, user]
   )
 
   // Start countdown when lobby starting
@@ -92,8 +109,6 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
     navigate("MainMenu", {})
   }
 
-  // TODO: Add button to transfer host (show when hovering user in list??)
-
   // Show loading if not ready
   if (!participants || !user || !lobby.resolved) return <Loading />
 
@@ -116,25 +131,56 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
         </div>
       </div>
 
+      {/* TODO: Add way to transfer host to someone else from the list above */}
+
       <ButtonList>
         <fieldset>
           <legend>
             <Text>Mode</Text>
           </legend>
 
-          <div className="game-configure-selector-label-container">
-            <input
-              type="radio"
-              name="mode"
-              id="mode-0"
-              value="0"
-              checked={(overrides.mode ?? lobby.settings.mode) === 0}
-              onChange={() => setOverrides(prev => ({ ...prev, mode: 0 }))}
-            />
-            <label htmlFor="mode-0">
-              <Text type="small">Classic</Text>
-            </label>
-          </div>
+          {Object.entries({ Classic: 0 }).map(([name, key]) => (
+            <div className="game-configure-selector-label-container" key={name}>
+              <input
+                type="radio"
+                name="mode"
+                id={`mode-${key}`}
+                value={key}
+                checked={(overrides.mode ?? lobby.settings.mode) === key}
+                onChange={() => setOverrides(prev => ({ ...prev, mode: key }))}
+              />
+              <label htmlFor={`mode-${key}`}>
+                <Text type="small">{name}</Text>
+              </label>
+            </div>
+          ))}
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Mode</Text>
+          </legend>
+
+          {Object.entries({
+            Easy: Api.Enums.EDifficulty.Easy,
+            Normal: Api.Enums.EDifficulty.Normal,
+            Hard: Api.Enums.EDifficulty.Hard,
+            Hell: Api.Enums.EDifficulty.Hell
+          }).map(([name, key]) => (
+            <div className="game-configure-selector-label-container" key={name}>
+              <input
+                type="radio"
+                name="difficulty"
+                id={`difficulty-${key}`}
+                value={key}
+                checked={(overrides.difficulty ?? lobby.settings.difficulty) === key}
+                onChange={() => setOverrides(prev => ({ ...prev, difficulty: key, mines: undefined }))}
+              />
+              <label htmlFor={`difficulty-${key}`}>
+                <Text type="small">{name}</Text>
+              </label>
+            </div>
+          ))}
         </fieldset>
 
         <fieldset>
@@ -164,6 +210,25 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             max={32}
             value={overrides.width ?? lobby.settings.width}
             onChange={e => setOverrides(prev => ({ ...prev, width: e }))}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            <Text>Mines</Text>
+          </legend>
+
+          <SliderInput
+            name="mines"
+            id="mines"
+            min={Math.round(
+              (overrides.width ?? lobby.settings.width) * (overrides.height ?? lobby.settings.height) * 0.078125
+            )}
+            max={Math.round(
+              (overrides.width ?? lobby.settings.width) * (overrides.height ?? lobby.settings.height) * 0.3125
+            )}
+            value={overrides.mines ?? lobby.settings.mines}
+            onChange={e => setOverrides(prev => ({ ...prev, mines: e, difficulty: undefined }))}
           />
         </fieldset>
 
@@ -231,6 +296,19 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             />
             <label htmlFor="shareBoards">
               <Text type="small">Share Boards</Text>
+            </label>
+          </div>
+
+          <div className="game-configure-selector-label-container">
+            <input
+              type="checkbox"
+              name="hostManaged"
+              id="hostManaged"
+              checked={lobbyOverrides.hostManaged ?? lobby.hostManaged}
+              onChange={e => setLobbyOverrides(prev => ({ ...prev, hostManaged: e.target.checked }))}
+            />
+            <label htmlFor="hostManaged">
+              <Text type="small">Host Managed</Text>
             </label>
           </div>
         </fieldset>
