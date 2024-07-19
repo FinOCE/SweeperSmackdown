@@ -16,13 +16,13 @@ public static class TokenPostFunction
 {
     [FunctionName(nameof(TokenPostFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "token")] TokenPostRequestDto payload)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "token")] TokenRequest payload)
     {
         if (payload.Mocked)
         {
             // Generate random number to use as non-Discord token/id
             return new OkObjectResult(
-                new TokenPostResponseDto(
+                new TokenResponse(
                     RandomNumberGenerator.GetInt32(1000000).ToString()));
         }
         else
@@ -46,7 +46,7 @@ public static class TokenPostFunction
             var res = await client.PostAsync("https://discord.com/api/oauth2/token", content);
             var data = await res.Content.ReadAsAsync<DiscordOAuthTokenResponseDto>();
             
-            return new OkObjectResult(new TokenPostResponseDto(data.AccessToken));
+            return new OkObjectResult(new TokenResponse(data.AccessToken));
         }
     }
 }

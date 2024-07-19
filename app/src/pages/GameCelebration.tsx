@@ -1,9 +1,6 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import "./GameCelebration.scss"
-import { useWebsocket } from "../hooks/useWebsocket"
 import { Loading } from "../components/Loading"
-import { Websocket } from "../types/Websocket"
-import { isEvent } from "../utils/isEvent"
 import { useNavigation } from "../hooks/useNavigation"
 import { useEmbeddedAppSdk } from "../hooks/useEmbeddAppSdk"
 import { Text } from "../components/ui/Text"
@@ -13,9 +10,6 @@ import { ButtonList } from "../components/ui/ButtonList"
 import { getDisplayDetails } from "../utils/getDisplayDetails"
 import { ProfilePicture } from "../components/ui/users/ProfilePicture"
 import { useLobby } from "../hooks/resources/useLobby"
-import { useWins } from "../hooks/resources/useWins"
-import { useScores } from "../hooks/resources/useScores"
-import { OnGroupDataMessageArgs } from "@azure/web-pubsub-client"
 import { useCountdown } from "../hooks/useCountdown"
 import { Api } from "../types/Api"
 
@@ -25,65 +19,25 @@ type GameCelebrationProps = {
 
 export function GameCelebration({ lobbyId }: GameCelebrationProps) {
   const { user, participants } = useEmbeddedAppSdk()
-  const { lobby, leaveLobby } = useLobby()
-  const { wins } = useWins()
-  const { scores } = useScores()
-  const { ws } = useWebsocket()
+  const { lobby, controls } = useLobby()
   const { navigate } = useNavigation()
-  const { countdown, start, stop } = useCountdown(() => {})
-
-  const [countdownExpiry, setCountdownExpiry] = useState<Date | null>(null)
+  const { countdown, completed, start } = useCountdown()
 
   // Handle countdown timer
   useEffect(() => {
-    if (!ws) return
+    if (!lobby.resolved) return
+    if (lobby.status.status !== Api.Enums.ELobbyStatus.Celebrating || !lobby.status.statusUntil) return
 
-    function onGameCelebrationStarting(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.GameCelebrationStarting>("GAME_CELEBRATION_STARTING", data)) return
-
-      setCountdownExpiry(new Date(data.data))
-    }
-
-    function onLobbyDelete(e: OnGroupDataMessageArgs) {
-      const data = e.message.data as Websocket.Message
-      if (!isEvent<Websocket.Response.LobbyDelete>("LOBBY_DELETE", data)) return
-
-      alert("Your lobby has been closed due to inactivity") // TODO: Send proper alert (also shared in other game pages)
-      navigate("MainMenu", {})
-    }
-
-    ws.on("group-message", onGameCelebrationStarting)
-    ws.on("group-message", onLobbyDelete)
-
-    return () => {
-      ws.off("group-message", onGameCelebrationStarting)
-      ws.off("group-message", onLobbyDelete)
-    }
-  }, [ws])
-
-  useEffect(() => {
-    if (!countdownExpiry) return
-
-    start(countdownExpiry.getTime() - Date.now())
-    return () => stop()
-  }, [countdownExpiry])
-
-  useEffect(() => {
-    if (!lobby) return
-
-    if (lobby.state !== Api.Enums.ELobbyState.Celebrate) navigate("GameConfigure", { lobbyId })
-  }, [lobby])
+    start(new Date(lobby.status.statusUntil).getTime() - Date.now())
+  }, [lobby.status?.status, lobby.status?.statusUntil])
 
   // Load page until ready
-  if (!user || !participants || !wins || !scores) return <Loading hide />
+  if (!user || !participants) return <Loading hide />
 
-  const leaderboard = Object.entries({ ...wins })
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => id)
+  const leaderboard = lobby.players.sort((a, b) => b.wins - a.wins)
 
   async function leave() {
-    await leaveLobby()
+    await controls.leave()
     navigate("MainMenu", {})
   }
 
@@ -93,14 +47,14 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
         <div id="game-celebration-podium">
           {leaderboard
             .filter((_, i) => i <= 2)
-            .map((id, i) => {
-              const details = getDisplayDetails(id, user, participants, wins, scores)
+            .map((player, i) => {
+              const details = getDisplayDetails(player, user, participants)
 
               return (
                 <Box
                   innerClass={`game-celebration-podium-winner-${i + 1}`}
                   type={(["gold", "silver", "bronze"] as const)[i]}
-                  key={id}
+                  key={player.id}
                 >
                   <div>
                     <Text type="big">#{i + 1}</Text>
@@ -120,11 +74,11 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
           <tbody>
             {leaderboard
               .filter((_, i) => i > 2)
-              .map((id, i) => {
-                const details = getDisplayDetails(id, user, participants, wins, scores)
+              .map((player, i) => {
+                const details = getDisplayDetails(player, user, participants)
 
                 return (
-                  <tr key={id}>
+                  <tr key={player.id}>
                     <td>
                       <Text type="normal">#{i + 1 + 3}</Text>
                     </td>
@@ -144,10 +98,12 @@ export function GameCelebration({ lobbyId }: GameCelebrationProps) {
         </table>
       </div>
 
-      {countdown && (
+      {countdown ? (
         <div className="game-celebration-countdown-container">
           <Text type="normal">Next round will begin in {countdown}</Text>
         </div>
+      ) : (
+        completed && <Text type="normal">Starting...</Text>
       )}
 
       <Settings>

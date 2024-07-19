@@ -1,10 +1,10 @@
 ﻿using Newtonsoft.Json;
-using SweeperSmackdown.Models;
+using SweeperSmackdown.Structures;
 using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;
 
-public class LobbyUserResponseDto
+public class PlayerResponse
 {
     [JsonProperty("id")]
     [JsonPropertyName("id")]
@@ -26,7 +26,7 @@ public class LobbyUserResponseDto
     [JsonPropertyName("wins")]
     public int Wins { get; set; }
 
-    public LobbyUserResponseDto(string id, string lobbyId, bool active, int score, int wins)
+    public PlayerResponse(string id, string lobbyId, bool active, int score, int wins)
     {
         Id = id;
         LobbyId = lobbyId;
@@ -35,6 +35,6 @@ public class LobbyUserResponseDto
         Wins = wins;
     }
 
-    public static LobbyUserResponseDto FromModel(Player player) =>
+    public static PlayerResponse FromModel(Player player) =>
         new(player.Id, player.LobbyId, player.Active, player.Score, player.Wins);
 }

@@ -2,7 +2,7 @@
 
 namespace SweeperSmackdown.DTOs;
 
-public class LoginPostRequestDto
+public class LoginRequest
 {
     [JsonProperty("accessToken")]
     public string AccessToken { get; set; } = null!;

@@ -3,18 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
-using SweeperSmackdown.Assets;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
+using SweeperSmackdown.Functions.Entities;
 using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Models;
 using SweeperSmackdown.Structures;
 using SweeperSmackdown.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
@@ -24,31 +18,8 @@ public static class LobbyPutFunction
     [FunctionName(nameof(LobbyPutFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "lobbies/{lobbyId}")] HttpRequest req,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Lobby? lobby,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString")]
-            IAsyncCollector<Lobby> lobbyDb,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            SqlQuery = "SELECT * FROM c WHERE c.lobbyId = {lobbyId}",
-            Connection = "CosmosDbConnectionString")]
-            IEnumerable<Player> players,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString")]
-            IAsyncCollector<Player> playerDb,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
+        [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -57,34 +28,42 @@ public static class LobbyPutFunction
         if (requesterId is null)
             return new StatusCodeResult(401);
 
-        // Return existing lobby if already exists
-        if (lobby is not null)
-            return new OkObjectResult(LobbyResponseDto.FromModel(lobby, players));
+        // Check if lobby already exists
+        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
+            Id.For<LobbyStateMachine>(lobbyId));
 
-        // Create lobby
-        lobby = new Lobby(
-            lobbyId,
-            requesterId,
-            new GameSettings(Guid.NewGuid().GetHashCode()));
+        if (lobby.EntityExists)
+        {
+            // Fetch remaining data and return 200
+            var settings = await entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
+                Id.For<GameSettingsStateMachine>(lobbyId));
 
-        await lobbyDb.AddAsync(lobby);
+            if (!settings.EntityExists)
+                return new StatusCodeResult(500);
 
-        // Create host player
-        var player = new Player(requesterId, lobbyId, true, 0, 0);
+            var status = await orchestrationClient.GetStatusAsync(
+                Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
 
-        await playerDb.AddAsync(player);
-        players = players.Append(player);
+            var customStatus = status.CustomStatus.ToObject<LobbyOrchestratorStatus>();
 
-        await ws.AddAsync(ActionFactory.AddUser(requesterId, lobbyId, player));
-        await ws.AddAsync(ActionFactory.AddUserToLobby(requesterId, lobbyId));
-        await ws.AddAsync(ActionFactory.UpdateLobby(lobbyId, LobbyResponseDto.FromModel(lobby, players)));
+            if (customStatus is null)
+                return new StatusCodeResult(500);
 
-        // Start orchestrator
-        await orchestrationClient.StartNewAsync(
-            nameof(LobbyOrchestratorFunction),
-            Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
+            return new OkObjectResult(LobbyResponse.FromModel(
+                lobbyId,
+                new PreciseLobbyStatus(customStatus, customStatus.Status == ELobbyStatus.Configuring ? settings.EntityState.State : null),
+                lobby.EntityState,
+                settings.EntityState));
+        }
+        else
+        {
+            // Start create orchestrator and return 202
+            await orchestrationClient.StartNewAsync(
+                nameof(LobbyCreateOrchestratorFunction),
+                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
+                new LobbyCreateOrchestratorFunctionProps(requesterId));
 
-        // Return created lobby
-        return new CreatedResult($"/lobbies/{lobbyId}", LobbyResponseDto.FromModel(lobby, players));
+            return new AcceptedResult();
+        }
     }
 }

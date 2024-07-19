@@ -5,17 +5,18 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Functions.Orchestrators;
 using SweeperSmackdown.Utils;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
 
-public static class LobbyUnlockActionFunction
+public static class LobbyDeleteFunction
 {
-    [FunctionName(nameof(LobbyUnlockActionFunction))]
+    [FunctionName(nameof(LobbyDeleteFunction))]
     public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "lobbies/{lobbyId}/unlock")] HttpRequest req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}")] HttpRequest req,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
@@ -32,24 +33,14 @@ public static class LobbyUnlockActionFunction
         if (!lobby.EntityExists)
             return new NotFoundResult();
 
-        // Only allow lobby host to modify
+        // Only allow host to delete
         if (lobby.EntityState.HostId != requesterId)
             return new StatusCodeResult(403);
 
-        // Short circuit if entity is in invalid state
-        var settings = await entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
-            Id.For<GameSettingsStateMachine>(lobbyId));
-
-        if (!settings.EntityExists)
-            return new NotFoundResult();
-
-        if (!GameSettingsStateMachine.ValidStatesToUnlock.Contains(settings.EntityState.State))
-            return new ConflictResult();
-
-        // Unlock lobby settings
-        await entityClient.SignalEntityAsync(
-            Id.For<GameSettingsStateMachine>(lobbyId),
-            nameof(IGameSettingsStateMachine.Unlock));
+        // Start orchestrator to delete lobby
+        await orchestrationClient.StartNewAsync(
+            nameof(LobbyDeleteOrchestratorFunction),
+            Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), lobbyId));
 
         return new AcceptedResult();
     }

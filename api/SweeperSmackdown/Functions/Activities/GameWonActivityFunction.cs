@@ -34,7 +34,7 @@ public static class GameWonActivityFunction
         
         // Notify game orchestrator of winner
         await orchestrationClient.RaiseEventAsync(
-            Id.ForInstance(nameof(GameActiveFunction), props.LobbyId),
+            Id.ForInstance(nameof(LobbyOrchestratorFunction), props.LobbyId),
             DurableEvents.GAME_WON,
             props.WinnerId);
 

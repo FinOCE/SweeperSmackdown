@@ -3,13 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace SweeperSmackdown.DTOs;
 
-public class LoginPostResponseDto
+public class LoginResponse
 {
     [JsonProperty("bearerToken")]
     [JsonPropertyName("bearerToken")]
     public string BearerToken { get; set; }
 
-    public LoginPostResponseDto(string bearerToken)
+    public LoginResponse(string bearerToken)
     {
         BearerToken = bearerToken;
     }

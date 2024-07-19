@@ -8,9 +8,7 @@ using SweeperSmackdown.Assets;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Factories;
 using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Models;
 using SweeperSmackdown.Utils;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,23 +22,10 @@ public static class BoardResetActionFunction
             AuthorizationLevel.Anonymous,
             "post",
             Route = "lobbies/{lobbyId}/boards/{userId}/reset")]
-            HttpRequest req,
-        [CosmosDB(
-            containerName: DatabaseConstants.LOBBY_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{lobbyId}",
-            PartitionKey = "{lobbyId}")]
-            Lobby? lobby,
-        [CosmosDB(
-            containerName: DatabaseConstants.PLAYER_CONTAINER_NAME,
-            databaseName: DatabaseConstants.DATABASE_NAME,
-            Connection = "CosmosDbConnectionString",
-            Id = "{userId}",
-            PartitionKey = "{lobbyId}")]
-            Player? player,
+        HttpRequest req,
         [DurableClient] IDurableEntityClient entityClient,
         [WebPubSub(Hub = PubSubConstants.HUB_NAME)] IAsyncCollector<WebPubSubAction> ws,
+        string lobbyId,
         string userId)
     {
         // Ensure request is from logged in user
@@ -50,11 +35,14 @@ public static class BoardResetActionFunction
             return new StatusCodeResult(401);
 
         // Check if lobby exists
-        if (lobby == null)
+        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
+            Id.For<LobbyStateMachine>(lobbyId));
+
+        if (!lobby.EntityExists)
             return new NotFoundResult();
 
-        // Check if requester is the user
-        if (player is null || requesterId != userId)
+        // Check if requester is a lobby member and the user specified
+        if (!lobby.EntityState.Players.Any(p => p.Id == requesterId) || requesterId != userId)
             return new StatusCodeResult(403);
 
         // Check if board exists
@@ -71,9 +59,9 @@ public static class BoardResetActionFunction
             Id.For<Board>(userId),
             board => board.Reset());
 
-        await ws.AddAsync(ActionFactory.CreateBoard(userId, lobby.Id, entity.EntityState.InitialState, true));
+        await ws.AddAsync(ActionFactory.CreateBoard(userId, lobbyId, entity.EntityState.InitialState, true));
 
         // Respond to request
-        return new NoContentResult();
+        return new AcceptedResult();
     }
 }

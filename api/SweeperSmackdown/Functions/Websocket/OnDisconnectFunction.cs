@@ -1,13 +1,10 @@
-﻿using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Azure.WebJobs;
+﻿using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
 using Microsoft.Azure.WebPubSub.Common;
 using SweeperSmackdown.Assets;
-using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Factories;
-using SweeperSmackdown.Models;
-using System.Linq;
+using SweeperSmackdown.Functions.Entities;
+using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Websocket;
@@ -17,28 +14,26 @@ public static class OnDisconnectFunction
     [FunctionName(nameof(OnDisconnectFunction))]
     public static async Task Run(
         [WebPubSubTrigger(PubSubConstants.HUB_NAME, WebPubSubEventType.System, "disconnected")] DisconnectedEventRequest req,
-        [CosmosDB(Connection = "CosmosDbConnectionString")] CosmosClient cosmosClient)
+        [DurableClient] IDurableEntityClient entityClient)
     {
         var userId = req.ConnectionContext.UserId;
-        
-        var lobbyContainer = cosmosClient.GetLobbyContainer();
 
-        var container = cosmosClient.GetPlayerContainer();
+        var reference = await entityClient.ReadEntityStateAsync<ConnectionReference>(
+            Id.For<ConnectionReference>(userId));
 
-        // Remove any instance of the player from lobbies
-        var playerInstances = await cosmosClient
-            .GetPlayerContainer()
-            .GetItemLinqQueryable<Player>()
-                .Where(p => p.Id == userId)
-            .ToFeedIterator()
-            .ReadAllAsync();
+        if (!reference.EntityExists)
+            return;
 
-        await Task.WhenAll(
-            playerInstances.Select(p => Task.Run(async () => {
-                await container.PatchItemAsync<Player>(p.Id, new(p.LobbyId), new[]
-                {
-                    PatchOperation.Set("/active", false)
-                });
-            })));
+        var lobbyId = reference.EntityState.LobbyId;
+
+        if (lobbyId is not null)
+            await entityClient.SignalEntityAsync(
+                Id.For<LobbyStateMachine>(lobbyId),
+                nameof(ILobbyStateMachine.RemovePlayer),
+                userId);
+
+        await entityClient.SignalEntityAsync(
+            Id.For<ConnectionReference>(userId),
+            nameof(IConnectionReference.Delete));
     }
 }

@@ -1,4 +1,5 @@
 import { Participant, User } from "../hooks/useEmbeddAppSdk"
+import { Api } from "../types/Api"
 
 export type DisplayDetails = {
   id: string
@@ -9,18 +10,16 @@ export type DisplayDetails = {
 }
 
 export function getDisplayDetails(
-  id: string,
+  player: Api.Player,
   user: User | null,
-  participants: Participant[] | null,
-  wins: Record<string, number>,
-  scores: Record<string, number>
+  participants: Participant[] | null
 ): DisplayDetails {
   return {
-    id,
-    displayName: getUsername(id, user, participants ?? []) ?? id,
-    avatarUrl: getAvatarUrl(id, user, participants ?? []),
-    wins: wins[id] ?? 0,
-    score: scores[id] ?? 0
+    id: player.id,
+    displayName: getUsername(player.id, user, participants ?? []) ?? player.id,
+    avatarUrl: getAvatarUrl(player.id, user, participants ?? []),
+    wins: player.wins,
+    score: player.score
   }
 }
 

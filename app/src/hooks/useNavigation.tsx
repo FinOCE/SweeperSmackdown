@@ -1,10 +1,13 @@
-import React, { createContext, useContext, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { Entrypoint } from "../pages/Entrypoint"
 import { FadeWrapper } from "../components/ui/FadeWrapper"
 import { MainMenu } from "../pages/MainMenu"
 import { GameConfigure } from "../pages/GameConfigure"
 import { GameActive } from "../pages/GameActive"
 import { GameCelebration } from "../pages/GameCelebration"
+import { useLobby } from "./resources/useLobby"
+import { Api } from "../types/Api"
+import { useEmbeddedAppSdk } from "./useEmbeddAppSdk"
 
 const Pages = {
   Entrypoint: Entrypoint,
@@ -31,6 +34,9 @@ const NavigationContext = createContext<TNavigationContext>({
 export const useNavigation = () => useContext(NavigationContext)
 
 export function NavigationProvider() {
+  const { user } = useEmbeddedAppSdk()
+  const { lobby } = useLobby()
+
   const [page, setPage] = useState<Page>({ name: "Entrypoint", args: {} })
   const [animate, setAnimate] = useState<"in" | "out" | "off">("off")
 
@@ -48,6 +54,25 @@ export function NavigationProvider() {
   function navigateWithoutAnimation<E extends keyof typeof Pages>(element: E, args: Parameters<(typeof Pages)[E]>[0]) {
     setPage({ name: element, args })
   }
+
+  useEffect(() => {
+    if (!lobby.resolved || !user) return
+
+    const expectedPage = ((): Page => {
+      switch (lobby.status.status) {
+        case Api.Enums.ELobbyStatus.Configuring:
+        case Api.Enums.ELobbyStatus.Starting:
+          return { name: "GameConfigure", args: { lobbyId: lobby.id } }
+        case Api.Enums.ELobbyStatus.Playing:
+        case Api.Enums.ELobbyStatus.Concluding:
+          return { name: "GameActive", args: { lobbyId: lobby.id, userId: user.id } }
+        case Api.Enums.ELobbyStatus.Celebrating:
+          return { name: "GameCelebration", args: { lobbyId: lobby.id } }
+      }
+    })()
+
+    if (page.name !== expectedPage.name) navigate(expectedPage.name, expectedPage.args)
+  }, [lobby.status?.status, user])
 
   return (
     <NavigationContext.Provider value={{ navigate, navigateWithoutAnimation }}>
