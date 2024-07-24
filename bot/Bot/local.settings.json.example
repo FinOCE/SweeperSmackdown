@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "DISCORD_PUBLIC_KEY": "DISCORD_PUBLIC_KEY_GOES_HERE"
+  },
+  "Host": {
+    "LocalHttpPort": 7198,
+    "CORS": "*"
+  }
+}
