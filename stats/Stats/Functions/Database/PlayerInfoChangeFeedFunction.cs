@@ -2,8 +2,8 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using SweeperSmackdown.Stats.Assets;
+using SweeperSmackdown.Stats.DTOs.Events;
 using SweeperSmackdown.Stats.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,14 +38,14 @@ public static class PlayerInfoChangeFeedFunction
             .ReadManyItemsAsync<AchievementProgressCollection>(keys);
 
         // Calculate new achievement progresses
-        var newProgresses = infos.Select(info =>
+        var progresses = infos.Select(info =>
             new AchievementProgressCollection(
                 info.Id,
                 Constants.Achievements.Select(achievement =>
                     new AchievementProgress(achievement.Id, achievement.GetProgress(info)))));
 
         // Calculate new progression and completion of achievements
-        var newlyUpdated = newProgresses
+        var updated = progresses
             .Where(n =>
                 oldProgresses
                     .Any(o => o.Id == n.Id))
@@ -58,7 +58,7 @@ public static class PlayerInfoChangeFeedFunction
                                     .First(o => o.Id == n.Id).Achievements
                                     .Any(oa => oa.Id == na.Id && oa.Progress == na.Progress))))
             .Concat(
-                newProgresses
+                progresses
                     .Where(n => !oldProgresses.Any(o => o.Id == n.Id))
                     .Select(n => KeyValuePair.Create(
                         n.Id,
@@ -66,41 +66,16 @@ public static class PlayerInfoChangeFeedFunction
             .Where(n => n.Value.Any())
             .ToDictionary();
 
-        var newlyProgressed = newlyUpdated
-            .Select(kvp => KeyValuePair.Create(
+        // Notify of updates to achievements and update db
+        var events = updated.Select(kvp => new EventGridEvent(
+            kvp.Key,
+            "SweeperSmackdown.Achievements.Updated",
+            "1.0.0",
+            new AchievementsUpdatedEventResponse(
                 kvp.Key,
-                kvp.Value.Where(a => a.Progress != 1)))
-            .Where(kvp => kvp.Value.Any())
-            .ToDictionary();
+                kvp.Value.Where(a => a.Progress != 1),
+                kvp.Value.Where(a => a.Progress == 1))));
 
-        var newlyCompleted = newlyUpdated
-            .Select(kvp => KeyValuePair.Create(
-                kvp.Key,
-                kvp.Value.Where(a => a.Progress == 1)))
-            .Where(kvp => kvp.Value.Any())
-            .ToDictionary();
-
-        // Notify of progressed and completed achievements and update achievement db
-        var progressedEvents = newlyProgressed.SelectMany(u =>
-            u.Value.Select(v =>
-                new EventGridEvent(
-                    u.Key,
-                    "SweeperSmackdown.Achievements.Progressed",
-                    "1.0.0",
-                    v)));
-
-        var completedEvents = newlyCompleted.SelectMany(u =>
-            u.Value.Select(v =>
-                new EventGridEvent(
-                    u.Key,
-                    "SweeperSmackdown.Achievements.Completed",
-                    "1.0.0",
-                    v)));
-
-        return new(
-            newProgresses,
-            Array.Empty<EventGridEvent>()
-                .Concat(progressedEvents)
-                .Concat(completedEvents));
+        return new(progresses, events);
     }
 }
