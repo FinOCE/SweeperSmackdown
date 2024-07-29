@@ -28,47 +28,58 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
   const { navigate } = useNavigation()
   const { countdown, completed, start } = useCountdown()
 
-  const [overrides, setOverrides] = useState<Partial<Api.GameSettings>>({})
-  const [lobbyOverrides, setLobbyOverrides] = useState<Partial<{ hostManaged: boolean; hostId: string }>>({})
+  const [settingsOverrides, setSettingsOverrides] = useState<Partial<Api.GameSettings>>({})
+  const [pendingSettingsOverrides, setPendingSettingsOverrides] = useState<Partial<Api.GameSettings>>({})
+
+  type LobbySettings = { hostManaged: boolean; hostId: string }
+  const [lobbyOverrides, setLobbyOverrides] = useState<Partial<LobbySettings>>({})
+  const [pendingLobbyOverrides, setPendingLobbyOverrides] = useState<Partial<LobbySettings>>({})
+
+  const computedSettingsOverrides = Object.assign(settingsOverrides, pendingSettingsOverrides)
+  const computedLobbyOverrides = Object.assign(lobbyOverrides, pendingLobbyOverrides)
+
+  // TODO: Handle pending overrides
 
   // Update server state whenever local state changes
   useDelay(
     () => {
       if (!lobby.resolved) return
-      if (Object.keys(overrides).length === 0) return
+      if (Object.keys(computedSettingsOverrides).length === 0) return
 
-      api.lobbySettingsPatch(lobbyId, {
-        mode: overrides.mode,
-        height: overrides.height,
-        width: overrides.width,
-        mines: overrides.mines,
-        difficulty: overrides.difficulty,
-        lives: overrides.lives,
-        timeLimit: overrides.timeLimit,
-        boardCount: overrides.boardCount,
-        shareBoards: overrides.seed !== 0
-      })
-
-      setOverrides({})
+      api
+        .lobbySettingsPatch(lobbyId, {
+          mode: computedSettingsOverrides.mode,
+          height: computedSettingsOverrides.height,
+          width: computedSettingsOverrides.width,
+          mines: computedSettingsOverrides.mines,
+          difficulty: computedSettingsOverrides.difficulty,
+          lives: computedSettingsOverrides.lives,
+          timeLimit: computedSettingsOverrides.timeLimit,
+          boardCount: computedSettingsOverrides.boardCount,
+          shareBoards: computedSettingsOverrides.seed !== 0
+        })
+        .catch(() => {}) // Ignore errors
+        .finally(() => setSettingsOverrides({})) // TODO: Store computedSettingsOverrides somewhere else to display until properly set over ws
     },
     500,
-    [overrides, lobby.resolved]
+    [computedSettingsOverrides, lobby.resolved]
   )
 
   useDelay(
     () => {
       if (!lobby.resolved || !user) return
-      if (Object.keys(lobbyOverrides).length === 0 || lobby.hostId !== user.id) return
+      if (Object.keys(computedLobbyOverrides).length === 0 || lobby.hostId !== user.id) return
 
-      api.lobbyPatch(lobbyId, {
-        hostId: lobbyOverrides.hostId,
-        hostManaged: lobbyOverrides.hostManaged
-      })
-
-      setLobbyOverrides({})
+      api
+        .lobbyPatch(lobbyId, {
+          hostId: computedLobbyOverrides.hostId,
+          hostManaged: computedLobbyOverrides.hostManaged
+        })
+        .catch(() => {}) // Ignore errors
+        .finally(() => setLobbyOverrides({})) // TODO: Store computedSettingsOverrides somewhere else to display until properly set over ws
     },
     500,
-    [lobbyOverrides, lobby.resolved, user]
+    [computedLobbyOverrides, lobby.resolved, user]
   )
 
   // Start countdown when lobby starting
@@ -146,8 +157,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
                 name="mode"
                 id={`mode-${key}`}
                 value={key}
-                checked={(overrides.mode ?? lobby.settings.mode) === key}
-                onChange={() => setOverrides(prev => ({ ...prev, mode: key }))}
+                checked={(computedSettingsOverrides.mode ?? lobby.settings.mode) === key}
+                onChange={() => setSettingsOverrides(prev => ({ ...prev, mode: key }))}
               />
               <label htmlFor={`mode-${key}`}>
                 <Text type="small">{name}</Text>
@@ -173,8 +184,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
                 name="difficulty"
                 id={`difficulty-${key}`}
                 value={key}
-                checked={(overrides.difficulty ?? lobby.settings.difficulty) === key}
-                onChange={() => setOverrides(prev => ({ ...prev, difficulty: key, mines: undefined }))}
+                checked={(computedSettingsOverrides.difficulty ?? lobby.settings.difficulty) === key}
+                onChange={() => setSettingsOverrides(prev => ({ ...prev, difficulty: key, mines: undefined }))}
               />
               <label htmlFor={`difficulty-${key}`}>
                 <Text type="small">{name}</Text>
@@ -193,8 +204,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="height"
             min={7}
             max={32}
-            value={overrides.height ?? lobby.settings.height}
-            onChange={e => setOverrides(prev => ({ ...prev, height: e }))}
+            value={computedSettingsOverrides.height ?? lobby.settings.height}
+            onChange={e => setSettingsOverrides(prev => ({ ...prev, height: e }))}
           />
         </fieldset>
 
@@ -208,8 +219,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="width"
             min={7}
             max={32}
-            value={overrides.width ?? lobby.settings.width}
-            onChange={e => setOverrides(prev => ({ ...prev, width: e }))}
+            value={computedSettingsOverrides.width ?? lobby.settings.width}
+            onChange={e => setSettingsOverrides(prev => ({ ...prev, width: e }))}
           />
         </fieldset>
 
@@ -222,13 +233,17 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             name="mines"
             id="mines"
             min={Math.round(
-              (overrides.width ?? lobby.settings.width) * (overrides.height ?? lobby.settings.height) * 0.078125
+              (computedSettingsOverrides.width ?? lobby.settings.width) *
+                (computedSettingsOverrides.height ?? lobby.settings.height) *
+                0.078125
             )}
             max={Math.round(
-              (overrides.width ?? lobby.settings.width) * (overrides.height ?? lobby.settings.height) * 0.3125
+              (computedSettingsOverrides.width ?? lobby.settings.width) *
+                (computedSettingsOverrides.height ?? lobby.settings.height) *
+                0.3125
             )}
-            value={overrides.mines ?? lobby.settings.mines}
-            onChange={e => setOverrides(prev => ({ ...prev, mines: e, difficulty: undefined }))}
+            value={computedSettingsOverrides.mines ?? lobby.settings.mines}
+            onChange={e => setSettingsOverrides(prev => ({ ...prev, mines: e, difficulty: undefined }))}
           />
         </fieldset>
 
@@ -242,8 +257,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="lives"
             min={0}
             max={10}
-            value={overrides.lives ?? lobby.settings.lives}
-            onChange={e => setOverrides(prev => ({ ...prev, lives: e }))}
+            value={computedSettingsOverrides.lives ?? lobby.settings.lives}
+            onChange={e => setSettingsOverrides(prev => ({ ...prev, lives: e }))}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
         </fieldset>
@@ -259,8 +274,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             min={0}
             max={600}
             step={10}
-            value={overrides.timeLimit ?? lobby.settings.timeLimit}
-            onChange={e => setOverrides(prev => ({ ...prev, timeLimit: e }))}
+            value={computedSettingsOverrides.timeLimit ?? lobby.settings.timeLimit}
+            onChange={e => setSettingsOverrides(prev => ({ ...prev, timeLimit: e }))}
             display={v => (v !== 0 ? `${v}s` : "Unlimited")}
           />
         </fieldset>
@@ -275,8 +290,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
             id="boardCount"
             min={0}
             max={25}
-            value={overrides.boardCount ?? lobby.settings.boardCount}
-            onChange={e => setOverrides(prev => ({ ...prev, boardCount: e }))}
+            value={computedSettingsOverrides.boardCount ?? lobby.settings.boardCount}
+            onChange={e => setSettingsOverrides(prev => ({ ...prev, boardCount: e }))}
             display={v => (v !== 0 ? String(v) : "Unlimited")}
           />
         </fieldset>
@@ -291,8 +306,8 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
               type="checkbox"
               name="shareBoards"
               id="shareBoards"
-              checked={(overrides.seed ?? lobby.settings.seed) !== 0}
-              onChange={e => setOverrides(prev => ({ ...prev, seed: e.target.checked ? 1 : 0 }))}
+              checked={(computedSettingsOverrides.seed ?? lobby.settings.seed) !== 0}
+              onChange={e => setSettingsOverrides(prev => ({ ...prev, seed: e.target.checked ? 1 : 0 }))}
             />
             <label htmlFor="shareBoards">
               <Text type="small">Share Boards</Text>
@@ -304,7 +319,7 @@ export function GameConfigure({ lobbyId }: GameConfigureProps) {
               type="checkbox"
               name="hostManaged"
               id="hostManaged"
-              checked={lobbyOverrides.hostManaged ?? lobby.hostManaged}
+              checked={computedLobbyOverrides.hostManaged ?? lobby.hostManaged}
               onChange={e => setLobbyOverrides(prev => ({ ...prev, hostManaged: e.target.checked }))}
             />
             <label htmlFor="hostManaged">
