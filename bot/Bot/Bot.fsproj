@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Types\Discord.fs" />
+    <Compile Include="Requests\CreateChannelInvite.fs" />
     <Compile Include="Services\Configuration\IConfigurationService.fs" />
     <Compile Include="Services\Configuration\ConfigurationService.fs" />
     <Compile Include="Services\Signing\ISigningService.fs" />

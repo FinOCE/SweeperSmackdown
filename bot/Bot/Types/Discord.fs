@@ -215,6 +215,15 @@ type InteractionCallbackType =
     | MODAL = 9
     | PREMIUM_REQUIRED = 10
 
+type InviteType =
+    | GUILD
+    | GROUP_DM
+    | FRIEND
+
+type InviteTargetType =
+    | STREAM
+    | EMBEDDED_APPLICATION
+
 type DefaultReaction = {
     [<JsonField("emoji_id")>]
     EmojiId: string option
@@ -1541,6 +1550,43 @@ and Message = {
 
     [<JsonField("call")>]
     Call: MessageCall option
+}
+
+type Invite = {
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: InviteType
+
+    [<JsonField("code")>]
+    Code: string
+    
+    [<JsonField("guild")>]
+    Guild: Guild option
+    
+    [<JsonField("channel")>]
+    Channel: Channel option
+    
+    [<JsonField("inviter")>]
+    Inviter: User option
+    
+    [<JsonField("target_type", EnumValue = EnumMode.Value)>]
+    TargetType: InviteTargetType option
+    
+    [<JsonField("target_user")>]
+    TargetUser: User option
+    
+    [<JsonField("target_application")>]
+    TargetApplication: Application option
+    
+    [<JsonField("approximate_presence_count")>]
+    ApproximatePresenceCount: int option
+    
+    [<JsonField("approximate_member_count")>]
+    ApproximateMemberCount: int option
+    
+    [<JsonField("expires_at")>]
+    ExpiresAt: DateTime
+
+    // TODO: Add guild_scheduled_event here (not deprecated?)
 }
 
 type InteractionData = {

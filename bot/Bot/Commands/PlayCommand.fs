@@ -1,21 +1,13 @@
 ﻿namespace SweeperSmackdown.Bot.Commands
 
-open FSharp.Json
 open SweeperSmackdown.Bot.Types
-open System.Net.Http
+open SweeperSmackdown.Bot.Requests
 
 module PlayCommand = 
     type Failure =
         | MissingData
         | MissingOption
         | NotChannelOption
-
-    type Invite = {
-        [<JsonField("code")>]
-        Code: string
-
-        // TODO: Create full type and move into Discord API response types
-    }
 
     let Run (interaction: Interaction) = task {
         match interaction.Data with
@@ -28,35 +20,13 @@ module PlayCommand =
                     match option with
                     | None -> return Error(NotChannelOption)
                     | Some option ->
-                        let client = new HttpClient()
-                        let req = new HttpRequestMessage(HttpMethod.Post, "") // TODO: Use correct path for creating invite
+                        return! CreateChannelInvite
+                            .Build(
+                                maxAge = 0,
+                                targetType = InviteTargetType.EMBEDDED_APPLICATION,
+                                targetApplicationId = "" // TODO: Set actual application ID here
+                            )
+                            .SendAsync("") // TODO: Set channel ID here from `option` somehow
 
-                        req.Headers.Clear()
-                        req.Headers.Add("Authorization", "Bearer ???") // TODO: Add bot token here
-
-                        let! res = client.SendAsync req
-                        let! body = res.Content.ReadAsStringAsync()
-                        let data = Json.deserialize<Invite> body
-
-                        return Ok({
-                            Type = InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE;
-                            Data = Some {
-                                Tts = None;
-                                Embeds = None;
-                                Flags = None;
-                                Components = None;
-                                Attachments = None;
-                                Poll = None;
-                                AllowedMentions = Some {
-                                    Parse = [];
-                                    Roles = None;
-                                    Users = None;
-                                    RepliedUser = None;
-                                };
-                                Content = Some $"https://discord.gg/{data.Code}";
-                            };
-                        })
-
-                        // TODO: Figure out how to remove all the `None` from above type (maybe they shouldn't even be options?)
-                        // TODO: Figure out how to make this not so indented
+                        // TODO: Figure out how to make this not so indented                        
     }
