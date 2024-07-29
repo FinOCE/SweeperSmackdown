@@ -176,6 +176,19 @@ type ApplicationCommandType =
     | USER = 2
     | MESSAGE = 3
 
+type ApplicationCommandOptionType =
+    | SUB_COMMAND = 1
+    | SUB_COMMAND_GROUP = 2
+    | STRING = 3
+    | INTEGER = 4
+    | BOOLEAN = 5
+    | USER = 6
+    | CHANNEL = 7
+    | ROLE = 8
+    | MENTIONABLE = 9
+    | NUMBER = 10
+    | ATTACHMENT = 11
+
 type InteractionContextType =
     | GUILD = 0
     | BOT_DM = 1
@@ -237,7 +250,7 @@ type CommandInteractionDataOption = {
     Name: string
     
     [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: ApplicationCommandType
+    Type: ApplicationCommandOptionType
     
     [<JsonField("value")>]
     Value: CommandInteractionDataOptionValue option
@@ -1638,4 +1651,69 @@ type PingInteraction = {
 type PingInteractionResponse = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
     Type: InteractionCallbackType
+}
+
+type AllowedMentions = {
+    [<JsonField("parse")>]
+    Parse: string list // "roles" "users" "everyone"
+    
+    [<JsonField("roles")>]
+    Roles: string list option
+    
+    [<JsonField("users")>]
+    Users: string list option
+    
+    [<JsonField("replied_user")>]
+    RepliedUser: bool option
+}
+
+type Choice = {
+    // TODO
+}
+
+type InteractionCallbackData = {
+    // TODO: Figure out how to make this one of the three below
+}
+
+type InteractionCallbackMessageData = {
+    [<JsonField("tts")>]
+    Tts: bool option
+    
+    [<JsonField("content")>]
+    Content: string option
+    
+    [<JsonField("embeds")>]
+    Embeds: Embed list option
+    
+    [<JsonField("allowed_mentions")>]
+    AllowedMentions: AllowedMentions option
+    
+    [<JsonField("flags")>]
+    Flags: int option
+    
+    [<JsonField("components")>]
+    Components: BaseMessageComponent list option
+    
+    [<JsonField("attachments")>]
+    Attachments: Attachment list option
+    
+    [<JsonField("poll")>]
+    Poll: Poll option
+}
+
+type InteractionCallbackAutocompleteData = {
+    [<JsonField("choices")>]
+    Choices: Choice list
+}
+
+type InteractionCallbackModalData = {
+    // TODO
+}
+
+type InteractionCallback = {
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: InteractionCallbackType
+
+    [<JsonField("data")>]
+    Data: InteractionCallbackMessageData option
 }
