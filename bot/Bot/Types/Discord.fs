@@ -166,10 +166,10 @@ type GuildVerificationLevel =
     | VERY_HIGH = 4
 
 type CommandInteractionDataOptionValue =
-    | String
-    | Int
-    | Double
-    | Bool
+    | String of string
+    | Int of int
+    | Double of double
+    | Bool of bool
 
 type ApplicationCommandType = 
     | CHAT_INPUT = 1
@@ -1715,10 +1715,12 @@ type AllowedMentions = {
 
 type Choice = {
     // TODO
+    Temp: bool
 }
 
 type InteractionCallbackData = {
     // TODO: Figure out how to make this one of the three below
+    Temp: bool
 }
 
 type InteractionCallbackMessageData = {
@@ -1754,6 +1756,7 @@ type InteractionCallbackAutocompleteData = {
 
 type InteractionCallbackModalData = {
     // TODO
+    Temp: bool
 }
 
 type InteractionCallback = {

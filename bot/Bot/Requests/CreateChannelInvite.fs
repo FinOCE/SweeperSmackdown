@@ -59,26 +59,5 @@ with
 
         let! res = client.SendAsync req
         let! body = res.Content.ReadAsStringAsync()
-        let data = Json.deserialize<Invite> body
-
-        return Ok({
-            Type = InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE;
-            Data = Some {
-                Tts = None;
-                Embeds = None;
-                Flags = None;
-                Components = None;
-                Attachments = None;
-                Poll = None;
-                AllowedMentions = Some {
-                    Parse = [];
-                    Roles = None;
-                    Users = None;
-                    RepliedUser = None;
-                };
-                Content = Some $"https://discord.gg/{data.Code}";
-            };
-        })
-
-        // TODO: Figure out how to remove all the unnecessary `None` (ctors for types?)
+        return Json.deserialize<Invite> body
     }
