@@ -8,6 +8,7 @@
     <IsPublishable>false</IsPublishable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Types\DiscordTests.fs" />
     <Compile Include="Services\Configuration\ConfigurationServiceTests.fs" />
     <Compile Include="Services\Signing\Ed25519SigningServiceTests.fs" />
     <Compile Include="Functions\Http\InteractionPostFunctionTests.fs" />

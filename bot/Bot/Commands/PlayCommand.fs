@@ -17,29 +17,29 @@ type PlayCommand (configurationService: IConfigurationService) =
     let Run (interaction: Interaction) =
         // Get the application ID from the environment
         match configurationService.TryGetValue "DISCORD_APPLICATION_ID" with
-        | None -> Error(MissingApplicationId) |> Task.FromResult
+        | None -> Task.FromResult <| Error MissingApplicationId
         | Some applicationId ->
 
         // Ensure interaction contains data
         match interaction.Data with
-        | None -> Error(MissingData) |> Task.FromResult
+        | None -> Task.FromResult <| Error MissingData
         | Some data ->
 
         // Ensure data contains options
         match data.Options with
-        | None -> Error(MissingOption) |> Task.FromResult
+        | None -> Task.FromResult <| Error MissingOption
         | Some options ->
 
         // Get channel option from options
         let option = options |> Seq.tryFind(fun o -> o.Type = ApplicationCommandOptionType.CHANNEL)
 
         if option.IsNone then
-            Error(NoChannelOption) |> Task.FromResult
+            Task.FromResult <| Error NoChannelOption
         else
 
         // Ensure option has a value
         match option.Value.Value with
-        | None -> Error(NoOptionValue) |> Task.FromResult
+        | None -> Task.FromResult <| Error NoOptionValue
         | Some value -> 
                             
         // Ensure value is a string
@@ -54,27 +54,16 @@ type PlayCommand (configurationService: IConfigurationService) =
                     )
                     .SendAsync(channelId))
 
-                return Ok({
-                    Type = InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE;
-                    Data = Some {
-                        Tts = None;
-                        Embeds = None;
-                        Flags = None;
-                        Components = None;
-                        Attachments = None;
-                        Poll = None;
-                        AllowedMentions = Some {
-                            Parse = [];
-                            Roles = None;
-                            Users = None;
-                            RepliedUser = None;
-                        };
-                        Content = Some $"https://discord.gg/{invite.Code}";
-                    };
-                })
-
-                // TODO: Figure out how to remove all the unnecessary `None` (ctors for types?)
+                return Ok (InteractionCallback.Build(
+                    InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
+                    InteractionCallbackMessageData.Build(
+                        Content = $"https://discord.gg/{invite.Code}",
+                        AllowedMentions = AllowedMentions.Build(
+                            Parse = []
+                        )
+                    )
+                ))
             }
-        | _ -> Error(NotStringValue) |> Task.FromResult
+        | _ -> Task.FromResult <| Error NotStringValue
 
         // TODO: Figure out how to clean up all these non-indented match cases

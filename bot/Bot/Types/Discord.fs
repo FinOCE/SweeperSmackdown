@@ -1712,6 +1712,18 @@ type AllowedMentions = {
     [<JsonField("replied_user")>]
     RepliedUser: bool option
 }
+with
+    static member Build(
+        Parse: string list,
+        ?Roles: string list,
+        ?Users: string list,
+        ?RepliedUser: bool
+    ) = {
+        Parse = Parse;
+        Roles = Roles;
+        Users = Users;
+        RepliedUser = RepliedUser;
+    }
 
 type Choice = {
     // TODO
@@ -1748,6 +1760,26 @@ type InteractionCallbackMessageData = {
     [<JsonField("poll")>]
     Poll: Poll option
 }
+with
+    static member Build(
+        ?Tts: bool,
+        ?Content: string,
+        ?Embeds: Embed list,
+        ?AllowedMentions: AllowedMentions,
+        ?Flags: int,
+        ?Components: BaseMessageComponent list,
+        ?Attachments: Attachment list,
+        ?Poll: Poll
+    ) = {
+        Tts = Tts;
+        Content = Content;
+        Embeds = Embeds;
+        AllowedMentions = AllowedMentions;
+        Flags = Flags;
+        Components = Components;
+        Attachments = Attachments;
+        Poll = Poll;
+    }
 
 type InteractionCallbackAutocompleteData = {
     [<JsonField("choices")>]
@@ -1762,7 +1794,15 @@ type InteractionCallbackModalData = {
 type InteractionCallback = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
     Type: InteractionCallbackType
-
+    
     [<JsonField("data")>]
     Data: InteractionCallbackMessageData option
 }
+with
+    static member Build(
+        Type: InteractionCallbackType,
+        ?Data: InteractionCallbackMessageData
+    ) = {
+        Type = Type;
+        Data = Data;
+    }
