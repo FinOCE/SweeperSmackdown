@@ -1,0 +1,20 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureWebJobsSecretStorageType": "files",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+
+    "BearerTokenSecretKey": "BEARER_TOKEN_SECRET_KEY_GOES_HERE",
+
+    "DiscordClientId": "DISCORD_CLIENT_ID_GOES_HERE",
+    "DiscordClientSecret": "DISCORD_CLIENT_SECRET_GOES_HERE",
+
+    "CosmosDbConnectionString": "COSMOS_DB_CONNECTION_STRING_GOES_HERE",
+    "WebPubSubConnectionString": "WEB_PUB_SUB_CONNECTION_STRING_GOES_HERE"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*"
+  }
+}
