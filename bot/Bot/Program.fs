@@ -17,6 +17,7 @@ HostBuilder()
         services
             .AddApplicationInsightsTelemetryWorkerService()
             .AddSingleton<IConfigurationService, ConfigurationService>()
+            .AddSingleton<IDiscordApiService, DiscordApiService>()
             .AddSingleton<ISigningService, Ed25519SigningService>()
         |> ignore
     )

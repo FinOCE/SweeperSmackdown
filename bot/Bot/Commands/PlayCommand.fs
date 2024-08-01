@@ -19,7 +19,7 @@ module Options =
         
         // TODO: Create versions of above for all option types and move to shared file
 
-type PlayCommand (configurationService: IConfigurationService) =
+type PlayCommand (configurationService: IConfigurationService, discordApiService: IDiscordApiService) =
     let validate (interaction: Interaction) =
         match interaction with
         | { Data = Some { Options = Some (Options.Channel "channel" channelId) } } -> Ok { channelId = channelId }
@@ -31,19 +31,20 @@ type PlayCommand (configurationService: IConfigurationService) =
         match validate interaction with
         | Error message -> return Error message
         | Ok ({ channelId = channelId }) ->
-            let! invite = (CreateChannelInvite
-                .Build(
+            let! invite = discordApiService.Send(
+                CreateChannelInvite.endpoint(channelId),
+                CreateChannelInvite.payload(
                     maxAge = 0,
                     targetType = InviteTargetType.EMBEDDED_APPLICATION,
                     targetApplicationId = configurationService.GetValue "DISCORD_APPLICATION_ID"
                 )
-                .SendAsync(channelId))
+            )
 
-            return Ok (InteractionCallback.Build(
+            return Ok (InteractionCallback.build(
                 InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-                InteractionCallbackMessageData.Build(
+                InteractionCallbackMessageData.build(
                     Content = $"https://discord.gg/{invite.Code}",
-                    AllowedMentions = AllowedMentions.Build(
+                    AllowedMentions = AllowedMentions.build(
                         Parse = []
                     )
                 )

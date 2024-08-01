@@ -3,6 +3,11 @@
 open FSharp.Json
 open System
 
+// FS0049: Uppercase variable identifiers should not generally be used in patterns, and may indicate a missing open
+//         declaration or a misspelt pattern name.
+#nowarn "49"
+
+
 type TextInputStyle =
     | SHORT = 1
     | PARAGRAPH = 2
@@ -1713,7 +1718,7 @@ type AllowedMentions = {
     RepliedUser: bool option
 }
 with
-    static member Build(
+    static member build(
         Parse: string list,
         ?Roles: string list,
         ?Users: string list,
@@ -1761,7 +1766,7 @@ type InteractionCallbackMessageData = {
     Poll: Poll option
 }
 with
-    static member Build(
+    static member build(
         ?Tts: bool,
         ?Content: string,
         ?Embeds: Embed list,
@@ -1799,7 +1804,7 @@ type InteractionCallback = {
     Data: InteractionCallbackMessageData option
 }
 with
-    static member Build(
+    static member build(
         Type: InteractionCallbackType,
         ?Data: InteractionCallbackMessageData
     ) = {

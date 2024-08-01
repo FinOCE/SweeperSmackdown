@@ -2,6 +2,7 @@
 
 open FSharp.Json
 open SweeperSmackdown.Bot.Types
+open SweeperSmackdown.Bot.Services
 open System.Net.Http
 
 type CreateChannelInvite = {
@@ -27,7 +28,10 @@ type CreateChannelInvite = {
     TargetApplicationId: string option
 }
 with
-    static member Build(
+    static member endpoint (channelId: string) =
+        Endpoint.create<Invite>($"channels/{channelId}/invites", HttpMethod.Post)
+
+    static member payload(
         ?maxAge: int,
         ?maxUses: int,
         ?temporary: bool,
@@ -35,7 +39,7 @@ with
         ?targetType: InviteTargetType,
         ?targetUserId: string,
         ?targetApplicationId: string
-    ) = {
+    ) = new StringContent(Json.serialize ({
         MaxAge = maxAge;
         MaxUses = maxUses;
         Temporary = temporary;
@@ -43,21 +47,4 @@ with
         TargetType = targetType;
         TargetUserId = targetUserId;
         TargetApplicationId = targetApplicationId;
-    }
-
-    member this.SendAsync(channelId: string) = task {
-        let client = new HttpClient()
-
-        let req = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"https://discord.com/api/channels/{channelId}/invites",
-            Content = new StringContent(Json.serialize this)
-        )
-
-        req.Headers.Clear()
-        req.Headers.Add("Authorization", "Bearer ???") // TODO: Add bot token here
-
-        let! res = client.SendAsync req
-        let! body = res.Content.ReadAsStringAsync()
-        return Json.deserialize<Invite> body
-    }
+    }))
