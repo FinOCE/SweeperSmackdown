@@ -5,65 +5,47 @@ open SweeperSmackdown.Bot.Requests
 open SweeperSmackdown.Bot.Services
 open System.Threading.Tasks
 
-type PlayCommandFailure =
-    | MissingApplicationId
-    | MissingData
-    | MissingOption
-    | NoChannelOption
-    | NoOptionValue
-    | NotStringValue
-
 type PlayCommand (configurationService: IConfigurationService) =
+    let TaskError message = Task.FromResult <| Error message
+
+    let (|Valid|NoChannelOption|NoOptions|MissingData|) (interaction: Interaction) =
+        let (|Channel|_|) (options: CommandInteractionDataOption list) =
+            match options |> Seq.tryFind(fun o -> o.Type = ApplicationCommandOptionType.CHANNEL) with
+            | Some { Value = Some(CommandInteractionDataOptionValue.String channelId) } -> Some (Channel channelId)
+            | _ -> None
+
+        match interaction with
+        | { Data = Some { Options = Some (Channel channelId) } } -> Valid channelId
+        | { Data = Some { Options = Some _ } } -> NoChannelOption
+        | { Data = Some { Options = None } } -> NoOptions
+        | { Data = None } -> MissingData
+
     let Run (interaction: Interaction) =
-        // Get the application ID from the environment
         match configurationService.TryGetValue "DISCORD_APPLICATION_ID" with
-        | None -> Task.FromResult <| Error MissingApplicationId
+        | None -> TaskError "Application missing discord application ID"
         | Some applicationId ->
-
-        // Ensure interaction contains data
-        match interaction.Data with
-        | None -> Task.FromResult <| Error MissingData
-        | Some data ->
-
-        // Ensure data contains options
-        match data.Options with
-        | None -> Task.FromResult <| Error MissingOption
-        | Some options ->
-
-        // Get channel option from options
-        let option = options |> Seq.tryFind(fun o -> o.Type = ApplicationCommandOptionType.CHANNEL)
-
-        if option.IsNone then
-            Task.FromResult <| Error NoChannelOption
-        else
-
-        // Ensure option has a value
-        match option.Value.Value with
-        | None -> Task.FromResult <| Error NoOptionValue
-        | Some value -> 
-                            
-        // Ensure value is a string
-        match value with
-        | CommandInteractionDataOptionValue.String channelId ->
-            task {
-                let! invite = (CreateChannelInvite
-                    .Build(
-                        maxAge = 0,
-                        targetType = InviteTargetType.EMBEDDED_APPLICATION,
-                        targetApplicationId = applicationId
-                    )
-                    .SendAsync(channelId))
-
-                return Ok (InteractionCallback.Build(
-                    InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    InteractionCallbackMessageData.Build(
-                        Content = $"https://discord.gg/{invite.Code}",
-                        AllowedMentions = AllowedMentions.Build(
-                            Parse = []
+            match interaction with
+            | MissingData -> TaskError "Missing interaction data"
+            | NoOptions -> TaskError "No options in interaction data"
+            | NoChannelOption -> TaskError "No channel option in interaction data"
+            | Valid channelId ->
+                task {
+                    let! invite = (CreateChannelInvite
+                        .Build(
+                            maxAge = 0,
+                            targetType = InviteTargetType.EMBEDDED_APPLICATION,
+                            targetApplicationId = applicationId
                         )
-                    )
-                ))
-            }
-        | _ -> Task.FromResult <| Error NotStringValue
+                        .SendAsync(channelId))
 
-        // TODO: Figure out how to clean up all these non-indented match cases
+                    return Ok (InteractionCallback.Build(
+                        InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        InteractionCallbackMessageData.Build(
+                            Content = $"https://discord.gg/{invite.Code}",
+                            AllowedMentions = AllowedMentions.Build(
+                                Parse = []
+                            )
+                        )
+                    ))
+                }
+                
