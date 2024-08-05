@@ -11,12 +11,14 @@
     <Compile Include="Types\Discord.fs" />
     <Compile Include="Services\Configuration\IConfigurationService.fs" />
     <Compile Include="Services\Configuration\ConfigurationService.fs" />
-    <Compile Include="Services\DiscordApi\IDiscordApiService.fs" />
-    <Compile Include="Services\DiscordApi\DiscordApiService.fs" />
     <Compile Include="Services\Signing\ISigningService.fs" />
     <Compile Include="Services\Signing\Ed25519SigningService.fs" />
+    <Compile Include="Services\DiscordApi\IDiscordApiService.fs" />
+    <Compile Include="Services\DiscordApi\DiscordApiService.fs" />
     <Compile Include="Requests\CreateChannelInvite.fs" />
     <Compile Include="Commands\PlayCommand.fs" />
+    <Compile Include="Commands\ICommandProvider.fs" />
+    <Compile Include="Commands\CommandProvider.fs" />
     <Compile Include="Functions\Http\InteractionPostFunction.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

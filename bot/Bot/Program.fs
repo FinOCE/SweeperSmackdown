@@ -2,6 +2,7 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open SweeperSmackdown.Bot.Services
+open SweeperSmackdown.Bot.Commands
 open System.IO
 
 HostBuilder()
@@ -16,9 +17,13 @@ HostBuilder()
     .ConfigureServices(fun services -> 
         services
             .AddApplicationInsightsTelemetryWorkerService()
+            // Services
             .AddSingleton<IConfigurationService, ConfigurationService>()
-            .AddSingleton<IDiscordApiService, DiscordApiService>()
             .AddSingleton<ISigningService, Ed25519SigningService>()
+            .AddSingleton<IDiscordApiService, DiscordApiService>()
+            // Application commands
+            .AddSingleton<PlayCommand>()
+            .AddSingleton<ICommandProvider, CommandProvider>()
         |> ignore
     )
     .Build()
