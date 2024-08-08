@@ -2,8 +2,6 @@
 
 open FSharp.Json
 open SweeperSmackdown.Bot.Types
-open SweeperSmackdown.Bot.Services
-open System.Net.Http
 
 type CreateChannelInvite = {
     [<JsonField("max_age")>]
@@ -28,10 +26,7 @@ type CreateChannelInvite = {
     TargetApplicationId: string option
 }
 with
-    static member endpoint (channelId: string) =
-        Endpoint.create<Invite>($"channels/{channelId}/invites", HttpMethod.Post)
-
-    static member payload(
+    static member build(
         ?maxAge: int,
         ?maxUses: int,
         ?temporary: bool,
@@ -39,7 +34,7 @@ with
         ?targetType: InviteTargetType,
         ?targetUserId: string,
         ?targetApplicationId: string
-    ) = new StringContent(Json.serialize ({
+    ) = {
         MaxAge = maxAge;
         MaxUses = maxUses;
         Temporary = temporary;
@@ -47,4 +42,4 @@ with
         TargetType = targetType;
         TargetUserId = targetUserId;
         TargetApplicationId = targetApplicationId;
-    }))
+    }
