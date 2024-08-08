@@ -2,11 +2,9 @@
 
 open FSharp.Json
 open System
+open System.Collections.Generic
 
-// FS0049: Uppercase variable identifiers should not generally be used in patterns, and may indicate a missing open
-//         declaration or a misspelt pattern name.
 #nowarn "49"
-
 
 type TextInputStyle =
     | SHORT = 1
@@ -1811,3 +1809,150 @@ with
         Type = Type;
         Data = Data;
     }
+
+type ApplicationCommandOptionChoiceValue =
+    | String of string
+    | Integer of int
+    | Double of double
+
+type ApplicationCommandOptionChoice = {
+    [<JsonField("name")>]
+    Name: string
+    
+    [<JsonField("name_localizations")>]
+    NameLocalizations: Dictionary<string, string> option
+    
+    [<JsonField("value")>]
+    Value: ApplicationCommandOptionChoiceValue
+}
+
+type ApplicationCommandMinValue =
+    | Integer of int
+    | Double of double
+    
+type ApplicationCommandMaxValue =
+    | Integer of int
+    | Double of double
+
+type ApplicationCommandOption = {
+    [<JsonField("type")>]
+    Type: ApplicationCommandOptionType
+    
+    [<JsonField("name")>]
+    Name: string
+    
+    [<JsonField("name_localizations")>]
+    NameLocalizations: Dictionary<string, string> option
+    
+    [<JsonField("description")>]
+    Description: string
+    
+    [<JsonField("description_localizations")>]
+    DescriptionOptions: Dictionary<string, string> option
+    
+    [<JsonField("required")>]
+    Required: bool option
+    
+    [<JsonField("choices")>]
+    Choices: ApplicationCommandOptionChoice list option
+    
+    [<JsonField("options")>]
+    Options: ApplicationCommandOption list option
+    
+    [<JsonField("channel_types")>]
+    ChannelTypes: ChannelType list option
+    
+    [<JsonField("min_value")>]
+    MinValue: ApplicationCommandMinValue option
+    
+    [<JsonField("max_value")>]
+    MaxValue: ApplicationCommandMaxValue option
+    
+    [<JsonField("min_length")>]
+    MinLength: int option
+    
+    [<JsonField("max_length")>]
+    MaxLength: int option
+    
+    [<JsonField("autocomplete")>]
+    Autocomplete: bool option
+}
+with
+    static member build(
+        Type: ApplicationCommandOptionType,
+        Name: string,
+        Description: string,
+        ?NameLocalizations: Dictionary<string, string>,
+        ?DescriptionOptions: Dictionary<string, string>,
+        ?Required: bool,
+        ?Choices: ApplicationCommandOptionChoice list,
+        ?Options: ApplicationCommandOption list,
+        ?ChannelTypes: ChannelType list,
+        ?MinValue: ApplicationCommandMinValue,
+        ?MaxValue: ApplicationCommandMaxValue,
+        ?MinLength: int,
+        ?MaxLength: int,
+        ?Autocomplete: bool
+    ) = {
+        Type = Type;
+        Name = Name;
+        NameLocalizations = NameLocalizations;
+        Description = Description;
+        DescriptionOptions = DescriptionOptions;
+        Required = Required;
+        Choices = Choices;
+        Options = Options;
+        ChannelTypes = ChannelTypes;
+        MinValue = MinValue;
+        MaxValue = MaxValue;
+        MinLength = MinLength;
+        MaxLength = MaxLength;
+        Autocomplete = Autocomplete;
+    }
+
+type ApplicationCommand = {
+    [<JsonField("id")>]
+    Id: string
+    
+    [<JsonField("type")>]
+    Type: ApplicationCommandType option
+    
+    [<JsonField("application_id")>]
+    ApplicationId: string
+    
+    [<JsonField("guild_id")>]
+    GuildId: string option
+    
+    [<JsonField("name")>]
+    Name: string
+    
+    [<JsonField("name_localizations")>]
+    NameLocalizations: Dictionary<string, string> option
+    
+    [<JsonField("description")>]
+    Description: string
+    
+    [<JsonField("description_localizations")>]
+    DescriptionLocalizations: Dictionary<string, string> option
+    
+    [<JsonField("options")>]
+    Options: ApplicationCommandOption list option
+    
+    [<JsonField("default_member_permissions")>]
+    DefaultMemberPermissions: string option
+    
+    [<JsonField("dm_permissions")>]
+    DmPermissions: bool option
+    
+    [<JsonField("nsfw")>]
+    Nsfw: bool option
+    
+    [<JsonField("integration_types")>]
+    IntegrationTypes: ApplicationIntegrationType list option
+    
+    [<JsonField("contexts")>]
+    Contexts: InteractionContextType list option
+    
+    [<JsonField("version")>]
+    Version: string
+}

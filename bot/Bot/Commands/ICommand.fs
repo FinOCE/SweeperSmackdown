@@ -1,11 +1,10 @@
 ﻿namespace SweeperSmackdown.Bot.Commands
 
 open SweeperSmackdown.Bot.Types
+open SweeperSmackdown.Bot.Requests
 open System.Threading.Tasks
 
-type ICommand<'T> =
-    abstract member Name: string
+type ICommand =
+    abstract member Data: CreateGlobalApplicationCommand
 
-    abstract member Validate: interaction: Interaction -> Result<'T, string>
-
-    abstract member Execute: validationResult: 'T -> Task<Result<InteractionCallback, string>>
+    abstract member Execute: interaction: Interaction -> Task<Result<InteractionCallback, string>>

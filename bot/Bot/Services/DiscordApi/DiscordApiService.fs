@@ -1,8 +1,6 @@
 ﻿namespace SweeperSmackdown.Bot.Services
 
 open FSharp.Json
-open SweeperSmackdown.Bot.Types
-open SweeperSmackdown.Bot.Requests
 open System.Net.Http
 
 type DiscordApiService (configurationService: IConfigurationService) =
@@ -27,8 +25,20 @@ type DiscordApiService (configurationService: IConfigurationService) =
         Some (new StringContent (Json.serialize payload) :> HttpContent)
 
     interface IDiscordApiService with
-        member this.CreateChannelInvite (channelId: string) (payload: CreateChannelInvite) =
-            this.Send<Invite>
+        member this.CreateGlobalApplicationCommand applicationId payload =
+            this.Send
+                HttpMethod.Post
+                $"applications/{applicationId}/commands"
+                (this.Content payload)
+
+        member this.BulkOverwriteGlobalApplicationCommands applicationId payload =
+            this.Send
+                HttpMethod.Patch
+                $"applications/{applicationId}/commands"
+                (this.Content payload)
+
+        member this.CreateChannelInvite channelId payload =
+            this.Send
                 HttpMethod.Post
                 $"channels/{channelId}/invites"
                 (this.Content payload)
