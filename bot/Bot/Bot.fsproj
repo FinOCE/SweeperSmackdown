@@ -8,9 +8,9 @@
     <RootNamespace>SweeperSmackdown.Bot</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Types\Discord.fs" />
-    <Compile Include="Requests\CreateGlobalApplicationCommand.fs" />
-    <Compile Include="Requests\CreateChannelInvite.fs" />
+    <Compile Include="Types\Discord\DiscordEnumTypes.fs" />
+    <Compile Include="Types\Discord\DiscordStructureTypes.fs" />
+    <Compile Include="Types\Discord\DiscordDTOTypes.fs" />
     <Compile Include="Services\Configuration\IConfigurationService.fs" />
     <Compile Include="Services\Configuration\ConfigurationService.fs" />
     <Compile Include="Services\Signing\ISigningService.fs" />

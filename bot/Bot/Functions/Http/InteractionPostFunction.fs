@@ -2,7 +2,7 @@
 
 open FSharp.Json
 open Microsoft.Azure.Functions.Worker
-open SweeperSmackdown.Bot.Types
+open SweeperSmackdown.Bot.Types.Discord
 open SweeperSmackdown.Bot.Services
 open SweeperSmackdown.Bot.Commands
 open System.IO

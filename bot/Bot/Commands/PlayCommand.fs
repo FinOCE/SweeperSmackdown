@@ -1,7 +1,6 @@
 ﻿namespace SweeperSmackdown.Bot.Commands
 
-open SweeperSmackdown.Bot.Types
-open SweeperSmackdown.Bot.Requests
+open SweeperSmackdown.Bot.Types.Discord
 open SweeperSmackdown.Bot.Services
 
 type PlayCommandValidationResult = { ChannelId: string }

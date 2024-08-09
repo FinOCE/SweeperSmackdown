@@ -1,7 +1,6 @@
 ﻿namespace SweeperSmackdown.Bot.Services
 
-open SweeperSmackdown.Bot.Types
-open SweeperSmackdown.Bot.Requests
+open SweeperSmackdown.Bot.Types.Discord
 open System.Threading.Tasks
 
 type IDiscordApiService =

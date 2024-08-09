@@ -1,6 +1,6 @@
 ﻿namespace SweeperSmackdown.Bot.Commands
 
-open SweeperSmackdown.Bot.Types
+open SweeperSmackdown.Bot.Types.Discord
 
 module Options =
     let (|Channel|_|) (name: string) (options: CommandInteractionDataOption list) =
