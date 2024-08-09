@@ -25,7 +25,7 @@ type PlayCommand (configurationService: IConfigurationService, discordApiService
 
         return Ok (InteractionCallback.build(
             Type = InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-            Data = InteractionCallbackMessageData.build(
+            Data = InteractionCallbackMessageData.buildBase(
                 Content = $"https://discord.gg/{invite.Code}",
                 AllowedMentions = AllowedMentions.build(
                     Parse = []

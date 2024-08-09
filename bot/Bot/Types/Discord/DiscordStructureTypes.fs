@@ -1102,10 +1102,6 @@ and TextInputComponent = {
 and MessageComponent =
     | BaseMessageComponent
 
-type MessageNonce =
-    | Number of int
-    | String of string
-
 type Channel = {
     [<JsonField("id")>]
     Id: string
@@ -1462,25 +1458,6 @@ with
         try Some(Json.deserialize<Interaction> json) with
         | _ -> None
 
-    static member Deserialize<'T>(json: string) =
-        try Some(Json.deserialize<'T> json) with
-        | _ -> None
-
-    static member GetInteractionType(json: string) =
-        match Interaction.Deserialize<BaseInteraction> json with
-        | Some interaction -> Some interaction.Type
-        | None -> None
-
-type PingInteraction = {
-    [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: InteractionType
-}
-
-type PingInteractionResponse = {
-    [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: InteractionCallbackType
-}
-
 type AllowedMentions = {
     [<JsonField("parse")>]
     Parse: string list // "roles" "users" "everyone"
@@ -1509,11 +1486,6 @@ with
 
 type Choice = {
     // TODO
-    Temp: bool
-}
-
-type InteractionCallbackData = {
-    // TODO: Figure out how to make this one of the three below
     Temp: bool
 }
 
@@ -1563,36 +1535,83 @@ with
         Poll = Poll;
     }
 
-type InteractionCallbackAutocompleteData = {
+    static member buildBase(
+        ?Tts: bool,
+        ?Content: string,
+        ?Embeds: Embed list,
+        ?AllowedMentions: AllowedMentions,
+        ?Flags: int,
+        ?Components: BaseMessageComponent list,
+        ?Attachments: Attachment list,
+        ?Poll: Poll
+    ) = InteractionCallbackData.InteractionCallbackMessageData (
+        InteractionCallbackMessageData.build (
+            ?Tts = Tts,
+            ?Content = Content,
+            ?Embeds = Embeds,
+            ?AllowedMentions = AllowedMentions,
+            ?Flags = Flags,
+            ?Components = Components,
+            ?Attachments = Attachments,
+            ?Poll = Poll
+        )
+        
+    )
+
+and InteractionCallbackAutocompleteData = {
     [<JsonField("choices")>]
     Choices: Choice list
 }
+with
+    static member build(
+        Choices: Choice list
+    ) = {
+        Choices = Choices;
+    }
 
-type InteractionCallbackModalData = {
+    static member buildBase(
+        Choices: Choice list
+    ) = InteractionCallbackData.InteractionCallbackAutocompleteData (
+        InteractionCallbackAutocompleteData.build Choices
+    )
+
+and InteractionCallbackModalData = {
     // TODO
     Temp: bool
 }
+with
+    static member build(
+        Temp: bool
+    ) = {
+        Temp = Temp;
+    }
+
+    static member buildBase(
+        Temp: bool
+    ) = InteractionCallbackData.InteractionCallbackModalData (
+        InteractionCallbackModalData.build Temp
+    )
+
+and InteractionCallbackData =
+    | InteractionCallbackMessageData of InteractionCallbackMessageData
+    | InteractionCallbackAutocompleteData of InteractionCallbackAutocompleteData
+    | InteractionCallbackModalData of InteractionCallbackModalData
 
 type InteractionCallback = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
     Type: InteractionCallbackType
     
     [<JsonField("data")>]
-    Data: InteractionCallbackMessageData option
+    Data: InteractionCallbackData option
 }
 with
     static member build(
         Type: InteractionCallbackType,
-        ?Data: InteractionCallbackMessageData
+        ?Data: InteractionCallbackData
     ) = {
         Type = Type;
         Data = Data;
     }
-
-type ApplicationCommandOptionChoiceValue =
-    | String of string
-    | Integer of int
-    | Double of double
 
 type ApplicationCommandOptionChoice = {
     [<JsonField("name")>]
@@ -1604,14 +1623,6 @@ type ApplicationCommandOptionChoice = {
     [<JsonField("value")>]
     Value: ApplicationCommandOptionChoiceValue
 }
-
-type ApplicationCommandMinValue =
-    | Integer of int
-    | Double of double
-    
-type ApplicationCommandMaxValue =
-    | Integer of int
-    | Double of double
 
 type ApplicationCommandOption = {
     [<JsonField("type")>]

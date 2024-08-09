@@ -220,3 +220,20 @@ type InviteType =
 type InviteTargetType =
     | STREAM
     | EMBEDDED_APPLICATION
+
+type MessageNonce =
+    | Number of int
+    | String of string
+
+type ApplicationCommandOptionChoiceValue =
+    | String of string
+    | Integer of int
+    | Double of double
+    
+type ApplicationCommandMinValue =
+    | Integer of int
+    | Double of double
+    
+type ApplicationCommandMaxValue =
+    | Integer of int
+    | Double of double

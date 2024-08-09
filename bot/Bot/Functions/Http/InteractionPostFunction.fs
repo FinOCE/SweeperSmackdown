@@ -35,28 +35,30 @@ type InteractionPostFunction (
         match verifySignature req.Headers body publicKey with
         | false -> return req.CreateResponse HttpStatusCode.Unauthorized
         | true ->
-            match Interaction.GetInteractionType body with
+            match Interaction.Deserialize body with
+            // Invalid interaction
             | None -> return req.CreateResponse HttpStatusCode.BadRequest
-            | Some InteractionType.PING ->
-                match Interaction.Deserialize<PingInteraction> body with
-                | None -> return req.CreateResponse HttpStatusCode.BadRequest
-                | Some _ ->
+            // Ping interaction
+            | Some interaction when interaction.Type = InteractionType.PING ->
+                let res = req.CreateResponse HttpStatusCode.OK
+                res.Headers.Add("Content-Type", "application/json")
+                do! InteractionCallback.build InteractionCallbackType.PONG
+                    |> Json.serialize
+                    |> res.WriteStringAsync
+                return res
+            // Application command interaction
+            | Some interaction when interaction.Type = InteractionType.APPLICATION_COMMAND ->
+                let! execution = commandProvider.Execute interaction
+                match execution with
+                | Error _ -> return req.CreateResponse HttpStatusCode.InternalServerError
+                | Ok callback -> 
                     let res = req.CreateResponse HttpStatusCode.OK
                     res.Headers.Add("Content-Type", "application/json")
-                    do! res.WriteStringAsync(Json.serialize { Type = InteractionCallbackType.PONG })
+                    do! callback
+                        |> Json.serialize
+                        |> res.WriteStringAsync
                     return res
-            | Some InteractionType.APPLICATION_COMMAND ->
-                match Interaction.Deserialize<Interaction> body with
-                | None -> return req.CreateResponse HttpStatusCode.BadRequest
-                | Some interaction ->
-                    let! execution = commandProvider.Execute interaction
-                    match execution with
-                    | Error _ -> return req.CreateResponse HttpStatusCode.InternalServerError
-                    | Ok callback -> 
-                        let res = req.CreateResponse HttpStatusCode.OK
-                        res.Headers.Add("Content-Type", "application/json")
-                        do! res.WriteStringAsync(Json.serialize callback)
-                        return res
+            // Unknown interaction type
             | _ ->
                 return req.CreateResponse HttpStatusCode.InternalServerError
     }
