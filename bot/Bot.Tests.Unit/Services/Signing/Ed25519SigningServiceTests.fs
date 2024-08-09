@@ -6,7 +6,7 @@ open System.Text
 open TweetNaclSharp
 
 [<TestClass>]
-type Ed25519SigningServiceTests() =
+type Ed25519SigningServiceTests () =
     [<TestMethod>]
     member _.``TESTUTIL - Generate valid ed25519 datarows`` () =
         let body = Guid.NewGuid().ToString()
@@ -30,7 +30,7 @@ type Ed25519SigningServiceTests() =
         "8228317DD172FCB211E6532D2CC34B7158D0877D768EAEA6A1205CEBEFF32CAE114455830E2885E1CAB7D54BF2ED387FD4F4D73E8AFAF186D2141F8778582901",
         "1DA73B9FFB48F89FB07D0226FB147A95C7DD412D985548822D3127416D505C06"
     )>]
-    member _.Verify_InvalidParameters_RejectsVerification(
+    member _.Verify_InvalidParameters_RejectsVerification (
         timestamp: string,
         body: string,
         signature: string,
@@ -52,7 +52,7 @@ type Ed25519SigningServiceTests() =
         "9228317DD172FCB211E6532D2CC34B7158D0877D768EAEA6A1205CEBEFF32CAE114455830E2885E1CAB7D54BF2ED387FD4F4D73E8AFAF186D2141F8778582901",
         "1DA73B9FFB48F89FB07D0226FB147A95C7DD412D985548822D3127416D505C06"
     )>]
-    member _.Verify_ValidParameters_AcceptsVerification(
+    member _.Verify_ValidParameters_AcceptsVerification (
         timestamp: string,
         body: string,
         signature: string,

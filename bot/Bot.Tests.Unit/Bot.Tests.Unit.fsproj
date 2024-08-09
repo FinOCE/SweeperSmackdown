@@ -8,9 +8,14 @@
     <IsPublishable>false</IsPublishable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandUtilsTests.fs" />
+    <Compile Include="Commands\PlayCommandTests.fs" />
+    <Compile Include="Commands\CommandProviderTests.fs" />
     <Compile Include="Types\DiscordTests.fs" />
     <Compile Include="Services\Configuration\ConfigurationServiceTests.fs" />
     <Compile Include="Services\Signing\Ed25519SigningServiceTests.fs" />
+    <Compile Include="Services\DiscordApi\DiscordApiServiceTests.fs" />
+    <Compile Include="Functions\Http\SyncApplicationCommandsPostFunctionTests.fs" />
     <Compile Include="Functions\Http\InteractionPostFunctionTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

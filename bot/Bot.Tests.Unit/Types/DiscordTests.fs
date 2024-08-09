@@ -1,4 +1,4 @@
-﻿namespace SweeperSmackdown.Bot.Types
+﻿namespace SweeperSmackdown.Bot.Types.Discord
 
 open FSharp.Json
 open Microsoft.VisualStudio.TestTools.UnitTesting
@@ -10,11 +10,11 @@ type DiscordTests() =
         // Arrange
         let json = """{"type":4,"data":{"content":"test","allowed_mentions":{"parse":[]}}}"""
 
-        let expected = InteractionCallback.Build(
+        let expected = InteractionCallback.build(
             InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-            InteractionCallbackMessageData.Build(
+            InteractionCallbackMessageData.build(
                 Content = "test",
-                AllowedMentions = AllowedMentions.Build(
+                AllowedMentions = AllowedMentions.build(
                     Parse = []
                 )
             )
@@ -30,11 +30,11 @@ type DiscordTests() =
     [<TestMethod>]
     member this.Serialization_CorrectlySerializesTypes() =
         // Arrange
-        let callback = InteractionCallback.Build(
+        let callback = InteractionCallback.build(
             InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-            InteractionCallbackMessageData.Build(
+            InteractionCallbackMessageData.build(
                 Content = "test",
-                AllowedMentions = AllowedMentions.Build(
+                AllowedMentions = AllowedMentions.build(
                     Parse = []
                 )
             )
