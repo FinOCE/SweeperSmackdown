@@ -12,7 +12,7 @@ type DiscordTests() =
 
         let expected = InteractionCallback.build(
             InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-            InteractionCallbackMessageData.build(
+            InteractionCallbackMessageData.buildBase(
                 Content = "test",
                 AllowedMentions = AllowedMentions.build(
                     Parse = []
@@ -23,16 +23,29 @@ type DiscordTests() =
         // Act
         let actual = Json.deserialize<InteractionCallback> json
 
+        // TODO: Figure out how to fix deserialization of InteractionCallbackData union
+        //
+        // Seems like it may be to do with it expecting nulls? Says its failing because it was
+        // expecting one field not two, so probably looking at choice data instead. I would assume
+        // using a `Json.deserialize` with a configuration to handle nulls properly will work. This
+        // would affect serializing the body of an interaction POST, so essential to be figured out.
+
         // Assert
         Assert.AreEqual(expected.Type, actual.Type)
-        Assert.AreEqual(expected.Data.Value.Content, actual.Data.Value.Content)
+
+        match (expected.Data, actual.Data) with
+        | Some (InteractionCallbackData.InteractionCallbackMessageData expected),
+          Some (InteractionCallbackData.InteractionCallbackMessageData actual) -> 
+            Assert.AreEqual(expected.Content, actual.Content)
+        | _ ->
+            Assert.Fail()
         
     [<TestMethod>]
     member this.Serialization_CorrectlySerializesTypes() =
         // Arrange
         let callback = InteractionCallback.build(
             InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-            InteractionCallbackMessageData.build(
+            InteractionCallbackMessageData.buildBase(
                 Content = "test",
                 AllowedMentions = AllowedMentions.build(
                     Parse = []

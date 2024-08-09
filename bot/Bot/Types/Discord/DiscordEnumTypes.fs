@@ -11,7 +11,7 @@ type ButtonStyle =
     | DANGER = 4
     | LINK = 5
 
-type MessageComponentType =
+type ComponentType =
     | ACTION_ROW = 1
     | BUTTON = 2
     | STRING_SELECT = 3

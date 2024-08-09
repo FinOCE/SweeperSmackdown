@@ -1005,22 +1005,17 @@ type SelectMenuDefaultValue = {
     Type: string
 }
 
-type BaseMessageComponent = {
+type ActionRowComponent = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: MessageComponentType
-}
-
-and ActionRowComponent = {
-    [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: MessageComponentType
+    Type: ComponentType
     
     [<JsonField("components")>]
-    Components: MessageComponent list
+    Components: Component list
 }
 
 and ButtonComponent = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: MessageComponentType
+    Type: ComponentType
 
     [<JsonField("style", EnumValue = EnumMode.Value)>]
     Style: ButtonStyle
@@ -1043,7 +1038,7 @@ and ButtonComponent = {
 
 and SelectMenuComponent = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: MessageComponentType
+    Type: ComponentType
 
     [<JsonField("custom_id")>]
     CustomId: string
@@ -1072,7 +1067,7 @@ and SelectMenuComponent = {
 
 and TextInputComponent = {
     [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: MessageComponentType
+    Type: ComponentType
 
     [<JsonField("custom_id")>]
     CustomId: string
@@ -1099,8 +1094,11 @@ and TextInputComponent = {
     Placeholder: string option
 }
 
-and MessageComponent =
-    | BaseMessageComponent
+and Component =
+    | ActionRowComponent of ActionRowComponent
+    | ButtonComponent of ButtonComponent
+    | SelectMenuComponent of SelectMenuComponent
+    | TextInputComponent of TextInputComponent
 
 type Channel = {
     [<JsonField("id")>]
@@ -1309,7 +1307,7 @@ and Message = {
     Thread: Channel option
 
     [<JsonField("components")>]
-    Components: MessageComponent list option
+    Components: Component list option
 
     [<JsonField("sticker_items")>]
     StickerItems: Sticker list option
@@ -1484,135 +1482,6 @@ with
         RepliedUser = RepliedUser;
     }
 
-type Choice = {
-    // TODO
-    Temp: bool
-}
-
-type InteractionCallbackMessageData = {
-    [<JsonField("tts")>]
-    Tts: bool option
-    
-    [<JsonField("content")>]
-    Content: string option
-    
-    [<JsonField("embeds")>]
-    Embeds: Embed list option
-    
-    [<JsonField("allowed_mentions")>]
-    AllowedMentions: AllowedMentions option
-    
-    [<JsonField("flags")>]
-    Flags: int option
-    
-    [<JsonField("components")>]
-    Components: BaseMessageComponent list option
-    
-    [<JsonField("attachments")>]
-    Attachments: Attachment list option
-    
-    [<JsonField("poll")>]
-    Poll: Poll option
-}
-with
-    static member build(
-        ?Tts: bool,
-        ?Content: string,
-        ?Embeds: Embed list,
-        ?AllowedMentions: AllowedMentions,
-        ?Flags: int,
-        ?Components: BaseMessageComponent list,
-        ?Attachments: Attachment list,
-        ?Poll: Poll
-    ) = {
-        Tts = Tts;
-        Content = Content;
-        Embeds = Embeds;
-        AllowedMentions = AllowedMentions;
-        Flags = Flags;
-        Components = Components;
-        Attachments = Attachments;
-        Poll = Poll;
-    }
-
-    static member buildBase(
-        ?Tts: bool,
-        ?Content: string,
-        ?Embeds: Embed list,
-        ?AllowedMentions: AllowedMentions,
-        ?Flags: int,
-        ?Components: BaseMessageComponent list,
-        ?Attachments: Attachment list,
-        ?Poll: Poll
-    ) = InteractionCallbackData.InteractionCallbackMessageData (
-        InteractionCallbackMessageData.build (
-            ?Tts = Tts,
-            ?Content = Content,
-            ?Embeds = Embeds,
-            ?AllowedMentions = AllowedMentions,
-            ?Flags = Flags,
-            ?Components = Components,
-            ?Attachments = Attachments,
-            ?Poll = Poll
-        )
-        
-    )
-
-and InteractionCallbackAutocompleteData = {
-    [<JsonField("choices")>]
-    Choices: Choice list
-}
-with
-    static member build(
-        Choices: Choice list
-    ) = {
-        Choices = Choices;
-    }
-
-    static member buildBase(
-        Choices: Choice list
-    ) = InteractionCallbackData.InteractionCallbackAutocompleteData (
-        InteractionCallbackAutocompleteData.build Choices
-    )
-
-and InteractionCallbackModalData = {
-    // TODO
-    Temp: bool
-}
-with
-    static member build(
-        Temp: bool
-    ) = {
-        Temp = Temp;
-    }
-
-    static member buildBase(
-        Temp: bool
-    ) = InteractionCallbackData.InteractionCallbackModalData (
-        InteractionCallbackModalData.build Temp
-    )
-
-and InteractionCallbackData =
-    | InteractionCallbackMessageData of InteractionCallbackMessageData
-    | InteractionCallbackAutocompleteData of InteractionCallbackAutocompleteData
-    | InteractionCallbackModalData of InteractionCallbackModalData
-
-type InteractionCallback = {
-    [<JsonField("type", EnumValue = EnumMode.Value)>]
-    Type: InteractionCallbackType
-    
-    [<JsonField("data")>]
-    Data: InteractionCallbackData option
-}
-with
-    static member build(
-        Type: InteractionCallbackType,
-        ?Data: InteractionCallbackData
-    ) = {
-        Type = Type;
-        Data = Data;
-    }
-
 type ApplicationCommandOptionChoice = {
     [<JsonField("name")>]
     Name: string
@@ -1746,3 +1615,139 @@ type ApplicationCommand = {
     [<JsonField("version")>]
     Version: string
 }
+
+type InteractionCallbackMessageData = {
+    [<JsonField("tts")>]
+    Tts: bool option
+    
+    [<JsonField("content")>]
+    Content: string option
+    
+    [<JsonField("embeds")>]
+    Embeds: Embed list option
+    
+    [<JsonField("allowed_mentions")>]
+    AllowedMentions: AllowedMentions option
+    
+    [<JsonField("flags")>]
+    Flags: int option
+    
+    [<JsonField("components")>]
+    Components: Component list option
+    
+    [<JsonField("attachments")>]
+    Attachments: Attachment list option
+    
+    [<JsonField("poll")>]
+    Poll: Poll option
+}
+with
+    static member build(
+        ?Tts: bool,
+        ?Content: string,
+        ?Embeds: Embed list,
+        ?AllowedMentions: AllowedMentions,
+        ?Flags: int,
+        ?Components: Component list,
+        ?Attachments: Attachment list,
+        ?Poll: Poll
+    ) = {
+        Tts = Tts;
+        Content = Content;
+        Embeds = Embeds;
+        AllowedMentions = AllowedMentions;
+        Flags = Flags;
+        Components = Components;
+        Attachments = Attachments;
+        Poll = Poll;
+    }
+
+    static member buildBase(
+        ?Tts: bool,
+        ?Content: string,
+        ?Embeds: Embed list,
+        ?AllowedMentions: AllowedMentions,
+        ?Flags: int,
+        ?Components: Component list,
+        ?Attachments: Attachment list,
+        ?Poll: Poll
+    ) = InteractionCallbackData.InteractionCallbackMessageData (
+        InteractionCallbackMessageData.build (
+            ?Tts = Tts,
+            ?Content = Content,
+            ?Embeds = Embeds,
+            ?AllowedMentions = AllowedMentions,
+            ?Flags = Flags,
+            ?Components = Components,
+            ?Attachments = Attachments,
+            ?Poll = Poll
+        )
+        
+    )
+
+and InteractionCallbackAutocompleteData = {
+    [<JsonField("choices")>]
+    Choices: ApplicationCommandOptionChoice list
+}
+with
+    static member build(
+        Choices: ApplicationCommandOptionChoice list
+    ) = {
+        Choices = Choices;
+    }
+
+    static member buildBase(
+        Choices: ApplicationCommandOptionChoice list
+    ) = InteractionCallbackData.InteractionCallbackAutocompleteData (
+        InteractionCallbackAutocompleteData.build Choices
+    )
+
+and InteractionCallbackModalData = {
+    [<JsonField("custom_id")>]
+    CustomId: string
+    
+    [<JsonField("title")>]
+    Title: string
+    
+    [<JsonField("components")>]
+    Components: Component list
+}
+with
+    static member build(
+        CustomId: string,
+        Title: string,
+        Components: Component list
+    ) = {
+        CustomId = CustomId;
+        Title = Title;
+        Components = Components;
+    }
+
+    static member buildBase(
+        CustomId: string,
+        Title: string,
+        Components: Component list
+    ) = InteractionCallbackData.InteractionCallbackModalData (
+        InteractionCallbackModalData.build (CustomId, Title, Components)
+    )
+
+and InteractionCallbackData =
+    | InteractionCallbackMessageData of InteractionCallbackMessageData
+    | InteractionCallbackAutocompleteData of InteractionCallbackAutocompleteData
+    | InteractionCallbackModalData of InteractionCallbackModalData
+
+type InteractionCallback = {
+    [<JsonField("type", EnumValue = EnumMode.Value)>]
+    Type: InteractionCallbackType
+    
+    [<JsonField("data")>]
+    Data: InteractionCallbackData option
+}
+with
+    static member build(
+        Type: InteractionCallbackType,
+        ?Data: InteractionCallbackData
+    ) = {
+        Type = Type;
+        Data = Data;
+    }
