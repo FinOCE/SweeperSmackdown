@@ -19,6 +19,7 @@
     <Compile Include="Services\DiscordApi\DiscordApiService.fs" />
     <Compile Include="Commands\ICommand.fs" />
     <Compile Include="Commands\CommandUtils.fs" />
+    <Compile Include="Commands\AboutCommand.fs" />
     <Compile Include="Commands\PlayCommand.fs" />
     <Compile Include="Commands\ICommandProvider.fs" />
     <Compile Include="Commands\CommandProvider.fs" />

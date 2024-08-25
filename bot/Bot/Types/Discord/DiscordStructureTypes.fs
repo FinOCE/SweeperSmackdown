@@ -569,6 +569,16 @@ type EmbedFooter = {
     [<JsonField("proxy_icon_url")>]
     ProxyIconUrl: string option
 }
+with
+    static member build(
+        Text: string,
+        ?IconUrl: string,
+        ?ProxyIconUrl: string
+    ) = {
+        Text = Text;
+        IconUrl = IconUrl;
+        ProxyIconUrl = ProxyIconUrl;
+    }
 
 type EmbedImage = {
     [<JsonField("url")>]
@@ -583,6 +593,18 @@ type EmbedImage = {
     [<JsonField("width")>]
     Width: int option
 }
+with
+    static member build(
+        Url: string,
+        ?ProxyUrl: string,
+        ?Height: int,
+        ?Width: int
+    ) = {
+        Url = Url;
+        ProxyUrl = ProxyUrl;
+        Height = Height;
+        Width = Width;
+    }
 
 type EmbedThumbnail = {
     [<JsonField("url")>]
@@ -597,6 +619,18 @@ type EmbedThumbnail = {
     [<JsonField("width")>]
     Width: int option
 }
+with
+    static member build(
+        Url: string,
+        ?ProxyUrl: string,
+        ?Height: int,
+        ?Width: int
+    ) = {
+        Url = Url;
+        ProxyUrl = ProxyUrl;
+        Height = Height;
+        Width = Width;
+    }
 
 type EmbedVideo = {
     [<JsonField("url")>]
@@ -611,6 +645,18 @@ type EmbedVideo = {
     [<JsonField("width")>]
     Width: int option
 }
+with
+    static member build(
+        ?Url: string,
+        ?ProxyUrl: string,
+        ?Height: int,
+        ?Width: int
+    ) = {
+        Url = Url;
+        ProxyUrl = ProxyUrl;
+        Height = Height;
+        Width = Width;
+    }
 
 type EmbedProvider = {
     [<JsonField("name")>]
@@ -619,6 +665,14 @@ type EmbedProvider = {
     [<JsonField("url")>]
     Url: string option
 }
+with
+    static member build(
+        ?Name: string,
+        ?Url: string
+    ) = {
+        Name = Name;
+        Url = Url;
+    }
 
 type EmbedAuthor = {
     [<JsonField("name")>]
@@ -633,6 +687,18 @@ type EmbedAuthor = {
     [<JsonField("proxy_icon_url")>]
     ProxyIconUrl: string option
 }
+with
+    static member build(
+        Name: string,
+        ?Url: string,
+        ?IconUrl: string,
+        ?ProxyIconUrl: string
+    ) = {
+        Name = Name;
+        Url = Url;
+        IconUrl = IconUrl;
+        ProxyIconUrl = ProxyIconUrl;
+    }
 
 type EmbedField = {
     [<JsonField("name")>]
@@ -644,6 +710,16 @@ type EmbedField = {
     [<JsonField("inline")>]
     Inline: bool option
 }
+with
+    static member build(
+        Name: string,
+        Value: string,
+        ?Inline: bool
+    ) = {
+        Name = Name;
+        Value = Value;
+        Inline = Inline;
+    }
 
 type Embed = {
     [<JsonField("title")>]
@@ -685,6 +761,36 @@ type Embed = {
     [<JsonField("fields")>]
     Fields: EmbedField list option
 }
+with
+    static member build(
+        ?Title: string,
+        ?Type: string,
+        ?Description: string,
+        ?Url: string,
+        ?Timestamp: DateTime,
+        ?Color: int,
+        ?Footer: EmbedFooter,
+        ?Image: EmbedImage,
+        ?Thumbnail: EmbedThumbnail,
+        ?Video: EmbedVideo,
+        ?Provider: EmbedProvider,
+        ?Author: EmbedAuthor,
+        ?Fields: EmbedField list
+    ) = {
+        Title = Title;
+        Type = Type;
+        Description = Description;
+        Url = Url;
+        Timestamp = Timestamp;
+        Color = Color;
+        Footer = Footer;
+        Image = Image;
+        Thumbnail = Thumbnail;
+        Video = Video;
+        Provider = Provider;
+        Author = Author;
+        Fields = Fields;
+    }
 
 type ReactionCountDetails = {
     [<JsonField("burst")>]

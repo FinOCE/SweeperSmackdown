@@ -3,10 +3,12 @@
 open SweeperSmackdown.Bot.Types.Discord
 
 type CommandProvider (
+    aboutCommand: AboutCommand,
     playCommand: PlayCommand
 ) =
     let commands: ICommand list = [
-        playCommand
+        aboutCommand;
+        playCommand;
     ]
 
     let getCommandName (interaction: Interaction) =

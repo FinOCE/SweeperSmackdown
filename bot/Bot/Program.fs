@@ -22,6 +22,7 @@ HostBuilder()
             .AddSingleton<ISigningService, Ed25519SigningService>()
             .AddSingleton<IDiscordApiService, DiscordApiService>()
             // Application commands
+            .AddSingleton<AboutCommand>()
             .AddSingleton<PlayCommand>()
             .AddSingleton<ICommandProvider, CommandProvider>()
         |> ignore
