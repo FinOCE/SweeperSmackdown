@@ -34,16 +34,12 @@ Function Start-Azurite {
 
 Function Start-Tunnel {
   Param(
-    # The path to run the tunnel from..
+    # The path to run the tunnel from.
     [Parameter(Mandatory=$true)]
-    [string] $Path,
-
-    # The ID of the tunnel to connect to.
-    [Parameter(Mandatory=$true)]
-    [string] $TunnelId
+    [string] $Path
   )
 
-  Open-TerminalTab -Path $Path -Command "cloudflared tunnel run $TunnelId"
+  Open-TerminalTab -Path $Path -Command "cloudflared --config=config.yml tunnel run"
 }
 
 Function Start-NodejsApp {
@@ -67,7 +63,7 @@ Function Start-FunctionApp {
 }
 
 Start-Azurite -Path "..\.azurite"
-Start-Tunnel -Path "..\.cloudflared" -TunnelId "67534728-9f06-4528-ae86-7f93a2286929"
+Start-Tunnel -Path "..\.cloudflared"
 Start-FunctionApp -Path "..\api\SweeperSmackdown"
 Start-FunctionApp -Path "..\bot\Bot"
 Start-NodejsApp -Path "..\app"
