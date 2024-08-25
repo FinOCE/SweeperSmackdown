@@ -10,7 +10,7 @@ type EntrypointProps = {}
 
 export function Entrypoint({}: EntrypointProps) {
   const { sdk, user } = useEmbeddedAppSdk()
-  const { ws } = useWebsocket()
+  const { ws, connectionFailed } = useWebsocket()
   const { navigate } = useNavigation()
 
   const [loading, setLoading] = useState(true)
@@ -28,6 +28,12 @@ export function Entrypoint({}: EntrypointProps) {
     return () => document.removeEventListener("click", handleNavigation)
   }, [sdk, user, ws, loading])
 
+  function getStatusText(loading: boolean, connectionFailed: boolean) {
+    if (connectionFailed) return "Unable to connect... Please try again later"
+    if (loading) return "Loading... Please wait a moment"
+    return "Press anywhere to Start"
+  }
+
   return (
     <div>
       <div className="entrypoint-title">
@@ -39,11 +45,7 @@ export function Entrypoint({}: EntrypointProps) {
         </div>
       </div>
       <div className="entrypoint-start-text">
-        {loading ? (
-          <Text type="normal">Loading... Please wait a moment</Text>
-        ) : (
-          <Text type="normal">Press anywhere to Start</Text>
-        )}
+        <Text type="normal">{getStatusText(loading, connectionFailed)}</Text>
       </div>
     </div>
   )

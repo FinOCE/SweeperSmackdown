@@ -11,9 +11,10 @@ require("events").defaultMaxListeners = maxListeners
 
 type TWebsocketContext = {
   ws: WebPubSubClient | null
+  connectionFailed: boolean
 }
 
-const WebsocketContext = createContext<TWebsocketContext>({ ws: null })
+const WebsocketContext = createContext<TWebsocketContext>({ ws: null, connectionFailed: false })
 export const useWebsocket = () => useContext(WebsocketContext)
 
 export function WebsocketProvider(props: { children: ReactNode }) {
@@ -23,15 +24,10 @@ export function WebsocketProvider(props: { children: ReactNode }) {
 
   const [client, setClient] = useState<WebPubSubClient | null>(null)
   const [ws, setWs] = useState<WebPubSubClient | null>(null)
-  const [retries, setRetries] = useState(0)
+  const [connectionFailed, setConnectionFailed] = useState(false)
 
   useEffect(() => {
-    if (!user || !hasToken) return
-
-    if (retries > 3) {
-      alert("Unable to connect to the game servers. Please try again later.")
-      return
-    }
+    if (!user || !origin || !hasToken) return
 
     api
       .negotiate(user.id)
@@ -40,28 +36,26 @@ export function WebsocketProvider(props: { children: ReactNode }) {
           ? res.url
           : `wss://${process.env.PUBLIC_ENV__DISCORD_CLIENT_ID}.discordsays.com/ws/client/hubs/Game?access_token=${res.accessToken}`
       )
-      .then(url => {
-        try {
-          setClient(new WebPubSubClient({ getClientAccessUrl: url }))
-        } catch (err) {
-          console.log("Failed to connect to web pubsub but caught error:", err)
-        }
-      })
-      .catch(() => setRetries(prev => prev + 1))
+      .then(url => setClient(new WebPubSubClient({ getClientAccessUrl: url })))
+      .catch(() => setConnectionFailed(true))
 
     return () => setClient(null)
-  }, [user, origin, hasToken, retries])
+  }, [user, origin, hasToken])
 
   useEffect(() => {
     if (!client) return
 
-    client.start().then(() => setWs(client))
+    client
+      .start()
+      .then(() => setWs(client))
+      .catch(() => setConnectionFailed(true))
 
     return () => {
       client.stop()
       setWs(null)
+      setConnectionFailed(false)
     }
   }, [client])
 
-  return <WebsocketContext.Provider value={{ ws }}>{props.children}</WebsocketContext.Provider>
+  return <WebsocketContext.Provider value={{ ws, connectionFailed }}>{props.children}</WebsocketContext.Provider>
 }
