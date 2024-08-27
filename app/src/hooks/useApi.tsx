@@ -19,7 +19,7 @@ export function ApiProvider(props: { children?: ReactNode }) {
   const [api, setApi] = useState<ReturnType<typeof getApi> | null>(null)
 
   useEffect(() => {
-    const baseUrl = origin === "browser" ? process.env.PUBLIC_ENV__API_BASE_URL : "/api"
+    const baseUrl = origin === "browser" ? process.env.PUBLIC_ENV__API_BASE_URL : "/.proxy/api"
     const api = getApi(baseUrl, token)
 
     setApi(api)
