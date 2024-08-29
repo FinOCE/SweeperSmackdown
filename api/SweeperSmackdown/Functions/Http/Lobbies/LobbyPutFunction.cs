@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
 using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Structures;
+using SweeperSmackdown.Functions.Orchestrators.Requests.Lobbies;
 using SweeperSmackdown.Utils;
 using System.Threading.Tasks;
 
@@ -34,34 +32,21 @@ public static class LobbyPutFunction
 
         if (lobby.EntityExists)
         {
-            // Fetch remaining data and return 200
-            var settings = await entityClient.ReadEntityStateAsync<GameSettingsStateMachine>(
-                Id.For<GameSettingsStateMachine>(lobbyId));
+            await orchestrationClient.StartNewAsync(
+                nameof(LobbyFetchFunction),
+                new LobbyFetchFunctionProps(lobbyId));
 
-            if (!settings.EntityExists)
-                return new StatusCodeResult(500);
+            // TODO: Poll orchestration and return 200 result
 
-            var status = await orchestrationClient.GetStatusAsync(
-                Id.ForInstance(nameof(LobbyOrchestratorFunction), lobbyId));
-
-            var customStatus = status.CustomStatus.ToObject<LobbyOrchestratorStatus>();
-
-            if (customStatus is null)
-                return new StatusCodeResult(500);
-
-            return new OkObjectResult(LobbyResponse.FromModel(
-                lobbyId,
-                new PreciseLobbyStatus(customStatus, customStatus.Status == ELobbyStatus.Configuring ? settings.EntityState.State : null),
-                lobby.EntityState,
-                settings.EntityState));
+            return new AcceptedResult();
         }
         else
         {
-            // Start create orchestrator and return 202
             await orchestrationClient.StartNewAsync(
-                nameof(LobbyCreateOrchestratorFunction),
-                Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
-                new LobbyCreateOrchestratorFunctionProps(requesterId));
+                nameof(LobbyCreateFunction),
+                new LobbyCreateFunctionProps(lobbyId, requesterId));
+
+            // TODO: Poll orchestration and return 201 result
 
             return new AcceptedResult();
         }

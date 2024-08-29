@@ -11,6 +11,7 @@ using SweeperSmackdown.Structures;
 using SweeperSmackdown.Functions.Orchestrators;
 using System.Collections.Generic;
 using System.Linq;
+using SweeperSmackdown.Functions.Orchestrators.Requests.Lobbies;
 
 namespace SweeperSmackdown.Functions.Entities;
 
@@ -28,10 +29,22 @@ public interface ILobbyStateMachine
     public Task Delete();
 
     /// <summary>
+    /// Get the host ID of the lobby.
+    /// </summary>
+    /// <returns>The host ID</returns>
+    public Task<string> GetHost();
+
+    /// <summary>
     /// Set a new host for the lobby.
     /// </summary>
     /// <param name="hostId">The ID of the new host</param>
     public Task SetHost(string hostId);
+
+    /// <summary>
+    /// Get whether the lobby is host managed or not.
+    /// </summary>
+    /// <returns>Whether or not the lobby is host managed</returns>
+    public Task<bool> GetHostManaged();
 
     /// <summary>
     /// Set whether or not the lobby is entirely controlled by the host.
@@ -117,12 +130,18 @@ public class LobbyStateMachine : ILobbyStateMachine
         Entity.Current.DeleteState();
     }
 
+    public Task<string> GetHost() =>
+        Task.FromResult(HostId);
+
     public async Task SetHost(string hostId)
     {
         HostId = hostId;
 
         await _ws.AddAsync(ActionFactory.UpdateLobbyHost(LobbyId, hostId));
     }
+
+    public Task<bool> GetHostManaged() =>
+        Task.FromResult(HostManaged);
 
     public async Task SetHostManaged(bool hostManaged)
     {
@@ -194,8 +213,8 @@ public class LobbyStateMachine : ILobbyStateMachine
         {
             if (Players.All(p => !p.Active))
                 await _orchestrationClient.StartNewAsync(
-                    nameof(LobbyDeleteOrchestratorFunction),
-                    Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), LobbyId));
+                    nameof(LobbyDisposeFunction),
+                    new LobbyDisposeFunctionProps(LobbyId, null));
             else
                 await SetHost(Players.First(p => p.Active).Id);
         }

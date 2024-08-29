@@ -5,8 +5,8 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.DTOs;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Utils;
+using SweeperSmackdown.Functions.Orchestrators.Requests.Lobbies;
+using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
@@ -17,7 +17,7 @@ public static class LobbyPatchFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "lobbies/{lobbyId}")] LobbyPatchRequest payload,
         HttpRequest req,
-        [DurableClient] IDurableEntityClient entityClient,
+        [DurableClient] IDurableOrchestrationClient orchestrationClient,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -26,31 +26,26 @@ public static class LobbyPatchFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobby exists
-        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
-            Id.For<LobbyStateMachine>(lobbyId));
+        // Start orchestrator to update lobby
+        try
+        {
+            await orchestrationClient.StartNewAsync(
+                nameof(LobbyUpdateFunction),
+                new LobbyUpdateFunctionProps(lobbyId, requesterId, payload.HostId, payload.HostManaged));
 
-        if (!lobby.EntityExists)
-            return new NotFoundResult();
+            // TODO: Poll orchestration and return 200 result
 
-        // Only allow host to modify
-        if (lobby.EntityState.HostId != requesterId)
-            return new StatusCodeResult(403);
+            return new AcceptedResult();
+        }
+        catch (FunctionFailedException ex)
+        {
+            if (ex.InnerException is AccessViolationException)
+                return new StatusCodeResult(403);
 
-        // Signal entity to update provided values
-        if (payload.HostId is not null)
-            await entityClient.SignalEntityAsync(
-                Id.For<LobbyStateMachine>(lobbyId),
-                nameof(ILobbyStateMachine.SetHost),
-                payload.HostId);
+            if (ex.InnerException is ArgumentException)
+                return new StatusCodeResult(404);
 
-        if (payload.HostManaged is not null)
-            await entityClient.SignalEntityAsync(
-                Id.For<LobbyStateMachine>(lobbyId),
-                nameof(ILobbyStateMachine.SetHostManaged),
-                payload.HostManaged);
-
-        // Respond to request
-        return new AcceptedResult();
+            return new StatusCodeResult(500);
+        }
     }
 }

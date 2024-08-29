@@ -4,9 +4,8 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Utils;
+using SweeperSmackdown.Functions.Orchestrators.Requests.Lobbies;
+using System;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
@@ -17,7 +16,6 @@ public static class LobbyDeleteFunction
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "lobbies/{lobbyId}")] HttpRequest req,
         [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient,
         string lobbyId)
     {
         // Only allow if user is logged in
@@ -26,22 +24,26 @@ public static class LobbyDeleteFunction
         if (requesterId == null)
             return new StatusCodeResult(401);
 
-        // Check if lobby exists
-        var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
-            Id.For<LobbyStateMachine>(lobbyId));
-
-        if (!lobby.EntityExists)
-            return new NotFoundResult();
-
-        // Only allow host to delete
-        if (lobby.EntityState.HostId != requesterId)
-            return new StatusCodeResult(403);
-
         // Start orchestrator to delete lobby
-        await orchestrationClient.StartNewAsync(
-            nameof(LobbyDeleteOrchestratorFunction),
-            Id.ForInstance(nameof(LobbyDeleteOrchestratorFunction), lobbyId));
+        try
+        {
+            await orchestrationClient.StartNewAsync(
+                nameof(LobbyDisposeFunction),
+                new LobbyDisposeFunctionProps(lobbyId, requesterId));
 
-        return new AcceptedResult();
+            // TODO: Poll orchestration and return 204 result
+
+            return new AcceptedResult();
+        }
+        catch (FunctionFailedException ex)
+        {
+            if (ex.InnerException is AccessViolationException)
+                return new StatusCodeResult(403);
+
+            if (ex.InnerException is ArgumentException)
+                return new StatusCodeResult(404);
+
+            return new StatusCodeResult(500);
+        }
     }
 }

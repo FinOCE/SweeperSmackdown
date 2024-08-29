@@ -4,10 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using SweeperSmackdown.Extensions;
-using SweeperSmackdown.Functions.Entities;
-using SweeperSmackdown.Functions.Orchestrators;
-using SweeperSmackdown.Utils;
-using System.Security.Cryptography;
+using SweeperSmackdown.Functions.Orchestrators.Requests.Lobbies;
 using System.Threading.Tasks;
 
 namespace SweeperSmackdown.Functions.Http.Lobbies;
@@ -17,8 +14,7 @@ public static class LobbyPostFunction
     [FunctionName(nameof(LobbyPostFunction))]
     public static async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "lobbies")] HttpRequest req,
-        [DurableClient] IDurableOrchestrationClient orchestrationClient,
-        [DurableClient] IDurableEntityClient entityClient)
+        [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
         // Only allow if user is logged in
         var requesterId = req.GetUserId();
@@ -26,26 +22,12 @@ public static class LobbyPostFunction
         if (requesterId is null)
             return new StatusCodeResult(401);
 
-        // Generate unique lobby ID
-        var lobbyId = "";
-        var existing = true;
-
-        do
-        {
-            lobbyId = RandomNumberGenerator.GetInt32(100_000).ToString();
-
-            var lobby = await entityClient.ReadEntityStateAsync<LobbyStateMachine>(
-                Id.For<LobbyStateMachine>(lobbyId));
-
-            existing = lobby.EntityExists;
-        }
-        while (existing);
-
-        // Start create orchestrator and return 202
+        // Create lobby
         await orchestrationClient.StartNewAsync(
-            nameof(LobbyCreateOrchestratorFunction),
-            Id.ForInstance(nameof(LobbyCreateOrchestratorFunction), lobbyId),
-            new LobbyCreateOrchestratorFunctionProps(requesterId));
+            nameof(LobbyCreateFunction),
+            new LobbyCreateFunctionProps(null, requesterId));
+
+        // TODO: Poll orchestration and return 201 result
 
         return new AcceptedResult();
     }
