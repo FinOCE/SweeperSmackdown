@@ -28,6 +28,12 @@ public interface ILobbyStateMachine
     public Task Delete();
 
     /// <summary>
+    /// Set all values on the state machine.
+    /// </summary>
+    /// <param name="args">The new values to apply</param>
+    public Task Set((string? HostId, bool? HostManaged) args);
+
+    /// <summary>
     /// Set a new host for the lobby.
     /// </summary>
     /// <param name="hostId">The ID of the new host</param>
@@ -117,18 +123,37 @@ public class LobbyStateMachine : ILobbyStateMachine
         Entity.Current.DeleteState();
     }
 
+    public async Task Set((string? HostId, bool? HostManaged) args)
+    {
+        var tasks = new List<Task>();
+
+        if (args.HostId is not null)
+            tasks.Add(SetHost(args.HostId));
+
+        if (args.HostManaged is not null)
+            tasks.Add(SetHostManaged(args.HostManaged.Value));
+
+        await Task.WhenAll(tasks);
+    }
+
     public async Task SetHost(string hostId)
     {
+        var oldHostId = HostId;
+
         HostId = hostId;
 
-        await _ws.AddAsync(ActionFactory.UpdateLobbyHost(LobbyId, hostId));
+        if (oldHostId != HostId)
+            await _ws.AddAsync(ActionFactory.UpdateLobbyHost(LobbyId, hostId));
     }
 
     public async Task SetHostManaged(bool hostManaged)
     {
+        var oldHostManaged = HostManaged;
+
         HostManaged = hostManaged;
 
-        await _ws.AddAsync(ActionFactory.UpdateLobbyHostManaged(LobbyId, hostManaged));
+        if (oldHostManaged != HostManaged)
+            await _ws.AddAsync(ActionFactory.UpdateLobbyHostManaged(LobbyId, hostManaged));
     }
 
     public Task<IEnumerable<Player>> GetPlayers() =>

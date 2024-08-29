@@ -18,6 +18,7 @@ public static class OnMoveFunction
     [FunctionName(nameof(OnMoveFunction))]
     public static async Task Run(
         [WebPubSubTrigger(PubSubConstants.HUB_NAME, WebPubSubEventType.User, PubSubEvents.MOVE_ADD)] UserEventRequest req,
+        IDurableOrchestrationClient orc,
         [DurableClient] IDurableEntityClient entityClient)
     {
         // Parse data from request
