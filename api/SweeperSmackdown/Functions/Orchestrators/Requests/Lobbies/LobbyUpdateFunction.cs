@@ -58,8 +58,10 @@ public static class LobbyUpdateFunction
                 nameof(ILobbyStateMachine.SetHostManaged),
                 props.HostManaged);
 
-        return await ctx.CallSubOrchestratorAsync<LobbyResponse>(
-            nameof(LobbyFetchFunction),
-            new LobbyFetchFunctionProps(props.LobbyId));
+        var res = await ctx.CallActivityAsync<LobbyResponse?>(
+            nameof(GetLobbyActivityFunction),
+            new GetLobbyActivityFunctionProps(props.LobbyId));
+
+        return res is null ? throw new ApplicationException() : res;
     }
 }

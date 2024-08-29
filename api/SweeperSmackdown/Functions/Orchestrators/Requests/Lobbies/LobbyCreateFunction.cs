@@ -77,8 +77,10 @@ public static class LobbyCreateFunction
 
         // TODO: Probably delete all uses of NotifyActivityFunction and use polling instead
 
-        return await ctx.CallSubOrchestratorAsync<LobbyResponse>(
-            nameof(LobbyFetchFunction),
-            new LobbyFetchFunctionProps(lobbyId));
+        var res = await ctx.CallActivityAsync<LobbyResponse?>(
+            nameof(GetLobbyActivityFunction),
+            new GetLobbyActivityFunctionProps(lobbyId));
+
+        return res is null ? throw new ApplicationException() : res;
     }
 }
